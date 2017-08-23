@@ -1,42 +1,21 @@
 /*
- *
- * @APPLE_LICENSE_HEADER_START@
- *
- * Copyright (c) 1999-2008 Apple Inc.  All Rights Reserved.
- *
- * This file contains Original Code and/or Modifications of Original Code
- * as defined in and that are subject to the Apple Public Source License
- * Version 2.0 (the 'License'). You may not use this file except in
- * compliance with the License. Please obtain a copy of the License at
- * http://www.opensource.apple.com/apsl/ and read it before using this
- * file.
- *
- * The Original Code and all software distributed under the License are
- * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
- * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
- * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
- * Please see the License for the specific language governing rights and
- * limitations under the License.
- *
- * @APPLE_LICENSE_HEADER_END@
- *
- */
-/*
-    File:       RTSPRequestStream.cpp
-
-    Contains:   Implementation of RTSPRequestStream class.
+	Copyright (c) 2012-2016 EasyDarwin.ORG.  All rights reserved.
+	Github: https://github.com/EasyDarwin
+	WEChat: EasyDarwin
+	Website: http://www.easydarwin.org
 */
+/*
+	File:       HTTPClientRequestStream.cpp
 
-
-#include "HTTPRequestStream.h"
+	Contains:   Implementation of HTTPClientRequestStream class.
+*/
+#include "HTTPClientRequestStream.h"
 #include "StringParser.h"
 #include "base64.h"
-#include "OS.h"
 
 #define READ_DEBUGGING 0
 
-HTTPRequestStream::HTTPRequestStream(TCPSocket *sock)
+HTTPClientRequestStream::HTTPClientRequestStream(ClientSocket *sock)
     : fSocket(sock),
       fRetreatBytes(0),
       fRetreatBytesRead(0),
@@ -45,13 +24,14 @@ HTTPRequestStream::HTTPRequestStream(TCPSocket *sock)
       fRequest(fRequestBuffer, 0),
       fRequestPtr(NULL),
       fDecode(false),
-      fPrintRTSP(false) {}
+      fPrintMsg(false),
+      fIsDataPacket(false) {}
 
-void HTTPRequestStream::SnarfRetreat(HTTPRequestStream &fromRequest) {
+void HTTPClientRequestStream::SnarfRetreat(HTTPClientRequestStream &fromRequest) {
   // Simplest thing to do is to just completely blow away everything in this current
   // stream, and replace it with the retreat bytes from the other stream.
   fRequestPtr = NULL;
-  Assert(fRetreatBytes < kRequestBufferSizeInBytes);
+  Assert(fRetreatBytes < CF_MAX_REQUEST_BUFFER_SIZE);
   fRetreatBytes = fromRequest.fRetreatBytes;
   fEncodedBytesRemaining = fCurOffset = fRequest.Len = 0;
   ::memcpy(&fRequestBuffer[0],
@@ -59,14 +39,14 @@ void HTTPRequestStream::SnarfRetreat(HTTPRequestStream &fromRequest) {
            fromRequest.fRetreatBytes);
 }
 
-CF_Error HTTPRequestStream::ReadRequest() {
+CF_Error HTTPClientRequestStream::ReadRequest() {
   while (true) {
     UInt32 newOffset = 0;
 
-    // If this is the case, we already HAVE a request on this session, and we now are done
-    // with the request and want to move onto the next one. The first thing we should do
-    // is check whether there is any lingering data in the stream. If there is, the parent
-    // session believes that is part of a new request
+    //If this is the case, we already HAVE a request on this session, and we now are done
+    //with the request and want to move onto the next one. The first thing we should do
+    //is check whether there is any lingering data in the stream. If there is, the parent
+    //session believes that is part of a new request
     if (fRequestPtr != NULL) {
       fRequestPtr = NULL;//flag that we no longer have a complete request
 
@@ -94,7 +74,7 @@ CF_Error HTTPRequestStream::ReadRequest() {
                   &fRequestBuffer[fCurOffset - fEncodedBytesRemaining],
                   fEncodedBytesRemaining);
         fCurOffset = fRetreatBytes + fEncodedBytesRemaining;
-        Assert(fCurOffset < kRequestBufferSizeInBytes);
+        Assert(fCurOffset < CF_MAX_REQUEST_BUFFER_SIZE);
       } else
         fCurOffset = fRetreatBytes;
 
@@ -113,15 +93,15 @@ CF_Error HTTPRequestStream::ReadRequest() {
         Assert(fEncodedBytesRemaining == 0);
       } else {
         // We don't have any new data, get some from the socket...
-        // 注意我们的 socket 端口是 non blocking
         CF_Error sockErr = fSocket->Read(&fRequestBuffer[fCurOffset],
-                                           (kRequestBufferSizeInBytes
-                                               - fCurOffset) - 1, &newOffset);
-        // assume the client is dead if we get an error back
+                                         (CF_MAX_REQUEST_BUFFER_SIZE
+                                             - fCurOffset) - 1,
+                                         &newOffset);
+        //assume the client is dead if we get an error back
         if (sockErr == EAGAIN)
           return CF_NoErr;
         if (sockErr != CF_NoErr) {
-          Assert(!fSocket->IsConnected());
+          Assert(!fSocket->GetSocket()->IsConnected());
           return sockErr;
         }
       }
@@ -140,7 +120,7 @@ CF_Error HTTPRequestStream::ReadRequest() {
         if (decodeErr == CF_NoErr) Assert(fEncodedBytesRemaining < 4);
       } else
         fRequest.Len += newOffset;
-      Assert(fRequest.Len < kRequestBufferSizeInBytes);
+      Assert(fRequest.Len < CF_MAX_REQUEST_BUFFER_SIZE);
       fCurOffset += newOffset;
     }
     Assert(newOffset > 0);
@@ -164,44 +144,40 @@ CF_Error HTTPRequestStream::ReadRequest() {
     }
     fIsDataPacket = false;
 
-    if (fPrintRTSP) {
-      DateBuffer theDate;
-      DateTranslator::UpdateDateBuffer(&theDate,
-                                       0); // get the current GMT date and time
-      qtss_printf("\n\n#C->S:\n#time: ms=%"   _U32BITARG_   " date=%s\n",
-                  (UInt32) OS::StartTimeMilli_Int(),
-                  theDate.GetDateBuffer());
+    //      if (fPrintMsg)
+    //      {
+    //          DateBuffer theDate;
+    //          DateTranslator::UpdateDateBuffer(&theDate, 0); // get the current GMT date and time
+    //	qtss_printf("\n\n#C->S:\n#time: ms=%"   _U32BITARG_   " date=%s\n", (UInt32) OS::StartTimeMilli_Int(), theDate.GetDateBuffer());
 
-      if (fSocket != NULL) {
-        UInt16 serverPort = fSocket->GetLocalPort();
-        UInt16 clientPort = fSocket->GetRemotePort();
-        StrPtrLen *theLocalAddrStr = fSocket->GetLocalAddrStr();
-        StrPtrLen *theRemoteAddrStr = fSocket->GetRemoteAddrStr();
-        if (theLocalAddrStr != NULL) {
-          qtss_printf("#server: ip=");
-          theLocalAddrStr->PrintStr();
-          qtss_printf(" port=%u\n", serverPort);
-        } else {
-          qtss_printf("#server: ip=NULL port=%u\n", serverPort);
-        }
+    //          if (fSocket != NULL)
+    //          {
+    //              UInt16 serverPort = fSocket->GetLocalPort();
+    //              UInt16 clientPort = fSocket->GetRemotePort();
+    //              StrPtrLen* theLocalAddrStr = fSocket->GetLocalAddrStr();
+    //              StrPtrLen* theRemoteAddrStr = fSocket->GetRemoteAddrStr();
+    //              if (theLocalAddrStr != NULL)
+    //              {	qtss_printf("#server: ip="); theLocalAddrStr->PrintStr(); qtss_printf(" port=%u\n" , serverPort );
+    //              }
+    //              else
+    //            	{	qtss_printf("#server: ip=NULL port=%u\n" , serverPort );
+    //            	}
+    //
+    //              if (theRemoteAddrStr != NULL)
+    //              {	qtss_printf("#client: ip="); theRemoteAddrStr->PrintStr(); qtss_printf(" port=%u\n" , clientPort );
+    //              }
+    //          	else
+    //          	{	qtss_printf("#client: ip=NULL port=%u\n" , clientPort );
+    //          	}
 
-        if (theRemoteAddrStr != NULL) {
-          qtss_printf("#client: ip=");
-          theRemoteAddrStr->PrintStr();
-          qtss_printf(" port=%u\n", clientPort);
-        } else {
-          qtss_printf("#client: ip=NULL port=%u\n", clientPort);
-        }
+    //          }
 
-      }
+    //	StrPtrLen str(fRequest);
+    //	str.PrintStrEOL("\n\r\n", "\n");// print the request but stop on \n\r\n and add a \n afterwards.
+    //}
 
-      StrPtrLen str(fRequest);
-      str.PrintStrEOL("\n\r\n",
-                      "\n");// print the request but stop on \n\r\n and add a \n afterwards.
-    }
-
-    // use a StringParser object to search for a double EOL, which signifies the end of
-    // the header.
+    //use a StringParser object to search for a double EOL, which signifies the end of
+    //the header.
     bool weAreDone = false;
     StringParser headerParser(&fRequest);
 
@@ -209,9 +185,9 @@ CF_Error HTTPRequestStream::ReadRequest() {
     while (headerParser.GetThruEOL(NULL)) {
       lcount++;
       if (headerParser.ExpectEOL()) {
-        // The legal end-of-header sequences are \r\r, \r\n\r\n, & \n\n. NOT \r\n\r!
-        // If the packets arrive just a certain way, we could get here with the latter
-        // combo, and not wait for a final \n.
+        //The legal end-of-header sequences are \r\r, \r\n\r\n, & \n\n. NOT \r\n\r!
+        //If the packets arrive just a certain way, we could get here with the latter
+        //combo, and not wait for a final \n.
         if ((headerParser.GetDataParsedLen() > 2) &&
             (memcmp(headerParser.GetCurrentPosition() - 3, "\r\n\r", 3) == 0))
           continue;
@@ -235,7 +211,7 @@ CF_Error HTTPRequestStream::ReadRequest() {
       }
     }
 
-    // weAreDone means we have gotten a full request
+    //weAreDone means we have gotten a full request
     if (weAreDone) {
       //put back any data that is not part of the header
       fRequest.Len -= headerParser.GetDataRemaining();
@@ -245,17 +221,17 @@ CF_Error HTTPRequestStream::ReadRequest() {
       return CF_RequestArrived;
     }
 
-    // check for a full buffer
-    if (fCurOffset == kRequestBufferSizeInBytes - 1) {
+    //check for a full buffer
+    if (fCurOffset == CF_MAX_REQUEST_BUFFER_SIZE - 1) {
       fRequestPtr = &fRequest;
       return (CF_Error) E2BIG;
     }
   }
 }
 
-CF_Error HTTPRequestStream::Read(void *ioBuffer,
-                                   UInt32 inBufLen,
-                                   UInt32 *outLengthRead) {
+CF_Error HTTPClientRequestStream::Read(void *ioBuffer,
+                                       UInt32 inBufLen,
+                                       UInt32 *outLengthRead) {
   UInt32 theLengthRead = 0;
   UInt8 *theIoBuffer = (UInt8 *) ioBuffer;
 
@@ -277,7 +253,7 @@ CF_Error HTTPRequestStream::Read(void *ioBuffer,
     fRetreatBytes -= theLengthRead;
     fRetreatBytesRead += theLengthRead;
 #if READ_DEBUGGING
-    qtss_printf("In RTSPRequestStream::Read: Got %d Retreat Bytes\n", theLengthRead);
+    qtss_printf("In HTTPClientRequestStream::Read: Got %d Retreat Bytes\n", theLengthRead);
 #endif
   }
 
@@ -293,10 +269,10 @@ CF_Error HTTPRequestStream::Read(void *ioBuffer,
   // Read data directly from the socket and place it in our buffer
   UInt32 theNewOffset = 0;
   CF_Error theErr = fSocket->Read(&theIoBuffer[theLengthRead],
-                                    inBufLen - theLengthRead,
-                                    &theNewOffset);
+                                  inBufLen - theLengthRead,
+                                  &theNewOffset);
 #if READ_DEBUGGING
-  qtss_printf("In RTSPRequestStream::Read: Got %d bytes off Socket\n", theNewOffset);
+  qtss_printf("In HTTPClientRequestStream::Read: Got %d bytes off Socket\n", theNewOffset);
 #endif
   if (outLengthRead != NULL)
     *outLengthRead = theNewOffset + theLengthRead;
@@ -304,12 +280,19 @@ CF_Error HTTPRequestStream::Read(void *ioBuffer,
   return theErr;
 }
 
-CF_Error HTTPRequestStream::DecodeIncomingData(char *inSrcData,
-                                                 UInt32 inSrcDataLen) {
+void HTTPClientRequestStream::ResetRequestBuffer() {
+  fRetreatBytes = 0;
+  fRetreatBytesRead = 0;
+  fCurOffset = 0;
+  fEncodedBytesRemaining = 0;
+}
+
+CF_Error HTTPClientRequestStream::DecodeIncomingData(char *inSrcData,
+                                                       UInt32 inSrcDataLen) {
   Assert(fRetreatBytes == 0);
 
   if (fRequest.Ptr == &fRequestBuffer[0]) {
-    fRequest.Ptr = new char[kRequestBufferSizeInBytes];
+    fRequest.Ptr = new char[CF_MAX_REQUEST_BUFFER_SIZE];
     fRequest.Len = 0;
   }
 
@@ -352,7 +335,7 @@ CF_Error HTTPRequestStream::DecodeIncomingData(char *inSrcData,
   // Make sure to replace the sacred endChar
   inSrcData[bytesToDecode] = endChar;
 
-  Assert(fRequest.Len < kRequestBufferSizeInBytes);
+  Assert(fRequest.Len < CF_MAX_REQUEST_BUFFER_SIZE);
   Assert(encodedBytesConsumed == bytesToDecode);
 
   return CF_NoErr;

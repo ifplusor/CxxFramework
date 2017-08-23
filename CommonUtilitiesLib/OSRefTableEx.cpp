@@ -21,7 +21,7 @@ OS_Error OSRefTableEx::Release(const string &key)//�ͷ�����
 {
   OSMutexLocker locker(&m_Mutex);
   if (m_Map.find(key) == m_Map.end())//������
-    return EPERM;
+    return (OS_Error) EPERM;
   //make sure to wakeup anyone who may be waiting for this resource to be released
   m_Map[key]->AddRef(-1);//��������
   m_Map[key]->GetCondPtr()->Signal();
@@ -33,11 +33,11 @@ OS_Error OSRefTableEx::Register(const string &key, void *pObject)//���뵽m
 {
   Assert(pObject != nullptr);
   if (pObject == nullptr)
-    return EPERM;
+    return (OS_Error) EPERM;
 
   OSMutexLocker locker(&m_Mutex);//����
   if (m_Map.find(key) != m_Map.end())//�Ѿ����֣��ܾ��ظ���key
-    return EPERM;
+    return (OS_Error) EPERM;
   OSRefEx
       *RefTemp = new OSRefEx(pObject);//����value���ڴ�new����UnRegister��delete
   m_Map[key] = RefTemp;//���뵽map��
@@ -49,7 +49,7 @@ OS_Error OSRefTableEx::UnRegister(const string &key)//��map���Ƴ��
 {
   OSMutexLocker locker(&m_Mutex);
   if (m_Map.find(key) == m_Map.end())//�����ڵ�ǰkey
-    return EPERM;
+    return (OS_Error) EPERM;
   //make sure that no one else is using the object
   while (m_Map[key]->GetRefNum() > 0)
     m_Map[key]->GetCondPtr()->Wait(&m_Mutex);
@@ -63,9 +63,9 @@ OS_Error OSRefTableEx::UnRegister(const string &key)//��map���Ƴ��
 OS_Error OSRefTableEx::TryUnRegister(const string &key) {
   OSMutexLocker locker(&m_Mutex);
   if (m_Map.find(key) == m_Map.end())//�����ڵ�ǰkey
-    return EPERM;
+    return (OS_Error) EPERM;
   if (m_Map[key]->GetRefNum() > 0)
-    return EPERM;
+    return (OS_Error) EPERM;
   // At this point, this is guarenteed not to block, because
   // we've already checked that the refCount is low.
   delete m_Map[key];//�ͷ�

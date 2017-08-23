@@ -3,15 +3,15 @@
 	Contains:
 */
 
-#ifndef __HTTPSESSIONINTERFACE_H__
-#define __HTTPSESSIONINTERFACE_H__
+#ifndef __HTTP_SESSION_INTERFACE_H__
+#define __HTTP_SESSION_INTERFACE_H__
 
-#include "Task.h"
-#include "HTTPRequestStream.h"
-#include "HTTPResponseStream.h"
+#include <CF.h>
 #include <atomic>
 #include <TCPSocket.h>
 #include <TimeoutTask.h>
+#include "HTTPRequestStream.h"
+#include "HTTPResponseStream.h"
 
 class HTTPSessionInterface : public Task {
  public:
@@ -43,18 +43,18 @@ class HTTPSessionInterface : public Task {
   // Allows non-buffered writes to the client. These will flow control.
 
   // THE FIRST ENTRY OF THE IOVEC MUST BE BLANK!!!
-  virtual QTSS_Error WriteV(iovec *inVec,
+  virtual CF_Error WriteV(iovec *inVec,
                             UInt32 inNumVectors,
                             UInt32 inTotalLength,
                             UInt32 *outLenWritten);
-  virtual QTSS_Error Write(void *inBuffer,
+  virtual CF_Error Write(void *inBuffer,
                            UInt32 inLength,
                            UInt32 *outLenWritten,
                            UInt32 inFlags);
-  virtual QTSS_Error Read(void *ioBuffer, UInt32 inLength, UInt32 *outLenRead);
-  virtual QTSS_Error RequestEvent(QTSS_EventType inEventMask);
+  virtual CF_Error Read(void *ioBuffer, UInt32 inLength, UInt32 *outLenRead);
+  virtual CF_Error RequestEvent(CF_EventType inEventMask);
 
-  virtual QTSS_Error SendHTTPPacket(StrPtrLen *contentXML,
+  virtual CF_Error SendHTTPPacket(StrPtrLen *contentXML,
                                     bool connectionClose,
                                     bool decrement);
 
@@ -62,6 +62,16 @@ class HTTPSessionInterface : public Task {
     kMaxUserNameLen = 32,
     kMaxUserPasswordLen = 32
   };
+
+  // SERVER NAME & VERSION
+
+  static StrPtrLen &GetServerName() { return sServerNameStr; }
+  static StrPtrLen &GetServerVersion() { return sServerVersionStr; }
+  static StrPtrLen &GetServerPlatform() { return sServerPlatformStr; }
+  static StrPtrLen &GetServerBuildDate() { return sServerBuildDateStr; }
+  static StrPtrLen &GetServerHeader() { return sServerHeaderPtr; }
+  static StrPtrLen &GetServerBuild() { return sServerBuildStr; }
+  static StrPtrLen &GetServerComment() { return sServerCommentStr; }
 
  protected:
   enum {
@@ -106,7 +116,24 @@ class HTTPSessionInterface : public Task {
   //static unsigned int	sSessionIndexCounter;
   static std::atomic_uint sSessionIndexCounter;
 
+  // Dictionary support Param retrieval function
+  static void *SetupParams(HTTPSessionInterface *inSession, UInt32 *outLen);
+
+
+  enum {
+    kMaxServerHeaderLen = 1000
+  };
+
+  static UInt32 sServerAPIVersion;
+  static StrPtrLen sServerNameStr;
+  static StrPtrLen sServerVersionStr;
+  static StrPtrLen sServerBuildStr;
+  static StrPtrLen sServerCommentStr;
+  static StrPtrLen sServerPlatformStr;
+  static StrPtrLen sServerBuildDateStr;
+  static char sServerHeader[kMaxServerHeaderLen];
+  static StrPtrLen sServerHeaderPtr;
 };
 
-#endif // __HTTPSESSIONINTERFACE_H__
+#endif // __HTTP_SESSION_INTERFACE_H__
 

@@ -180,7 +180,7 @@ class EventThread : public OSThread {
 
  private:
 
-  virtual void Entry();
+  virtual void Entry() override;
 
   OSRefTable fRefTable;
 

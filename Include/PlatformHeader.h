@@ -33,8 +33,8 @@
 #define PLATFORM_SERVER_BIN_NAME	"edss"
 #define PLATFORM_SERVER_TEXT_NAME	"edss"
 #else
-#define PLATFORM_SERVER_BIN_NAME    "edss"
-#define PLATFORM_SERVER_TEXT_NAME    "edss"
+#define PLATFORM_SERVER_BIN_NAME    "CxxFramework"
+#define PLATFORM_SERVER_TEXT_NAME    "CxxFramework"
 #define MMAP_TABLES 0
 #endif
 

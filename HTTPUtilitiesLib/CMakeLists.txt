@@ -1,5 +1,8 @@
 set(HEADER_FILES
-        ${PROJECT_SOURCE_DIR}/Include/QTSS.h
+        include/HTTPClientRequestStream.h
+        include/HTTPClientResponseStream.h
+        include/HTTPProtocol.h
+        include/HTTPRequest.h
         include/HTTPRequestStream.h
         include/HTTPResponseStream.h
         include/HTTPSessionInterface.h
@@ -7,6 +10,10 @@ set(HEADER_FILES
         include/HTTPListenerSocket.h)
 
 set(SOURCE_FILES
+        HTTPClientRequestStream.cpp
+        HTTPClientResponseStream.cpp
+        HTTPProtocol.cpp
+        HTTPRequest.cpp
         HTTPRequestStream.cpp
         HTTPResponseStream.cpp
         HTTPSessionInterface.cpp
@@ -16,7 +23,6 @@ set(SOURCE_FILES
 add_library(HTTPUtilities STATIC
         ${HEADER_FILES} ${SOURCE_FILES})
 target_include_directories(HTTPUtilities
-        PUBLIC include
-        PUBLIC ${PROJECT_SOURCE_DIR}/Include)
+        PUBLIC include)
 target_link_libraries(HTTPUtilities
         PUBLIC CommonUtilities)

@@ -53,17 +53,16 @@ void StringFormatter::Put(char *buffer, UInt32 bufferSize) {
     return;
   }
 
-  //loop until the input buffer size is smaller than the space in the output
-  //buffer. Call BufferIsFull at each pass through the loop
+  // loop until the input buffer size is smaller than the space in the output
+  // buffer. Call BufferIsFull at each pass through the loop
   UInt32 spaceLeft = this->GetSpaceLeft();
   UInt32 spaceInBuffer = spaceLeft - 1;
   UInt32 resizedSpaceLeft = 0;
 
-  while ((spaceInBuffer < bufferSize)
-      || (spaceLeft == 0)) // too big for destination
-  {
+  // too big for destination
+  while ((spaceInBuffer < bufferSize) || (spaceLeft == 0)) {
     if (spaceLeft > 0) {
-      //copy as much as possible; truncating the result
+      // copy as much as possible; truncating the result
       ::memcpy(fCurrentPut, buffer, spaceInBuffer);
       fCurrentPut += spaceInBuffer;
       fBytesWritten += spaceInBuffer;
@@ -72,8 +71,7 @@ void StringFormatter::Put(char *buffer, UInt32 bufferSize) {
     }
     this->BufferIsFull(fStartPut, this->GetCurrentOffset()); // resize buffer
     resizedSpaceLeft = this->GetSpaceLeft();
-    if (spaceLeft == resizedSpaceLeft) // couldn't resize, nothing left to do
-    {
+    if (spaceLeft == resizedSpaceLeft) { // couldn't resize, nothing left to do
       return; // done. There is either nothing to do or nothing we can do because the BufferIsFull
     }
     spaceLeft = resizedSpaceLeft;

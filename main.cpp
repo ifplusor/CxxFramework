@@ -2,6 +2,7 @@
 #include <Socket.h>
 #include <SocketUtils.h>
 #include <TimeoutTask.h>
+#include <HTTPSessionInterface.h>
 #include "HTTPListenerSocket.h"
 
 bool isStop = false;
@@ -89,8 +90,11 @@ int main() {
   Socket::StartThread();
   OSThread::Sleep(1000);
 
-  TCPListenerSocket *tcpSocket = new HTTPListenerSocket();
-  tcpSocket->RequestEvent(EV_RE);
+  HTTPSessionInterface::Initialize();
+
+  HTTPListenerSocket *httpSocket = new HTTPListenerSocket();
+  httpSocket->Initialize(SocketUtils::GetIPAddr(0), 8081);
+  httpSocket->RequestEvent(EV_RE);
 
   while (!isStop) {
 #ifdef __sgi__

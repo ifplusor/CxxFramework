@@ -1,5 +1,4 @@
 set(HEADER_FILES
-        ${PROJECT_SOURCE_DIR}/Include/PlatformHeader.h
         include/ClientSocket.h
         include/ConfParser.h
         include/DateTranslator.h
@@ -112,5 +111,4 @@ add_library(CommonUtilities STATIC
         ${HEADER_FILES} ${SOURCE_FILES})
 target_include_directories(CommonUtilities
         PUBLIC include
-        PUBLIC ${PROJECT_SOURCE_DIR}/Include
         PUBLIC ${PROJECT_SOURCE_DIR}/ThirdParty)

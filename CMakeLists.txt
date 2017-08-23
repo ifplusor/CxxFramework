@@ -30,16 +30,25 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
 
 
+add_custom_target(HEADERS
+        SOURCES Include/PlatformHeader.h
+        SOURCES Include/revision.h
+        SOURCES Include/CF.h
+        SOURCES Include/CFMemoryDeleter.h)
+
+include_directories(Include)
+
+
 add_subdirectory(CommonUtilitiesLib)
 add_subdirectory(HTTPUtilitiesLib)
 
 
 set(HEADER_FILES )
 
-set(SOURCE_FILES
-        main.cpp)
+set(SOURCE_FILES main.cpp)
 
 add_executable(demo ${SOURCE_FILES})
 target_link_libraries(demo
         PRIVATE CommonUtilities
-        PRIVATE HTTPUtilities)
+        PRIVATE HTTPUtilities
+        PRIVATE pthread)

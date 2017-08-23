@@ -54,7 +54,7 @@ UInt32 OSRefTableUtils::HashString(StrPtrLen *inString) {
 OS_Error OSRefTable::Register(OSRef *inRef) {
   Assert(inRef != nullptr);
   if (inRef == nullptr)
-    return EPERM;
+    return (OS_Error) EPERM;
 #if DEBUG
     Assert(!inRef->fInATable);
 #endif
@@ -65,7 +65,7 @@ OS_Error OSRefTable::Register(OSRef *inRef) {
   OSMutexLocker locker(&fMutex);
   if (inRef->fString.Ptr == nullptr || inRef->fString.Len
       == 0) {   //printf("OSRefTable::Register inRef is invalid \n");
-    return EPERM;
+    return (OS_Error) EPERM;
   }
 
   // Check for a duplicate. In this function, if there is a duplicate,
@@ -73,7 +73,7 @@ OS_Error OSRefTable::Register(OSRef *inRef) {
   OSRefKey key(&inRef->fString);
   OSRef *duplicateRef = fTable.Map(&key);
   if (duplicateRef != nullptr)
-    return EPERM;
+    return (OS_Error) EPERM;
 
   // There is no duplicate, so add this ref into the table
 #if DEBUG

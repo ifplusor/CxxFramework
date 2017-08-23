@@ -1,16 +1,8 @@
-/*
-	Copyleft (c) 2012-2016 EasyDarwin.ORG.  All rights reserved.
-	Github: https://github.com/EasyDarwin
-	WEChat: EasyDarwin
-	Website: http://www.EasyDarwin.org
-*/
-
-#ifndef __HTTPSESSION_H__
-#define __HTTPSESSION_H__
+#ifndef __HTTP_SESSION_H__
+#define __HTTP_SESSION_H__
 
 #include "HTTPSessionInterface.h"
 #include "HTTPRequest.h"
-#include "QTSSModule.h"
 
 class HTTPSession : public HTTPSessionInterface {
  public:
@@ -18,7 +10,7 @@ class HTTPSession : public HTTPSessionInterface {
   virtual ~HTTPSession();
 
   //Send HTTPPacket
-  QTSS_Error SendHTTPPacket(StrPtrLen *contentXML,
+  CF_Error SendHTTPPacket(StrPtrLen *contentXML,
                             bool connectionClose,
                             bool decrement) override;
 
@@ -26,30 +18,14 @@ class HTTPSession : public HTTPSessionInterface {
   SInt64 Run() override;
 
   // Does request prep & request cleanup, respectively
-  QTSS_Error SetupRequest();
+
+  CF_Error SetupRequest();
   void CleanupRequest();
-
-  QTSS_Error execNetMsgCSUsageAck();
-  QTSS_Error execNetMsgCSGetServerVersionReqRESTful(const char *queryString);
-
-  QTSS_Error execNetMsgCSLoginReqRESTful(const char *queryString);
-  QTSS_Error execNetMsgCSLogoutReqRESTful(const char *queryString);
-
-  QTSS_Error execNetMsgCSGetBaseConfigReqRESTful(const char *queryString);
-  QTSS_Error execNetMsgCSSetBaseConfigReqRESTful(const char *queryString);
-
-  QTSS_Error execNetMsgCSGetDeviceStreamReqRESTful(const char *queryString);
-  QTSS_Error execNetMsgCSLiveDeviceStreamReqRESTful(const char *queryString);
-
-  QTSS_Error execNetMsgCSGetRTSPLiveSessionsRESTful(const char *queryString);
-
-  QTSS_Error execNetMsgCSGetRTSPRecordSessionsRESTful(const char *queryString);
-  QTSS_Error execNetMsgCSRestartServiceRESTful(const char *queryString);
 
   // test current connections handled by this object against server pref connection limit
   static inline bool OverMaxConnections(UInt32 buffer);
 
-  QTSS_Error dumpRequestData();
+  CF_Error dumpRequestData();
 
   HTTPRequest *fRequest;
   OSMutex fReadMutex;
@@ -69,5 +45,5 @@ class HTTPSession : public HTTPSessionInterface {
   UInt32 fState;
 };
 
-#endif // __HTTPSESSION_H__
+#endif // __HTTP_SESSION_H__
 

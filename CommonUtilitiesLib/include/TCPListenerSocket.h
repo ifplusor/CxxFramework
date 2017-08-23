@@ -56,8 +56,12 @@ class TCPListenerSocket : public TCPSocket, public IdleTask {
   //
   // Send a TCPListenerObject a Kill event to delete it.
 
-  //addr = listening address. port = listening port. Automatically
-  //starts listening
+  /**
+   * starts listening
+   * @param addr - listening address.
+   * @param port - listening port. Automatically
+   * @return
+   */
   OS_Error Initialize(UInt32 addr, UInt16 port);
 
   //You can query the listener to see if it is failing to accept
@@ -66,10 +70,11 @@ class TCPListenerSocket : public TCPSocket, public IdleTask {
 
   void SlowDown() { fSleepBetweenAccepts = true; }
   void RunNormal() { fSleepBetweenAccepts = false; }
+
   //derived object must implement a way of getting tasks & sockets to this object
   virtual Task *GetSessionTask(TCPSocket **outSocket) = 0;
 
-  virtual SInt64 Run();
+  virtual SInt64 Run() override;
 
  private:
 
@@ -78,7 +83,7 @@ class TCPListenerSocket : public TCPSocket, public IdleTask {
     kListenQueueLength = 128            //UInt32
   };
 
-  virtual void ProcessEvent(int eventBits);
+  virtual void ProcessEvent(int eventBits) override;
   OS_Error listen(UInt32 queueLength);
 
   UInt32 fAddr;

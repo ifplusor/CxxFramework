@@ -191,8 +191,8 @@ class OSThread {
 class OSThreadDataSetter {
  public:
 
-  OSThreadDataSetter(void *inInitialValue, void *inFinalValue) : fFinalValue(
-      inFinalValue) {
+  OSThreadDataSetter(void *inInitialValue, void *inFinalValue)
+      : fFinalValue(inFinalValue) {
     OSThread::GetCurrent()->SetThreadData(inInitialValue);
   }
 

@@ -44,7 +44,7 @@
 
 OS_Error TCPListenerSocket::listen(UInt32 queueLength) {
   if (fFileDesc == EventContext::kInvalidFileDesc)
-    return EBADF;
+    return (OS_Error) EBADF;
 
   int err = ::listen(fFileDesc, queueLength);
   if (err != 0)

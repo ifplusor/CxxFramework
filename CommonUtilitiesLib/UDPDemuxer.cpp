@@ -38,7 +38,7 @@ OS_Error UDPDemuxer::RegisterTask(UInt32 inRemoteAddr, UInt16 inRemotePort,
   Assert(NULL != inTaskP);
   OSMutexLocker locker(&fMutex);
   if (this->GetTask(inRemoteAddr, inRemotePort) != NULL)
-    return EPERM;
+    return (OS_Error) EPERM;
   inTaskP->set(inRemoteAddr, inRemotePort);
   fHashTable.Add(inTaskP);
   return OS_NoErr;
@@ -54,7 +54,7 @@ OS_Error UDPDemuxer::UnregisterTask(UInt32 inRemoteAddr, UInt16 inRemotePort,
     fHashTable.Remove(theTask);
     return OS_NoErr;
   } else
-    return EPERM;
+    return (OS_Error) EPERM;
 }
 
 UDPDemuxerTask *UDPDemuxer::GetTask(UInt32 inRemoteAddr, UInt16 inRemotePort) {

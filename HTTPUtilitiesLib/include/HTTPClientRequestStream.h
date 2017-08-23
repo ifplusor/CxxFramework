@@ -1,53 +1,35 @@
 /*
- *
- * @APPLE_LICENSE_HEADER_START@
- *
- * Copyright (c) 1999-2008 Apple Inc.  All Rights Reserved.
- *
- * This file contains Original Code and/or Modifications of Original Code
- * as defined in and that are subject to the Apple Public Source License
- * Version 2.0 (the 'License'). You may not use this file except in
- * compliance with the License. Please obtain a copy of the License at
- * http://www.opensource.apple.com/apsl/ and read it before using this
- * file.
- *
- * The Original Code and all software distributed under the License are
- * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
- * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
- * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
- * Please see the License for the specific language governing rights and
- * limitations under the License.
- *
- * @APPLE_LICENSE_HEADER_END@
- *
- */
+	Copyright (c) 2012-2016 EasyDarwin.ORG.  All rights reserved.
+	Github: https://github.com/EasyDarwin
+	WEChat: EasyDarwin
+	Website: http://www.easydarwin.org
+*/
 /*
-    File:       HTTPRequestStream.h
+	File:       HTTPClientRequestStream.h
 
-    Contains:   Provides a stream abstraction for HTTP. Given a socket, this object
-                can read in data until an entire HTTP request header is available.
-                (do this by calling ReadRequest). It handles HTTP pipelining (request
-                headers are produced serially even if multiple headers arrive simultaneously),
-                & RTSP request data.
+	Contains:   Provides a stream abstraction for HTTP. Given a socket, this object
+				can read in data until an entire HTTP request header is available.
+				(do this by calling ReadRequest). It handles HTTP pipelining (request
+				headers are produced serially even if multiple headers arrive simultaneously),
+				& HTTP request data.
 */
 
-#ifndef __HTTP_REQUEST_STREAM_H__
-#define __HTTP_REQUEST_STREAM_H__
+#ifndef __HTTPClient_REQUEST_STREAM_H__
+#define __HTTPClient_REQUEST_STREAM_H__
 
 
 //INCLUDES
 #include <CF.h>
-#include <TCPSocket.h>
+#include <ClientSocket.h>
 
-class HTTPRequestStream {
+class HTTPClientRequestStream {
  public:
 
   //CONSTRUCTOR / DESTRUCTOR
-  HTTPRequestStream(TCPSocket *sock);
+  HTTPClientRequestStream(ClientSocket *sock);
 
   // We may have to delete this memory if it was allocated due to base64 decoding
-  ~HTTPRequestStream() {
+  ~HTTPClientRequestStream() {
     if (fRequest.Ptr != &fRequestBuffer[0])
       delete[] fRequest.Ptr;
   }
@@ -55,7 +37,7 @@ class HTTPRequestStream {
   //ReadRequest
   //This function will not block.
   //Attempts to read data into the stream, stopping when we hit the EOL - EOL that
-  //ends an RTSP header.
+  //ends an HTTP header.
   //
   //Returns:          QTSS_NoErr:     Out of data, haven't hit EOL - EOL yet
   //                  QTSS_RequestArrived: full request has arrived
@@ -73,7 +55,12 @@ class HTTPRequestStream {
 
   // Use a different TCPSocket to read request data
   // this will be used by RTSPSessionInterface::SnarfInputSocket
-  void AttachToSocket(TCPSocket *sock) { fSocket = sock; }
+  void AttachToSocket(ClientSocket *sock) {
+    ResetRequestBuffer();
+    fSocket = sock;
+  }
+
+  void ResetRequestBuffer();
 
   // Tell the request stream whether or not to decode from base64.
   void IsBase64Encoded(bool isDataEncoded) { fDecode = isDataEncoded; }
@@ -84,29 +71,21 @@ class HTTPRequestStream {
   //is in the proper state (has been initialized, ReadRequest has been called until it returns
   //RequestArrived).
   StrPtrLen *GetRequestBuffer() { return fRequestPtr; }
-
   bool IsDataPacket() { return fIsDataPacket; }
-
-  void ShowRTSP(bool enable) { fPrintRTSP = enable; }
-
-  void SnarfRetreat(HTTPRequestStream &fromRequest);
+  void ShowMsg(bool enable) { fPrintMsg = enable; }
+  void SnarfRetreat(HTTPClientRequestStream &fromRequest);
 
  private:
-
   //CONSTANTS:
-  enum {
-    kRequestBufferSizeInBytes = CF_MAX_REQUEST_BUFFER_SIZE        //UInt32
-  };
-
   // Base64 decodes into fRequest.Ptr, updates fRequest.Len, and returns the amount
   // of data left undecoded in inSrcData
   CF_Error DecodeIncomingData(char *inSrcData, UInt32 inSrcDataLen);
 
-  TCPSocket *fSocket;
+  ClientSocket *fSocket;
   UInt32 fRetreatBytes;
   UInt32 fRetreatBytesRead; // Used by Read() when it is reading RetreatBytes
 
-  char fRequestBuffer[kRequestBufferSizeInBytes];
+  char fRequestBuffer[CF_MAX_REQUEST_BUFFER_SIZE];
   UInt32 fCurOffset; // tracks how much valid data is in the above buffer
   UInt32 fEncodedBytesRemaining; // If we are decoding, tracks how many encoded bytes are in the buffer
 
@@ -114,7 +93,7 @@ class HTTPRequestStream {
   StrPtrLen *fRequestPtr;    // pointer to a request header
   bool fDecode;        // should we base 64 decode?
   bool fIsDataPacket;  // is this a data packet? Like for a record?
-  bool fPrintRTSP;     // debugging printfs
+  bool fPrintMsg;     // debugging printfs
 
 };
 

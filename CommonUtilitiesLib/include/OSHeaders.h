@@ -23,11 +23,12 @@
  *
  */
 
-#ifndef OSHeaders_H
-#define OSHeaders_H
+#ifndef __OS_HEADERS_H__
+#define __OS_HEADERS_H__
 
 #include <limits.h>
-#include <PlatformHeader.h>
+
+#include <CF.h>
 
 #ifndef TRUE
 #define TRUE 1
@@ -562,12 +563,7 @@ typedef FourCharCode        OSType;
 
 #endif
 
-typedef SInt32 OS_Error;
+typedef CF_Error OS_Error;
 
-enum {
-  OS_NoErr = (OS_Error) 0,
-  OS_BadURLFormat = (OS_Error) -100,
-  OS_NotEnoughSpace = (OS_Error) -101
-};
 
-#endif /* OSHeaders_H */
+#endif /* __OS_HEADERS_H__ */

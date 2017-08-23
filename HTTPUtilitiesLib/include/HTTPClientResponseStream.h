@@ -1,58 +1,43 @@
 /*
- *
- * @APPLE_LICENSE_HEADER_START@
- *
- * Copyright (c) 1999-2008 Apple Inc.  All Rights Reserved.
- *
- * This file contains Original Code and/or Modifications of Original Code
- * as defined in and that are subject to the Apple Public Source License
- * Version 2.0 (the 'License'). You may not use this file except in
- * compliance with the License. Please obtain a copy of the License at
- * http://www.opensource.apple.com/apsl/ and read it before using this
- * file.
- *
- * The Original Code and all software distributed under the License are
- * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
- * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
- * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
- * Please see the License for the specific language governing rights and
- * limitations under the License.
- *
- * @APPLE_LICENSE_HEADER_END@
- *
- */
+	Copyright (c) 2012-2016 EasyDarwin.ORG.  All rights reserved.
+	Github: https://github.com/EasyDarwin
+	WEChat: EasyDarwin
+	Website: http://www.easydarwin.org
+*/
 /*
-    File:       HTTPResponseStream.h
+	File:       HTTPClientResponseStream.h
 
-    Contains:   Object that provides a "buffered WriteV" service. Clients
-                can call this function to write to a socket, and buffer flow
-                controlled data in different ways.
+	Contains:   Object that provides a "buffered WriteV" service. Clients
+				can call this function to write to a socket, and buffer flow
+				controlled data in different ways.
 
-                It is derived from StringFormatter, which it uses as an output
-                stream buffer. The buffer may grow infinitely.
+				It is derived from StringFormatter, which it uses as an output
+				stream buffer. The buffer may grow infinitely.
 */
 
-#ifndef __HTTP_RESPONSE_STREAM_H__
-#define __HTTP_RESPONSE_STREAM_H__
+#ifndef __HTTPClient_RESPONSE_STREAM_H__
+#define __HTTPClient_RESPONSE_STREAM_H__
 
+#include <CF.h>
 #include <ResizeableStringFormatter.h>
-#include <TCPSocket.h>
+#include <ClientSocket.h>
 #include <TimeoutTask.h>
-class HTTPResponseStream : public ResizeableStringFormatter {
+
+
+class HTTPClientResponseStream : public ResizeableStringFormatter {
  public:
 
   // This object provides some flow control buffering services.
   // It also refreshes the timeout whenever there is a successful write
   // on the socket.
-  HTTPResponseStream(TCPSocket *inSocket, TimeoutTask *inTimeoutTask)
+  HTTPClientResponseStream(ClientSocket *inSocket, TimeoutTask *inTimeoutTask)
       : ResizeableStringFormatter(fOutputBuf, kOutputBufferSizeInBytes),
         fSocket(inSocket),
         fBytesSentInBuffer(0),
         fTimeoutTask(inTimeoutTask),
-        fPrintRTSP(false) {}
+        fPrintMsg(true) {}
 
-  virtual ~HTTPResponseStream() {}
+  virtual ~HTTPClientResponseStream() {}
 
   // WriteV
   //
@@ -84,12 +69,20 @@ class HTTPResponseStream : public ResizeableStringFormatter {
   // this returns QTSS_NoErr, otherwise, it returns EWOULDBLOCK
   CF_Error Flush();
 
-  void ShowRTSP(bool enable) { fPrintRTSP = enable; }
+  void ShowMsg(bool enable) { fPrintMsg = enable; }
+
+  // Use a different TCPSocket to read request data
+  void AttachToSocket(ClientSocket *sock) {
+    ResetResponseBuffer();
+    fSocket = sock;
+  }
+
+  void ResetResponseBuffer();
 
  private:
 
   enum {
-    kOutputBufferSizeInBytes = CF_MAX_REQUEST_BUFFER_SIZE  //UInt32
+    kOutputBufferSizeInBytes = 64 * 1024 - 1  //64k Buffer UInt32
   };
 
   //The default buffer size is allocated inline as part of the object. Because this size
@@ -97,12 +90,12 @@ class HTTPResponseStream : public ResizeableStringFormatter {
   //cases. But if the response is too big for this buffer, the BufferIsFull function will
   //allocate a larger buffer.
   char fOutputBuf[kOutputBufferSizeInBytes];
-  TCPSocket *fSocket;
+  ClientSocket *fSocket;
   UInt32 fBytesSentInBuffer;
   TimeoutTask *fTimeoutTask;
-  bool fPrintRTSP;     // debugging printfs
+  bool fPrintMsg;     // debugging printfs
 
-  friend class HTTPRequestInterface;
+  friend class HTTPRequest;
 };
 
-#endif // __HTTP_RESPONSE_STREAM_H__
+#endif // __HTTPClient_RESPONSE_STREAM_H__

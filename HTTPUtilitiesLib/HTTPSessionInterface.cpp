@@ -27,7 +27,9 @@
     Contains:   Implementation of HTTPSessionInterface object.
 */
 
+#include <HTTPProtocol.h>
 #include "HTTPSessionInterface.h"
+#include "revision.h"
 
 #if DEBUG
 #define HTTP_SESSION_INTERFACE_DEBUGGING 1
@@ -37,8 +39,54 @@
 
 std::atomic_uint HTTPSessionInterface::sSessionIndexCounter{kFirstHTTPSessionID};
 
+// STATIC DATA
+
+UInt32 HTTPSessionInterface::sServerAPIVersion = CF_API_VERSION;
+
+#if __MacOSX__
+StrPtrLen HTTPSessionInterface::sServerNameStr("EasyDarwin");
+#else
+StrPtrLen HTTPSessionInterface::sServerNameStr(PLATFORM_SERVER_TEXT_NAME);
+#endif
+
+// kVersionString from revision.h, include with -i at project level
+StrPtrLen HTTPSessionInterface::sServerVersionStr(kVersionString);
+StrPtrLen HTTPSessionInterface::sServerBuildStr(kBuildString);
+StrPtrLen HTTPSessionInterface::sServerCommentStr(kCommentString);
+
+StrPtrLen HTTPSessionInterface::sServerPlatformStr(kPlatformNameString);
+StrPtrLen HTTPSessionInterface::sServerBuildDateStr(__DATE__ ", " __TIME__);
+char      HTTPSessionInterface::sServerHeader[kMaxServerHeaderLen];
+StrPtrLen HTTPSessionInterface::sServerHeaderPtr(sServerHeader, kMaxServerHeaderLen);
+
 void HTTPSessionInterface::Initialize() {
 
+  //Write out a premade server header
+  StringFormatter serverFormatter(sServerHeaderPtr.Ptr, kMaxServerHeaderLen);
+//  serverFormatter.Put(HTTPProtocol::GetHeaderString(httpServerHeader));
+//  serverFormatter.Put(": ");
+  serverFormatter.Put(sServerNameStr);
+  serverFormatter.PutChar('/');
+  serverFormatter.Put(sServerVersionStr);
+  serverFormatter.PutChar(' ');
+
+  serverFormatter.PutChar('(');
+  serverFormatter.Put("Build/");
+  serverFormatter.Put(sServerBuildStr);
+  serverFormatter.Put("; ");
+  serverFormatter.Put("Platform/");
+  serverFormatter.Put(sServerPlatformStr);
+  serverFormatter.PutChar(';');
+
+  if (sServerCommentStr.Len > 0) {
+    serverFormatter.PutChar(' ');
+    serverFormatter.Put(sServerCommentStr);
+  }
+
+  serverFormatter.PutChar(')');
+
+  sServerHeaderPtr.Len = serverFormatter.GetCurrentOffset();
+  Assert(sServerHeaderPtr.Len < kMaxServerHeaderLen);
 }
 
 HTTPSessionInterface::HTTPSessionInterface()
@@ -85,7 +133,7 @@ void HTTPSessionInterface::DecrementObjectHolderCount() {
 
 }
 
-QTSS_Error HTTPSessionInterface::Write(void *inBuffer, UInt32 inLength,
+CF_Error HTTPSessionInterface::Write(void *inBuffer, UInt32 inLength,
                                        UInt32 *outLenWritten, UInt32 inFlags) {
   UInt32 sendType = HTTPResponseStream::kDontBuffer;
   if ((inFlags & qtssWriteFlagsBufferData) != 0)
@@ -97,7 +145,7 @@ QTSS_Error HTTPSessionInterface::Write(void *inBuffer, UInt32 inLength,
   return fOutputStream.WriteV(theVec, 2, inLength, outLenWritten, sendType);
 }
 
-QTSS_Error HTTPSessionInterface::WriteV(iovec *inVec,
+CF_Error HTTPSessionInterface::WriteV(iovec *inVec,
                                         UInt32 inNumVectors,
                                         UInt32 inTotalLength,
                                         UInt32 *outLenWritten) {
@@ -105,10 +153,10 @@ QTSS_Error HTTPSessionInterface::WriteV(iovec *inVec,
                               inNumVectors,
                               inTotalLength,
                               outLenWritten,
-                              RTSPResponseStream::kDontBuffer);
+                              HTTPResponseStream::kDontBuffer);
 }
 
-QTSS_Error HTTPSessionInterface::Read(void *ioBuffer,
+CF_Error HTTPSessionInterface::Read(void *ioBuffer,
                                       UInt32 inLength,
                                       UInt32 *outLenRead) {
   //
@@ -116,13 +164,13 @@ QTSS_Error HTTPSessionInterface::Read(void *ioBuffer,
   // request body.  If the request body size isn't known, fRequestBodyLen will be -1
 
   if (fRequestBodyLen == 0)
-    return QTSS_NoMoreData;
+    return CF_NoMoreData;
 
   if ((fRequestBodyLen > 0) && ((SInt32) inLength > fRequestBodyLen))
     inLength = fRequestBodyLen;
 
   UInt32 theLenRead = 0;
-  QTSS_Error theErr = fInputStream.Read(ioBuffer, inLength, &theLenRead);
+  CF_Error theErr = fInputStream.Read(ioBuffer, inLength, &theLenRead);
 
   if (fRequestBodyLen >= 0)
     fRequestBodyLen -= theLenRead;
@@ -133,13 +181,13 @@ QTSS_Error HTTPSessionInterface::Read(void *ioBuffer,
   return theErr;
 }
 
-QTSS_Error HTTPSessionInterface::RequestEvent(QTSS_EventType inEventMask) {
-  if (inEventMask & QTSS_ReadableEvent)
+CF_Error HTTPSessionInterface::RequestEvent(CF_EventType inEventMask) {
+  if (inEventMask & CF_ReadableEvent)
     fInputSocketP->RequestEvent(EV_RE);
-  if (inEventMask & QTSS_WriteableEvent)
+  if (inEventMask & CF_WriteableEvent)
     fOutputSocketP->RequestEvent(EV_WR);
 
-  return QTSS_NoErr;
+  return CF_NoErr;
 }
 
 /*
@@ -164,7 +212,7 @@ void HTTPSessionInterface::SnarfInputSocket(HTTPSessionInterface *fromRTSPSessio
   fInputStream.AttachToSocket(fInputSocketP);
 }
 
-void *HTTPSessionInterface::SetupParams(QTSSDictionary *inSession,
+void *HTTPSessionInterface::SetupParams(HTTPSessionInterface *inSession,
                                         UInt32 * /*outLen*/) {
   HTTPSessionInterface *theSession = (HTTPSessionInterface *) inSession;
 
@@ -177,39 +225,17 @@ void *HTTPSessionInterface::SetupParams(QTSSDictionary *inSession,
   StrPtrLen *theLocalAddrStr = theSession->fSocket.GetLocalAddrStr();
   StrPtrLen *theLocalDNSStr = theSession->fSocket.GetLocalDNSStr();
   StrPtrLen *theRemoteAddrStr = theSession->fSocket.GetRemoteAddrStr();
-  if (theLocalAddrStr == NULL || theLocalDNSStr == NULL || theRemoteAddrStr
-      == NULL) {    //the socket is bad most likely values are all 0. If the socket had an error we shouldn't even be here.
+  if (theLocalAddrStr == NULL || theLocalDNSStr == NULL || theRemoteAddrStr == NULL) {
+    //the socket is bad most likely values are all 0. If the socket had an error we shouldn't even be here.
     //theLocalDNSStr is set to localAddr if it is unavailable, so it should be present at this point as well.
     Assert(0);   //for debugging
     return NULL; //nothing to set
   }
-  theSession->SetVal(easyHTTPSesLocalAddr,
-                     &theSession->fLocalAddr,
-                     sizeof(theSession->fLocalAddr));
-  theSession->SetVal(easyHTTPSesLocalAddrStr,
-                     theLocalAddrStr->Ptr,
-                     theLocalAddrStr->Len);
-  theSession->SetVal(easyHTTPSesLocalDNS,
-                     theLocalDNSStr->Ptr,
-                     theLocalDNSStr->Len);
-  theSession->SetVal(easyHTTPSesRemoteAddr,
-                     &theSession->fRemoteAddr,
-                     sizeof(theSession->fRemoteAddr));
-  theSession->SetVal(easyHTTPSesRemoteAddrStr,
-                     theRemoteAddrStr->Ptr,
-                     theRemoteAddrStr->Len);
-
-  theSession->SetVal(easyHTTPSesLocalPort,
-                     &theSession->fLocalPort,
-                     sizeof(theSession->fLocalPort));
-  theSession->SetVal(easyHTTPSesRemotePort,
-                     &theSession->fRemotePort,
-                     sizeof(theSession->fRemotePort));
   return NULL;
 }
 
-QTSS_Error HTTPSessionInterface::SendHTTPPacket(StrPtrLen *contentXML,
+CF_Error HTTPSessionInterface::SendHTTPPacket(StrPtrLen *contentXML,
                                                 bool connectionClose,
                                                 bool decrement) {
-  return QTSS_NoErr;
+  return CF_NoErr;
 }

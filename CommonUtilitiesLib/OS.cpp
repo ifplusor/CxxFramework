@@ -284,7 +284,7 @@ OS_Error OS::MakeDir(char *inPath) {
         return EEXIST; // there is a file at this point in the path!
 #else
   else if (!S_ISDIR(theStatBuffer.st_mode))
-    return EEXIST;//there is a file at this point in the path!
+    return (OS_Error) EEXIST;//there is a file at this point in the path!
 #endif
 
   //directory exists

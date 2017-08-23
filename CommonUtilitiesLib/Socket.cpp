@@ -186,7 +186,7 @@ OS_Error Socket::SetSocketRcvBufSize(UInt32 inNewSize) {
 #endif
 
   if (err == -1)
-    return OSThread::GetErrno();
+    return (OS_Error) OSThread::GetErrno();
 
   return OS_NoErr;
 }
@@ -310,8 +310,8 @@ OS_Error Socket::Send(const char *inData,
     err = ::send(fFileDesc, inData, inLength, 0);//flags??
   } while ((err == -1) && (OSThread::GetErrno() == EINTR));
   if (err == -1) {
-    //Are there any errors that can happen if the client is connected?
-    //Yes... EAGAIN. Means the socket is now flow-controleld
+    // Are there any errors that can happen if the client is connected?
+    // Yes... EAGAIN. Means the socket is now flow-controleld
     int theErr = OSThread::GetErrno();
     if ((theErr != EAGAIN) && (this->IsConnected()))
       fState ^= kConnected;//turn off connected state flag
@@ -363,7 +363,7 @@ OS_Error Socket::Read(void *buffer, const UInt32 length, UInt32 *outRecvLenP) {
     return (OS_Error) ENOTCONN;
 
   //int theRecvLen = ::recv(fFileDesc, buffer, length, 0);//flags??
-  int theRecvLen;
+  long theRecvLen;
   do {
     theRecvLen = ::recv(fFileDesc, (char *) buffer, length, 0);//flags??
   } while ((theRecvLen == -1) && (OSThread::GetErrno() == EINTR));
@@ -375,11 +375,9 @@ OS_Error Socket::Read(void *buffer, const UInt32 length, UInt32 *outRecvLenP) {
     if ((theErr != EAGAIN) && (this->IsConnected()))
       fState ^= kConnected;//turn off connected state flag
     return (OS_Error) theErr;
-  }
+  } else if (theRecvLen == 0) {
     //if we get 0 bytes back from read, that means the client has disconnected.
-    //Note that and return the proper error to the caller
-  else if (theRecvLen == 0) {
-    fState ^= kConnected;
+    //Note that and return the proper error to the caller    fState ^= kConnected;
     return (OS_Error) ENOTCONN;
   }
   Assert(theRecvLen > 0);

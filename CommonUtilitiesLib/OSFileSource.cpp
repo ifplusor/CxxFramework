@@ -520,12 +520,12 @@ OS_Error OSFileSource::ReadFromDisk(void *inBuffer,
       return OSThread::GetErrno();
 #else
   if (lseek(fFile, fPosition, SEEK_SET) == -1)
-    return OSThread::GetErrno();
+    return (OS_Error) OSThread::GetErrno();
 #endif
 
   int rcvLen = ::read(fFile, (char *) inBuffer, inLength);
   if (rcvLen == -1)
-    return OSThread::GetErrno();
+    return (OS_Error) OSThread::GetErrno();
 
   if (outRcvLen != nullptr)
     *outRcvLen = rcvLen;

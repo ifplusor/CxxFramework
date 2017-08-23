@@ -45,9 +45,8 @@ UserAgentParser::UserAgentFields UserAgentParser::sFieldIDs[] =
 
 UInt8 UserAgentParser::sEOLWhitespaceEqualMask[] =
     {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, //0-9     // \t is a stop
-        1, 0, 0, 1, 0, 0, 0, 0, 0,
-        0, //10-19    //'\r' & '\n' are stop conditions
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, //0-9     '\t' is a stop
+        1, 0, 0, 1, 0, 0, 0, 0, 0, 0, //10-19   '\r' & '\n' are stop conditions
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //20-29
         0, 0, 1, 0, 0, 0, 0, 0, 0, 0, //30-39   ' '  is a stop
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //40-49
@@ -76,9 +75,8 @@ UInt8 UserAgentParser::sEOLWhitespaceEqualMask[] =
 
 UInt8 UserAgentParser::sEOLSemicolonCloseParenMask[] =
     {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, //0-9     // \t is a stop
-        1, 0, 0, 1, 0, 0, 0, 0, 0,
-        0, //10-19    //'\r' & '\n' are stop conditions
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, //0-9     '\t' is a stop
+        1, 0, 0, 1, 0, 0, 0, 0, 0, 0, //10-19   '\r' & '\n' are stop conditions
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //20-29
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //30-39
         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, //40-49   ')'  is a stop
@@ -113,8 +111,7 @@ void UserAgentParser::Parse(StrPtrLen *inStream) {
 
   memset(&fFieldData, 0, sizeof(fFieldData));
 
-  parser.ConsumeUntil(&startFields,
-                      '('); // search for '(' if not found does nothing
+  parser.ConsumeUntil(&startFields, '('); // search for '(' if not found does nothing
 
   // parse through everything between the '(' and ')'.
   while (startFields.Len != 0) {
@@ -122,18 +119,14 @@ void UserAgentParser::Parse(StrPtrLen *inStream) {
     tempID.Set(nullptr, 0);
     tempData.Set(nullptr, 0);
 
-    parser.ConsumeLength(nullptr,
-                         1); // step past '(' or ';' if not found or at end of line does nothing
+    parser.ConsumeLength(nullptr, 1); // step past '(' or ';' if not found or at end of line does nothing
     parser.ConsumeWhitespace(); // search for non-white space if not found does nothing
-    parser.ConsumeUntil(&tempID,
-                        sEOLWhitespaceEqualMask); // search for end of id (whitespace or =)if not found does nothing
+    parser.ConsumeUntil(&tempID, sEOLWhitespaceEqualMask); // search for end of id (whitespace or =)if not found does nothing
     if (tempID.Len == 0) break;
 
     parser.ConsumeUntil(nullptr, '='); // find the '='
-    parser.ConsumeLength(nullptr,
-                         1); // step past if not found or at end of line does nothing
-    parser.ConsumeUntil(&tempData,
-                        sEOLSemicolonCloseParenMask); // search for end of data if not found does nothing
+    parser.ConsumeLength(nullptr, 1); // step past if not found or at end of line does nothing
+    parser.ConsumeUntil(&tempData, sEOLSemicolonCloseParenMask); // search for end of data if not found does nothing
     if (tempData.Len == 0) break;
 
     StrPtrLen testID;

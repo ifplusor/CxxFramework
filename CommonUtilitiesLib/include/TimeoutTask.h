@@ -70,7 +70,7 @@ class TimeoutTaskThread : public IdleTask {
     kIntervalSeconds = 15   //UInt32
   };
 
-  virtual SInt64 Run();
+  virtual SInt64 Run() override;
 
   OSMutex fMutex;
   OSQueue fQueue;
