@@ -33,8 +33,16 @@
 class HTTPPacket {
  public:
 
-  // Construct
+  /**
+   * construct object for parse http packet header.
+   * @param packetPtr - http packet data
+   */
   HTTPPacket(StrPtrLen *packetPtr);
+
+  /**
+   * construct object for build http packet
+   * @param httpType - http packet type
+   */
   HTTPPacket(HTTPType httpType = httpResponseType);
 
   // Destructor

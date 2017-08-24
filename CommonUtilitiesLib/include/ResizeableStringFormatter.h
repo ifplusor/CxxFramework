@@ -47,7 +47,7 @@ class ResizeableStringFormatter : public StringFormatter {
   //If we've been forced to increase the buffer size, fStartPut WILL be a dynamically allocated
   //buffer, and it WON'T be equal to fOriginalBuffer (obviously).
   virtual ~ResizeableStringFormatter() {
-    if (fStartPut != fOriginalBuffer)delete[] fStartPut;
+    if (fStartPut != fOriginalBuffer) delete[] fStartPut;
   }
 
  private:
@@ -55,7 +55,7 @@ class ResizeableStringFormatter : public StringFormatter {
   // This function will get called by StringFormatter if the current
   // output buffer is full. This object allocates a buffer that's twice
   // as big as the old one.
-  virtual bool BufferIsFull(char *inBuffer, UInt32 inBufferLen);
+  bool BufferIsFull(char *inBuffer, UInt32 inBufferLen) override;
 
   char *fOriginalBuffer;
 

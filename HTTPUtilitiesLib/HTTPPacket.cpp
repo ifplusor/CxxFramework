@@ -66,72 +66,68 @@ UInt8 HTTPPacket::sURLStopConditions[] =
         0, 0, 0, 0, 0, 0              //250-255
     };
 
-// Constructor for parse a packet
-HTTPPacket::HTTPPacket(StrPtrLen *packetPtr) {
-  // Store the pointer to the server header field
-  fSvrHeader = HTTPSessionInterface::GetServerHeader();
+// Constructor for parse a packet header
+HTTPPacket::HTTPPacket(StrPtrLen *packetPtr)
+    : fSvrHeader(HTTPSessionInterface::GetServerHeader()),
+      fPacketHeader(*packetPtr), // 浅拷贝
+      fMethod(httpIllegalMethod),
+      fVersion(httpIllegalVersion),
+//      fRequestLine(),
+//      fAbsoluteURI(),
+//      fRelativeURI(),
+//      fAbsoluteURIScheme(),
+//      fHostHeader(),
+      fRequestPath(nullptr),
+      fQueryString(nullptr),
+      fStatusCode(httpOK),
+      fRequestKeepAlive(false), // Default value when there is no version string
+      fHTTPHeader(nullptr),
+      fHTTPHeaderFormatter(nullptr),
+      fHTTPBody(nullptr),
+      fHTTPType(httpIllegalType) { // 未解析情况下为httpIllegalType
 
-  // Set initial state
-  fPacketHeader = *packetPtr; // 浅拷贝
-  fHTTPHeader = NULL;
-  fHTTPHeaderFormatter = NULL;
-  fHTTPBody = NULL;
-  fMethod = httpIllegalMethod;
-  fVersion = httpIllegalVersion;
-  fAbsoluteURI = NULL;
-  fRelativeURI = NULL;
-  fAbsoluteURIScheme = NULL;
-  fHostHeader = NULL;
-  fRequestPath = NULL;
-  fQueryString = NULL;
-  fStatusCode = httpOK;
-  fRequestKeepAlive = false; // Default value when there is no version string
-
-  fHTTPType = httpIllegalType; // 未解析情况下为httpIllegalType
 }
 
 // Constructor for creating a new packet
-HTTPPacket::HTTPPacket(HTTPType httpType) {
-  // Store the pointer to the server header field
-  fSvrHeader = HTTPSessionInterface::GetServerHeader();
+HTTPPacket::HTTPPacket(HTTPType httpType)
+    : fSvrHeader(HTTPSessionInterface::GetServerHeader()),
+//      fPacketHeader(),
+      fMethod(httpIllegalMethod),
+      fVersion(httpIllegalVersion),
+//      fRequestLine(),
+//      fAbsoluteURI(),
+//      fRelativeURI(),
+//      fAbsoluteURIScheme(),
+//      fHostHeader(),
+      fRequestPath(nullptr),
+      fQueryString(nullptr),
+      fStatusCode(httpOK),
+      fRequestKeepAlive(false), // Default value when there is no version string
+      fHTTPHeader(nullptr),
+      fHTTPHeaderFormatter(nullptr),
+      fHTTPBody(nullptr),
+      fHTTPType(httpType) {
 
-  // We do not require any of these:
-  fPacketHeader = NULL;
-
-  fMethod = httpIllegalMethod;
-  fVersion = httpIllegalVersion;
-  fRequestLine = NULL;
-  fAbsoluteURI = NULL;
-  fRelativeURI = NULL;
-  fAbsoluteURIScheme = NULL;
-  fHostHeader = NULL;
-  fRequestPath = NULL;
-  fQueryString = NULL;
-  fStatusCode = httpOK;
-  fRequestKeepAlive = false;
-
-  // We require the response  but we allocate memory only when we call
+  // We require the response but we allocate memory only when we call
   // CreateResponseHeader
-  fHTTPHeader = NULL;
-  fHTTPHeaderFormatter = NULL;
-  fHTTPBody = NULL;
-
-  fHTTPType = httpType;
 }
 
 // Destructor
 HTTPPacket::~HTTPPacket() {
-  if (fHTTPHeader != NULL) {
-    if (fHTTPHeader->Ptr != NULL)
-      delete fHTTPHeader->Ptr;
-    delete fHTTPHeader;
+  // delete nullptr is no effect.
+
+  if (fHTTPHeader != nullptr) {
+    delete fHTTPHeader->Ptr;
   }
-  if (fHTTPHeaderFormatter != NULL)
-    delete fHTTPHeaderFormatter;
-  if (fRequestPath != NULL)
-    delete[] fRequestPath;
-  if (fQueryString != NULL)
-    delete[] fQueryString;
+  delete fHTTPHeader;
+  delete fHTTPHeaderFormatter;
+  delete[] fRequestPath;
+  delete[] fQueryString;
+
+  if (fHTTPBody != nullptr) {
+    delete fHTTPBody->Ptr;
+  }
+  delete fHTTPBody;
 }
 
 // Parses the request
@@ -360,8 +356,8 @@ void HTTPPacket::setKeepAlive(StrPtrLen *keepAliveValue) {
 }
 
 void HTTPPacket::putStatusLine(StringFormatter *putStream,
-                                HTTPStatusCode status,
-                                HTTPVersion version) {
+                               HTTPStatusCode status,
+                               HTTPVersion version) {
   putStream->Put(HTTPProtocol::GetVersionString(version));
   putStream->PutSpace();
   putStream->Put(HTTPProtocol::GetStatusCodeAsString(status));
@@ -371,7 +367,7 @@ void HTTPPacket::putStatusLine(StringFormatter *putStream,
 }
 
 void HTTPPacket::putMethedLine(StringFormatter *putStream, HTTPMethod method,
-                                HTTPVersion version) {
+                               HTTPVersion version) {
   putStream->Put(HTTPProtocol::GetMethodString(method));
   putStream->PutSpace();
   putStream->Put("/");
@@ -451,7 +447,7 @@ StrPtrLen *HTTPPacket::GetCompleteHTTPHeader() const {
 }
 
 void HTTPPacket::AppendResponseHeader(HTTPHeader inHeader,
-                                       StrPtrLen *inValue) const {
+                                      StrPtrLen *inValue) const {
   fHTTPHeaderFormatter->Put(HTTPProtocol::GetHeaderString(inHeader));
   fHTTPHeaderFormatter->Put(sColonSpace);
   fHTTPHeaderFormatter->Put(*inValue);
