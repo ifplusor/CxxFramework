@@ -62,13 +62,19 @@ void TCPSocket::SnarfSocket(TCPSocket &fromSocket) {
 
 }
 
+/*
+ * 通过 getsockname 将 osSocket 描述字对应的 sockaddr 保存到
+ * TCPSocket::fLocalAddr，并设置 TCPSocket::fState |= kBound | kConnected。
+ * 同时将 osSocket 保存为 TCPSocket::fFileDesc
+ */
 void TCPSocket::Set(int inSocket, struct sockaddr_in *remoteaddr) {
   fRemoteAddr = *remoteaddr;
   fFileDesc = inSocket;
 
   if (inSocket != EventContext::kInvalidFileDesc) {
-    //make sure to find out what IP address this connection is actually occuring on. That
-    //way, we can report correct information to clients asking what the connection's IP is
+    // make sure to find out what IP address this connection is actually
+    // occurring on. That way, we can report correct information to clients
+    // asking what the connection's IP is
 #if __Win32__ || __osf__ || __sgi__ || __hpux__
     int len = sizeof(fLocalAddr);
 #else

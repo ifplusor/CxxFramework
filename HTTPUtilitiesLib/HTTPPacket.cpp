@@ -22,28 +22,29 @@
  * @APPLE_LICENSE_HEADER_END@
  *
  */
-#include "HTTPRequest.h"
+#include "HTTPPacket.h"
 #include "StringTranslator.h"
 #include "DateTranslator.h"
 #include <OSThread.h>
+#include <HTTPSessionInterface.h>
 
-StrPtrLen HTTPRequest::sColonSpace(": ", 2);
+StrPtrLen HTTPPacket::sColonSpace(": ", 2);
 static bool sFalse = false;
 static bool sTrue = true;
 static StrPtrLen sCloseString("close", 5);
 static StrPtrLen sAllString("*", 1);
 static StrPtrLen sKeepAliveString("keep-alive", 10);
-static StrPtrLen sDefaultRealm("Streaming Server", 19);
-UInt8 HTTPRequest::sURLStopConditions[] =
+static StrPtrLen sDefaultRealm("CxxFramework Server", 19);
+
+UInt8 HTTPPacket::sURLStopConditions[] =
     {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, //0-9      //'\t' is a stop condition
-        1, 0, 0, 1, 0, 0, 0, 0, 0,
-        0, //10-19    //'\r' & '\n' are stop conditions
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, //0-9      '\t' is a stop condition
+        1, 0, 0, 1, 0, 0, 0, 0, 0, 0, //10-19    '\r' & '\n' are stop conditions
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //20-29
-        0, 0, 1, 0, 0, 0, 0, 0, 0, 0, //30-39    //' '
+        0, 0, 1, 0, 0, 0, 0, 0, 0, 0, //30-39    ' '
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //40-49
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //50-59
-        0, 0, 0, 1, 0, 0, 0, 0, 0, 0, //60-69   //'?'
+        0, 0, 0, 1, 0, 0, 0, 0, 0, 0, //60-69    '?'
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //70-79
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //80-89
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //90-99
@@ -62,18 +63,19 @@ UInt8 HTTPRequest::sURLStopConditions[] =
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //220-229
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //230-239
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //240-249
-        0, 0, 0, 0, 0, 0             //250-255
+        0, 0, 0, 0, 0, 0              //250-255
     };
 
-// Constructor
-HTTPRequest::HTTPRequest(StrPtrLen *serverHeader, StrPtrLen *requestPtr) {
+// Constructor for parse a packet
+HTTPPacket::HTTPPacket(StrPtrLen *packetPtr) {
   // Store the pointer to the server header field
-  fSvrHeader = *serverHeader;
+  fSvrHeader = HTTPSessionInterface::GetServerHeader();
 
   // Set initial state
-  fRequestHeader = *requestPtr;
+  fPacketHeader = *packetPtr; // 浅拷贝
   fHTTPHeader = NULL;
   fHTTPHeaderFormatter = NULL;
+  fHTTPBody = NULL;
   fMethod = httpIllegalMethod;
   fVersion = httpIllegalVersion;
   fAbsoluteURI = NULL;
@@ -88,13 +90,13 @@ HTTPRequest::HTTPRequest(StrPtrLen *serverHeader, StrPtrLen *requestPtr) {
   fHTTPType = httpIllegalType; // 未解析情况下为httpIllegalType
 }
 
-// Constructor for creating a response only
-HTTPRequest::HTTPRequest(StrPtrLen *serverHeader, HTTPType httpType) {
+// Constructor for creating a new packet
+HTTPPacket::HTTPPacket(HTTPType httpType) {
   // Store the pointer to the server header field
-  fSvrHeader = *serverHeader;
+  fSvrHeader = HTTPSessionInterface::GetServerHeader();
 
   // We do not require any of these:
-  fRequestHeader = NULL;
+  fPacketHeader = NULL;
 
   fMethod = httpIllegalMethod;
   fVersion = httpIllegalVersion;
@@ -105,19 +107,20 @@ HTTPRequest::HTTPRequest(StrPtrLen *serverHeader, HTTPType httpType) {
   fHostHeader = NULL;
   fRequestPath = NULL;
   fQueryString = NULL;
-  fStatusCode = (HTTPStatusCode) 0;
+  fStatusCode = httpOK;
   fRequestKeepAlive = false;
 
   // We require the response  but we allocate memory only when we call
   // CreateResponseHeader
   fHTTPHeader = NULL;
   fHTTPHeaderFormatter = NULL;
+  fHTTPBody = NULL;
 
   fHTTPType = httpType;
 }
 
 // Destructor
-HTTPRequest::~HTTPRequest() {
+HTTPPacket::~HTTPPacket() {
   if (fHTTPHeader != NULL) {
     if (fHTTPHeader->Ptr != NULL)
       delete fHTTPHeader->Ptr;
@@ -132,13 +135,13 @@ HTTPRequest::~HTTPRequest() {
 }
 
 // Parses the request
-CF_Error HTTPRequest::Parse() {
-  Assert(fRequestHeader.Ptr != NULL);
-  StringParser parser(&fRequestHeader);
+CF_Error HTTPPacket::Parse() {
+  Assert(fPacketHeader.Ptr != NULL);
+  StringParser parser(&fPacketHeader);
 
   // Store the request line (used for logging)
   // (ex: GET /index.html HTTP/1.0)
-  StringParser requestLineParser(&fRequestHeader);
+  StringParser requestLineParser(&fPacketHeader);
   requestLineParser.ConsumeUntil(&fRequestLine, StringParser::sEOLMask);
 
   // Parse request line returns an error if there is an error in the
@@ -161,7 +164,7 @@ CF_Error HTTPRequest::Parse() {
   return CF_NoErr;
 }
 
-CF_Error HTTPRequest::parseRequestLine(StringParser *parser) {
+CF_Error HTTPPacket::parseRequestLine(StringParser *parser) {
   // Get the method - If the method is not one of the defined methods
   // then it doesn't return an error but sets fMethod to httpIllegalMethod
   StrPtrLen theParsedData;
@@ -223,7 +226,7 @@ CF_Error HTTPRequest::parseRequestLine(StringParser *parser) {
   return CF_NoErr;
 }
 
-CF_Error HTTPRequest::parseURI(StringParser *parser) {
+CF_Error HTTPPacket::parseURI(StringParser *parser) {
   // read in the complete URL into fRequestAbsURI
   parser->ConsumeUntil(&fAbsoluteURI, sURLStopConditions);
 
@@ -297,7 +300,7 @@ CF_Error HTTPRequest::parseURI(StringParser *parser) {
 }
 
 // Parses the Connection header and makes sure that request is properly terminated
-CF_Error HTTPRequest::parseHeaders(StringParser *parser) {
+CF_Error HTTPPacket::parseHeaders(StringParser *parser) {
   StrPtrLen theKeyWord;
   bool isStreamOK;
 
@@ -346,7 +349,7 @@ CF_Error HTTPRequest::parseHeaders(StringParser *parser) {
   return CF_NoErr;
 }
 
-void HTTPRequest::setKeepAlive(StrPtrLen *keepAliveValue) {
+void HTTPPacket::setKeepAlive(StrPtrLen *keepAliveValue) {
   if (sCloseString.EqualIgnoreCase(keepAliveValue->Ptr, keepAliveValue->Len))
     fRequestKeepAlive = sFalse;
   else {
@@ -356,7 +359,7 @@ void HTTPRequest::setKeepAlive(StrPtrLen *keepAliveValue) {
   }
 }
 
-void HTTPRequest::putStatusLine(StringFormatter *putStream,
+void HTTPPacket::putStatusLine(StringFormatter *putStream,
                                 HTTPStatusCode status,
                                 HTTPVersion version) {
   putStream->Put(HTTPProtocol::GetVersionString(version));
@@ -367,7 +370,7 @@ void HTTPRequest::putStatusLine(StringFormatter *putStream,
   putStream->PutEOL();
 }
 
-void HTTPRequest::putMethedLine(StringFormatter *putStream, HTTPMethod method,
+void HTTPPacket::putMethedLine(StringFormatter *putStream, HTTPMethod method,
                                 HTTPVersion version) {
   putStream->Put(HTTPProtocol::GetMethodString(method));
   putStream->PutSpace();
@@ -377,14 +380,13 @@ void HTTPRequest::putMethedLine(StringFormatter *putStream, HTTPMethod method,
   putStream->PutEOL();
 }
 
-StrPtrLen *HTTPRequest::GetHeaderValue(HTTPHeader inHeader) {
+StrPtrLen *HTTPPacket::GetHeaderValue(HTTPHeader inHeader) {
   if (inHeader != httpIllegalHeader)
     return &fFieldValues[inHeader];
   return NULL;
 }
 
-bool HTTPRequest::CreateResponseHeader(HTTPStatusCode statusCode,
-                                       HTTPVersion version) {
+bool HTTPPacket::CreateResponseHeader() {
   if (fHTTPType != httpResponseType) return false;
 
   // If we are creating a second response for the same request, make sure and
@@ -403,9 +405,9 @@ bool HTTPRequest::CreateResponseHeader(HTTPStatusCode statusCode,
       new ResizeableStringFormatter(fHTTPHeader->Ptr, fHTTPHeader->Len);
 
   // make a partial header for the given version and status code
-  putStatusLine(fHTTPHeaderFormatter, statusCode, version);
-  Assert(fSvrHeader.Ptr != NULL);
+  putStatusLine(fHTTPHeaderFormatter, fStatusCode, fVersion);
 
+  Assert(fSvrHeader.Ptr != NULL);
   AppendResponseHeader(httpServerHeader, &fSvrHeader);
   AppendDateField();
 
@@ -415,7 +417,7 @@ bool HTTPRequest::CreateResponseHeader(HTTPStatusCode statusCode,
   return true;
 }
 
-bool HTTPRequest::CreateRequestHeader(HTTPMethod method, HTTPVersion version) {
+bool HTTPPacket::CreateRequestHeader() {
   if (fHTTPType != httpRequestType) return false;
 
   // If we are creating a second response for the same request, make sure and
@@ -434,7 +436,7 @@ bool HTTPRequest::CreateRequestHeader(HTTPMethod method, HTTPVersion version) {
       new ResizeableStringFormatter(fHTTPHeader->Ptr, fHTTPHeader->Len);
 
   //make a partial header for the given version and status code
-  putMethedLine(fHTTPHeaderFormatter, method, version);
+  putMethedLine(fHTTPHeaderFormatter, fMethod, fVersion);
   Assert(fSvrHeader.Ptr != NULL);
 
   AppendResponseHeader(httpUserAgentHeader, &fSvrHeader);
@@ -442,13 +444,13 @@ bool HTTPRequest::CreateRequestHeader(HTTPMethod method, HTTPVersion version) {
   return true;
 }
 
-StrPtrLen *HTTPRequest::GetCompleteHTTPHeader() const {
+StrPtrLen *HTTPPacket::GetCompleteHTTPHeader() const {
   fHTTPHeaderFormatter->PutEOL();
   fHTTPHeader->Len = fHTTPHeaderFormatter->GetCurrentOffset();
   return fHTTPHeader;
 }
 
-void HTTPRequest::AppendResponseHeader(HTTPHeader inHeader,
+void HTTPPacket::AppendResponseHeader(HTTPHeader inHeader,
                                        StrPtrLen *inValue) const {
   fHTTPHeaderFormatter->Put(HTTPProtocol::GetHeaderString(inHeader));
   fHTTPHeaderFormatter->Put(sColonSpace);
@@ -457,15 +459,15 @@ void HTTPRequest::AppendResponseHeader(HTTPHeader inHeader,
   fHTTPHeader->Len = fHTTPHeaderFormatter->GetCurrentOffset();
 }
 
-void HTTPRequest::AppendContentLengthHeader(UInt64 length_64bit) const {
+void HTTPPacket::AppendContentLengthHeader(UInt64 length_64bit) const {
   //char* contentLength = new char[256];
   char contentLength[256] = {0};
-  qtss_sprintf(contentLength, "%" _64BITARG_ "d", length_64bit);
+  qtss_sprintf(contentLength, "%" _U64BITARG_ "", length_64bit);
   StrPtrLen contentLengthPtr(contentLength);
   AppendResponseHeader(httpContentLengthHeader, &contentLengthPtr);
 }
 
-void HTTPRequest::AppendContentLengthHeader(UInt32 length_32bit) const {
+void HTTPPacket::AppendContentLengthHeader(UInt32 length_32bit) const {
   //char* contentLength = new char[256];
   char contentLength[256] = {0};
   qtss_sprintf(contentLength, "%"   _U32BITARG_   "", length_32bit);
@@ -473,15 +475,15 @@ void HTTPRequest::AppendContentLengthHeader(UInt32 length_32bit) const {
   AppendResponseHeader(httpContentLengthHeader, &contentLengthPtr);
 }
 
-void HTTPRequest::AppendConnectionCloseHeader() const {
+void HTTPPacket::AppendConnectionCloseHeader() const {
   AppendResponseHeader(httpConnectionHeader, &sCloseString);
 }
 
-void HTTPRequest::AppendConnectionKeepAliveHeader() const {
+void HTTPPacket::AppendConnectionKeepAliveHeader() const {
   AppendResponseHeader(httpConnectionHeader, &sKeepAliveString);
 }
 
-void HTTPRequest::AppendDateAndExpiresFields() const {
+void HTTPPacket::AppendDateAndExpiresFields() const {
   Assert(OSThread::GetCurrent() != NULL);
   DateBuffer *theDateBuffer = OSThread::GetCurrent()->GetDateBuffer();
   theDateBuffer->InexactUpdate(); // Update the date buffer to the current date & time
@@ -492,19 +494,18 @@ void HTTPRequest::AppendDateAndExpiresFields() const {
   this->AppendResponseHeader(httpExpiresHeader, &theDate);
 }
 
-void HTTPRequest::AppendDateField() const {
+void HTTPPacket::AppendDateField() const {
   Assert(OSThread::GetCurrent() != NULL);
   DateBuffer *theDateBuffer = OSThread::GetCurrent()->GetDateBuffer();
-  theDateBuffer
-      ->InexactUpdate(); // Update the date buffer to the current date & time
+  theDateBuffer->InexactUpdate(); // Update the date buffer to the current date & time
   StrPtrLen theDate(theDateBuffer->GetDateBuffer(), DateBuffer::kDateBufferLen);
 
   // Append date
   this->AppendResponseHeader(httpDateHeader, &theDate);
 }
 
-time_t HTTPRequest::ParseIfModSinceHeader() {
-  time_t theIfModSinceDate =
-      static_cast<time_t>(DateTranslator::ParseDate(&fFieldValues[httpIfModifiedSinceHeader]));
+time_t HTTPPacket::ParseIfModSinceHeader() {
+  time_t theIfModSinceDate = static_cast<time_t>(
+      DateTranslator::ParseDate(&fFieldValues[httpIfModifiedSinceHeader]));
   return theIfModSinceDate;
 }

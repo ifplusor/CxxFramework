@@ -49,12 +49,16 @@
 class TCPSocket : public Socket {
  public:
 
-  //TCPSocket takes an optional task object which will get notified when
-  //certain events happen on this socket. Those events are:
-  //
-  //S_DATA:               Data is currently available on the socket.
-  //S_CONNECTIONCLOSING:  Client is closing the connection. No longer necessary
-  //                      to call Close or Disconnect, Snd & Rcv will fail.
+  /**
+   * TCPSocket takes an optional task object which will get notified when
+   * certain events happen on this socket. Those events are:
+   * <ul><li>
+   *   S_DATA:               Data is currently available on the socket.
+   *   </li><li>
+   *   S_CONNECTIONCLOSING:  Client is closing the connection. No longer necessary
+   *                         to call Close or Disconnect, Snd & Rcv will fail.
+   * </li></ul>
+   */
   TCPSocket(Task *notifytask, UInt32 inSocketType)
       : Socket(notifytask, inSocketType),
         fRemoteStr(fRemoteBuffer, kIPAddrBufSize) {}

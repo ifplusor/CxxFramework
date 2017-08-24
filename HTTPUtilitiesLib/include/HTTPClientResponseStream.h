@@ -95,7 +95,7 @@ class HTTPClientResponseStream : public ResizeableStringFormatter {
   TimeoutTask *fTimeoutTask;
   bool fPrintMsg;     // debugging printfs
 
-  friend class HTTPRequest;
+  friend class HTTPPacket;
 };
 
 #endif // __HTTPClient_RESPONSE_STREAM_H__

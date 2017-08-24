@@ -155,6 +155,7 @@ class StrPtrLen {
     Len = newStr.Len;
   }
   char operator[](int i) { /*Assert(i<Len);i*/ return Ptr[i]; }
+
   void Set(char *inPtr, UInt32 inLen) {
     Ptr = inPtr;
     Len = inLen;
@@ -164,8 +165,8 @@ class StrPtrLen {
     Len = (inPtr) ? ::strlen(inPtr) : 0;
   }
 
-  //This is a non-encapsulating interface. The class allows you to access its
-  //data.
+  // This is a non-encapsulating interface. The class allows you to access its
+  // data.
   char *Ptr;
   UInt32 Len;
 

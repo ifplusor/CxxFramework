@@ -325,7 +325,6 @@ void StrPtrLen::PrintStrEOL(char *stopStr, char *appendStr) {
       thestr[i] = 0;
       break;
     }
-
   }
 
   for (i = 0; thestr[i] != 0; i++) {

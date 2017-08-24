@@ -63,12 +63,13 @@ CF_Error HTTPRequestStream::ReadRequest() {
   while (true) {
     UInt32 newOffset = 0;
 
-    // If this is the case, we already HAVE a request on this session, and we now are done
-    // with the request and want to move onto the next one. The first thing we should do
-    // is check whether there is any lingering data in the stream. If there is, the parent
-    // session believes that is part of a new request
+    // If this is the case, we already HAVE a request on this session, and we
+    // now are done with the request and want to move onto the next one.
+    // The first thing we should do is check whether there is any lingering
+    // data in the stream. If there is, the parent session believes that is
+    // part of a new request
     if (fRequestPtr != NULL) {
-      fRequestPtr = NULL;//flag that we no longer have a complete request
+      fRequestPtr = NULL; // flag that we no longer have a complete request
 
       // Take all the retreated leftover data and move it to the beginning of the buffer
       if ((fRetreatBytes > 0) && (fRequest.Len > 0))
@@ -81,15 +82,19 @@ CF_Error HTTPRequestStream::ReadRequest() {
       if (fEncodedBytesRemaining > 0) {
         //Assert(fEncodedBytesRemaining < 4);
 
-        // The right position is at fRetreatBytes offset in the request buffer. The reason for this is:
-        //  1) We need to find a place in the request buffer where we know we have enough space to store
-        //  fEncodedBytesRemaining. fRetreatBytes + fEncodedBytesRemaining will always be less than
-        //  kRequestBufferSize because all this data must have been in the same request buffer, together, at one point.
-        //
-        //  2) We need to make sure that there is always more data in the RequestBuffer than in the decoded
-        //  request buffer, otherwise we could overrun the decoded request buffer (we bounds check on the encoded
-        //  buffer, not the decoded buffer). Leaving fRetreatBytes as empty space in the request buffer ensures
-        //  that this principle is maintained.
+        // The right position is at fRetreatBytes offset in the request buffer.
+        // The reason for this is:
+        //  1) We need to find a place in the request buffer where we know we
+        //     have enough space to store fEncodedBytesRemaining.
+        //     fRetreatBytes + fEncodedBytesRemaining will always be less than
+        //     kRequestBufferSize because all this data must have been in the
+        //     same request buffer, together, at one point.
+        //  2) We need to make sure that there is always more data in the
+        //     RequestBuffer than in the decoded request buffer, otherwise we
+        //     could overrun the decoded request buffer (we bounds check on the
+        //     encoded buffer, not the decoded buffer). Leaving fRetreatBytes
+        //     as empty space in the request buffer ensures that this principle
+        //     is maintained.
         ::memmove(&fRequestBuffer[fRetreatBytes],
                   &fRequestBuffer[fCurOffset - fEncodedBytesRemaining],
                   fEncodedBytesRemaining);
@@ -105,8 +110,9 @@ CF_Error HTTPRequestStream::ReadRequest() {
     // We don't have any new data, so try and get some
     if (newOffset == 0) {
       if (fRetreatBytes > 0) {
-        // This will be true if we've just snarfed another input stream, in which case the encoded data
-        // is copied into our request buffer, and its length is tracked in fRetreatBytes.
+        // This will be true if we've just snarfed another input stream,
+        // in which case the encoded data is copied into our request buffer,
+        // and its length is tracked in fRetreatBytes.
         // If this is true, just fall through and decode the data.
         newOffset = fRetreatBytes;
         fRetreatBytes = 0;
@@ -114,9 +120,10 @@ CF_Error HTTPRequestStream::ReadRequest() {
       } else {
         // We don't have any new data, get some from the socket...
         // 注意我们的 socket 端口是 non blocking
-        CF_Error sockErr = fSocket->Read(&fRequestBuffer[fCurOffset],
-                                           (kRequestBufferSizeInBytes
-                                               - fCurOffset) - 1, &newOffset);
+        CF_Error sockErr = fSocket->Read(
+            &fRequestBuffer[fCurOffset],
+            (kRequestBufferSizeInBytes - fCurOffset) - 1,
+            &newOffset);
         // assume the client is dead if we get an error back
         if (sockErr == EAGAIN)
           return CF_NoErr;
@@ -129,10 +136,9 @@ CF_Error HTTPRequestStream::ReadRequest() {
       if (fDecode) {
         // If we need to decode this data, do it now.
         Assert(fCurOffset >= fEncodedBytesRemaining);
-        CF_Error decodeErr =
-            this->DecodeIncomingData(&fRequestBuffer[fCurOffset
-                                         - fEncodedBytesRemaining],
-                                     newOffset + fEncodedBytesRemaining);
+        CF_Error decodeErr = this->DecodeIncomingData(
+            &fRequestBuffer[fCurOffset - fEncodedBytesRemaining],
+            newOffset + fEncodedBytesRemaining);
         // If the above function returns an error, it is because we've
         // encountered some non-base64 data in the stream. We can process
         // everything up until that point, but all data after this point will
@@ -154,7 +160,7 @@ CF_Error HTTPRequestStream::ReadRequest() {
       if (interleavedPacketLen > fRequest.Len)
         continue;
 
-      //put back any data that is not part of the header
+      // put back any data that is not part of the header
       fRetreatBytes += fRequest.Len - interleavedPacketLen;
       fRequest.Len = interleavedPacketLen;
 
@@ -166,8 +172,7 @@ CF_Error HTTPRequestStream::ReadRequest() {
 
     if (fPrintRTSP) {
       DateBuffer theDate;
-      DateTranslator::UpdateDateBuffer(&theDate,
-                                       0); // get the current GMT date and time
+      DateTranslator::UpdateDateBuffer(&theDate, 0); // get the current GMT date and time
       qtss_printf("\n\n#C->S:\n#time: ms=%"   _U32BITARG_   " date=%s\n",
                   (UInt32) OS::StartTimeMilli_Int(),
                   theDate.GetDateBuffer());
@@ -196,12 +201,12 @@ CF_Error HTTPRequestStream::ReadRequest() {
       }
 
       StrPtrLen str(fRequest);
-      str.PrintStrEOL("\n\r\n",
-                      "\n");// print the request but stop on \n\r\n and add a \n afterwards.
+      // print the request but stop on \n\r\n and add a \n afterwards.
+      str.PrintStrEOL("\n\r\n", "\n");
     }
 
-    // use a StringParser object to search for a double EOL, which signifies the end of
-    // the header.
+    // use a StringParser object to search for a double EOL, which signifies
+    // the end of the header.
     bool weAreDone = false;
     StringParser headerParser(&fRequest);
 
@@ -209,9 +214,10 @@ CF_Error HTTPRequestStream::ReadRequest() {
     while (headerParser.GetThruEOL(NULL)) {
       lcount++;
       if (headerParser.ExpectEOL()) {
-        // The legal end-of-header sequences are \r\r, \r\n\r\n, & \n\n. NOT \r\n\r!
-        // If the packets arrive just a certain way, we could get here with the latter
-        // combo, and not wait for a final \n.
+        // The legal end-of-header sequences are \r\r, \r\n\r\n, & \n\n.
+        // NOT \r\n\r!
+        // If the packets arrive just a certain way, we could get here with
+        // the latter combo, and not wait for a final \n.
         if ((headerParser.GetDataParsedLen() > 2) &&
             (memcmp(headerParser.GetCurrentPosition() - 3, "\r\n\r", 3) == 0))
           continue;
@@ -237,7 +243,7 @@ CF_Error HTTPRequestStream::ReadRequest() {
 
     // weAreDone means we have gotten a full request
     if (weAreDone) {
-      //put back any data that is not part of the header
+      // put back any data that is not part of the header
       fRequest.Len -= headerParser.GetDataRemaining();
       fRetreatBytes += headerParser.GetDataRemaining();
 

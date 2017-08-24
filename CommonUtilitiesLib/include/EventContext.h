@@ -29,9 +29,6 @@
                 generated from a UNIX file descriptor (usually EV_RE or EV_WR)
                 and signal a Task.
 
-
-
-
 */
 
 #ifndef __EVENT_CONTEXT_H__
@@ -72,13 +69,15 @@ class EventContext {
 
   virtual ~EventContext() { if (fAutoCleanup) this->Cleanup(); }
 
-  //
-  // InitNonBlocking
-  //
-  // Sets inFileDesc to be non-blocking. Once this is called, the
-  // EventContext object "owns" the file descriptor, and will close it
-  // when Cleanup is called. This is necessary because of some weird
-  // select() behavior. DON'T CALL CLOSE ON THE FD ONCE THIS IS CALLED!!!!
+  /**
+   * InitNonBlocking - Sets inFileDesc to be non-blocking.
+   *
+   * Once this is called, the EventContext object "owns" the file descriptor,
+   * and will close it when Cleanup is called. This is necessary because of
+   * some weird select() behavior.
+   *
+   * <b>NOTE:</b> DON'T CALL CLOSE ON THE FD ONCE THIS IS CALLED!!!!
+   */
   void InitNonBlocking(int inFileDesc);
 
   //
@@ -105,7 +104,8 @@ class EventContext {
     }
   }
 
-  // when the HTTP Proxy tunnels takes over a TCPSocket, we need to maintain this context too
+  // when the HTTP Proxy tunnels takes over a TCPSocket, we need to maintain
+  // this context too
   void SnarfEventContext(EventContext &fromContext);
 
   // Don't cleanup this socket automatically
@@ -121,14 +121,15 @@ class EventContext {
 
  protected:
 
-  //
-  // ProcessEvent
-  //
-  // When an event occurs on this file descriptor, this function
-  // will get called. Default behavior is to Signal the associated
-  // task, but that behavior may be altered / overridden.
-  //
-  // Currently, we always generate a Task::kReadEvent
+  /**
+   * ProcessEvent - process network event on socket
+   *
+   * When an event occurs on this file descriptor, this function
+   * will get called. Default behavior is to Signal the associated
+   * task, but that behavior may be altered / overridden.
+   *
+   * Currently, we always generate a Task::kReadEvent
+   */
   virtual void ProcessEvent(int /*eventBits*/) {
     if (EVENTCONTEXT_DEBUG) {
       if (fTask == NULL)
@@ -187,4 +188,4 @@ class EventThread : public OSThread {
   friend class EventContext;
 };
 
-#endif //__EVENT_CONTEXT_H__
+#endif // __EVENT_CONTEXT_H__

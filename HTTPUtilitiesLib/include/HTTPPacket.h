@@ -22,28 +22,31 @@
  * @APPLE_LICENSE_HEADER_END@
  *
  */
-#ifndef __HTTP_REQUEST_H__
-#define __HTTP_REQUEST_H__
+#ifndef __HTTP_REQUEST_RESPONSE_H__
+#define __HTTP_REQUEST_RESPONSE_H__
 
 #include <CF.h>
 #include <StringParser.h>
 #include <ResizeableStringFormatter.h>
 #include "HTTPProtocol.h"
 
-class HTTPRequest {
+class HTTPPacket {
  public:
 
-  // HTTP请求构造函数
-  HTTPRequest(StrPtrLen *serverHeader, StrPtrLen *requestPtr);
-
-  // HTTP响应构造函数
-  HTTPRequest(StrPtrLen *serverHeader, HTTPType httpType = httpRequestType);
+  // Construct
+  HTTPPacket(StrPtrLen *packetPtr);
+  HTTPPacket(HTTPType httpType = httpResponseType);
 
   // Destructor
-  virtual ~HTTPRequest();
+  virtual ~HTTPPacket();
 
-  // Should be called before accessing anything in the request header
-  // Calls ParseRequestLine and ParseHeaders
+  /**
+   * Parse - parse http request header
+   *
+   * Calls ParseRequestLine and ParseHeaders
+   *
+   * <b>NOTE:</b> Should be called before accessing anything in the request header
+   */
   CF_Error Parse();
 
   // Basic access methods for the HTTP method, the absolute request URI,
@@ -67,12 +70,15 @@ class HTTPRequest {
   // and the value returned. Otherwise, NULL is returned.
   StrPtrLen *GetHeaderValue(HTTPHeader inHeader);
 
-  // Creates a header with the corresponding version and status code
-  bool CreateResponseHeader(HTTPStatusCode statusCode = httpOK,
-                            HTTPVersion version = http11Version);
-  // Creates a header with the
-  bool CreateRequestHeader(HTTPMethod method = httpPostMethod,
-                           HTTPVersion version = http11Version);
+  StrPtrLen *GetBody() { return fHTTPBody; }
+  void SetBody(StrPtrLen *body) { fHTTPBody = body; }
+
+  // Creates a header
+  bool CreateResponseHeader();
+  bool CreateRequestHeader();
+
+  void SetVersion(HTTPVersion version) { fVersion = version; }
+  void SetStatusCode(HTTPStatusCode statusCode) { fStatusCode = statusCode; }
 
   // To append response header fields as appropriate
   void AppendResponseHeader(HTTPHeader inHeader, StrPtrLen *inValue) const;
@@ -115,9 +121,11 @@ class HTTPRequest {
   StrPtrLen *getServerHeader() { return &fSvrHeader; }
 
   // Complete request and response headers
-  StrPtrLen fRequestHeader;
+  StrPtrLen fPacketHeader;
   ResizeableStringFormatter *fHTTPHeaderFormatter;
   StrPtrLen *fHTTPHeader;
+
+  StrPtrLen *fHTTPBody;
 
   // Private members
   HTTPMethod fMethod;
@@ -147,4 +155,4 @@ class HTTPRequest {
   static UInt8 sURLStopConditions[];
 };
 
-#endif // __HTTP_REQUEST_H__
+#endif // __HTTP_REQUEST_RESPONSE_H__

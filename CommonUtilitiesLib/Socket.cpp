@@ -365,19 +365,20 @@ OS_Error Socket::Read(void *buffer, const UInt32 length, UInt32 *outRecvLenP) {
   //int theRecvLen = ::recv(fFileDesc, buffer, length, 0);//flags??
   long theRecvLen;
   do {
-    theRecvLen = ::recv(fFileDesc, (char *) buffer, length, 0);//flags??
+    theRecvLen = ::recv(fFileDesc, (char *) buffer, length, 0); //flags??
   } while ((theRecvLen == -1) && (OSThread::GetErrno() == EINTR));
 
   if (theRecvLen == -1) {
     // Are there any errors that can happen if the client is connected?
-    // Yes... EAGAIN. Means the socket is now flow-controleld
+    // Yes... EAGAIN. Means the socket is now flow-controled
     int theErr = OSThread::GetErrno();
     if ((theErr != EAGAIN) && (this->IsConnected()))
-      fState ^= kConnected;//turn off connected state flag
+      fState ^= kConnected; // turn off connected state flag
     return (OS_Error) theErr;
   } else if (theRecvLen == 0) {
-    //if we get 0 bytes back from read, that means the client has disconnected.
-    //Note that and return the proper error to the caller    fState ^= kConnected;
+    // if we get 0 bytes back from read, that means the client has disconnected.
+    // Note that and return the proper error to the caller
+    fState ^= kConnected;
     return (OS_Error) ENOTCONN;
   }
   Assert(theRecvLen > 0);

@@ -29,8 +29,6 @@
                 hides the details of socket event handling. Sockets can post
                 events (such as S_DATA, S_CONNECTIONCLOSED) to Tasks.
 
-
-
 */
 
 #ifndef __SOCKET_H__
@@ -65,11 +63,15 @@ class Socket : public EventContext {
 
   static EventThread *GetEventThread() { return sEventThread; }
 
-  //Binds the socket to the following address.
-  //Returns: QTSS_FileNotOpen, QTSS_NoErr, or POSIX errorcode.
+  /**
+   * Bind - binds the socket to the following address.
+   * @return CF_FileNotOpen, CF_NoErr, or POSIX error code.
+   */
   OS_Error Bind(UInt32 addr, UInt16 port, bool test = false);
 
-  //The same. but in reverse
+  /**
+   * Unbind - unbinds the socket.
+   */
   void Unbind();
 
   void ReuseAddr();
@@ -80,28 +82,35 @@ class Socket : public EventContext {
 
   void SetSocketBufSize(UInt32 inNewSize);
 
-  //
-  // Returns an error if the socket buffer size is too big
+  /**
+   * @return Returns an error if the socket buffer size is too big
+   */
   OS_Error SetSocketRcvBufSize(UInt32 inNewSize);
 
-  //Send
-  //Returns: QTSS_FileNotOpen, QTSS_NoErr, or POSIX errorcode.
+  /**
+   * Send
+   * @return CF_FileNotOpen, CF_NoErr, or POSIX error code.
+   */
   OS_Error Send(const char *inData,
                 const UInt32 inLength,
                 UInt32 *outLengthSent);
 
-  //Read
-  //Reads some data.
-  //Returns: QTSS_FileNotOpen, QTSS_NoErr, or POSIX errorcode.
+  /**
+   * Read - reads some data.
+   * @return CF_FileNotOpen, CF_NoErr, or POSIX error code.
+   */
   OS_Error Read(void *buffer, const UInt32 length, UInt32 *rcvLen);
 
-  //WriteV: same as send, but takes an iovec
-  //Returns: QTSS_FileNotOpen, QTSS_NoErr, or POSIX errorcode.
+  /**
+   * WriteV - same as Send, but takes an iovec
+   * @return CF_FileNotOpen, CF_NoErr, or POSIX error code.
+   */
   OS_Error WriteV(const struct iovec *iov,
                   const UInt32 numIOvecs,
                   UInt32 *outLengthSent);
 
-  //You can query for the socket's state
+  // You can query for the socket's state
+
   bool IsConnected() { return (bool) (fState & kConnected); }
 
   bool IsBound() { return (bool) (fState & kBound); }
@@ -123,18 +132,13 @@ class Socket : public EventContext {
 
  protected:
 
-  //TCPSocket takes an optional task object which will get notified when
-  //certain events happen on this socket. Those events are:
-  //
-  //S_DATA:               Data is currently available on the socket.
-  //S_CONNECTIONCLOSING:  Client is closing the connection. No longer necessary
-  //                      to call Close or Disconnect, Snd & Rcv will fail.
-
   Socket(Task *notifytask, UInt32 inSocketType);
 
   virtual ~Socket() {}
 
-  //returns QTSS_NoErr, or appropriate posix error
+  /**
+   * @return returns QTSS_NoErr, or appropriate posix error
+   */
   OS_Error Open(int theType);
 
   UInt32 fState;
@@ -149,8 +153,8 @@ class Socket : public EventContext {
   char            fLocalAddrBuffer[kMaxIPAddrSizeInBytes];
 #endif
 
-  //address information (available if bound)
-  //these are always stored in network order. Conver
+  // address information (available if bound)
+  // these are always stored in network order. Conver
   struct sockaddr_in fLocalAddr;
   struct sockaddr_in fDestAddr;
 
@@ -159,7 +163,8 @@ class Socket : public EventContext {
   char fPortBuffer[kPortBufSizeInBytes];
   StrPtrLen fPortStr;
 
-  //State flags. Be careful when changing these values, as subclasses add their own
+  // State flags. Be careful when changing these values, as subclasses add
+  // their own
   enum {
     kBound = 0x0004,
     kConnected = 0x0008

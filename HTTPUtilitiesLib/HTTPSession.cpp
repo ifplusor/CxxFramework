@@ -31,7 +31,7 @@ HTTPSession::~HTTPSession() {
                 fSocket.GetRemoteAddrStr()->Ptr);
 
   fLiveSession = false; //used in Clean up request to remove the RTP session.
-  this->CleanupRequest();// Make sure that all our objects are deleted
+  this->CleanupRequestAndResponse();// Make sure that all our objects are deleted
 }
 
 SInt64 HTTPSession::Run() {
@@ -55,16 +55,16 @@ SInt64 HTTPSession::Run() {
         // 读取请求报文
 
         if ((err = fInputStream.ReadRequest()) == CF_NoErr) {
-          // 如果RequestStream返回QTSS_NoErr，就表示已经读取了目前所到达的网络数据
-          // 但，还不能构成一个整体报文，还要继续等待读取...
+          // 如果 RequestStream 返回 CF_NoErr，就表示已经读取了目前所到达的
+          // 网络数据。但还不能构成一个整体报文，还要继续等待读取...
           fInputSocketP->RequestEvent(EV_RE);
           return 0;
         }
 
         if ((err != CF_RequestArrived) && (err != E2BIG)) {
-          // Any other error implies that the client has gone away. At this point,
-          // we can't have 2 sockets, so we don't need to do the "half closed" check
-          // we do below
+          // Any other error implies that the client has gone away.
+          // At this point, we can't have 2 sockets, so we don't need to do
+          // the "half closed" check. we do below
           Assert(err > 0);
           Assert(!this->IsLiveSession());
           break;
@@ -82,15 +82,13 @@ SInt64 HTTPSession::Run() {
         OSMutexLocker readMutexLocker(&fReadMutex);
 
         if ((err = fInputStream.ReadRequest()) == CF_NoErr) {
-          // 如果RequestStream返回QTSS_NoErr，就表示已经读取了目前所到达的网络数据
-          // 但，还不能构成一个整体报文，还要继续等待读取...
           fInputSocketP->RequestEvent(EV_RE);
           return 0;
         }
 
         if ((err != CF_RequestArrived) && (err != E2BIG)
             && (err != CF_BadArgument)) {
-          //Any other error implies that the input connection has gone away.
+          // Any other error implies that the input connection has gone away.
           // We should only kill the whole session if we aren't doing HTTP.
           // (If we are doing HTTP, the POST connection can go away)
           Assert(err > 0);
@@ -118,28 +116,27 @@ SInt64 HTTPSession::Run() {
         Assert(fInputStream.GetRequestBuffer());
 
         Assert(fRequest == nullptr);
-        fRequest = new HTTPRequest(&HTTPSessionInterface::GetServerHeader(),
-                                   fInputStream.GetRequestBuffer());
+        Assert(fResponse == nullptr);
+        fRequest = new HTTPPacket(fInputStream.GetRequestBuffer());
+        fResponse = new HTTPPacket(httpResponseType);
 
-        // 在这里，我们已经读取了一个完整的Request，并准备进行请求的处理，
+        // 在这里，我们已经读取了一个完整的 Request，并准备进行请求的处理，
         // 直到响应报文发出。
-        // 在此过程中，此Session的Socket不进行任何网络数据的读/写；
+        // 在此过程中，此 Session 的 Socket 不进行任何网络数据的读/写；
         fReadMutex.Lock();
         fSessionMutex.Lock();
 
         fOutputStream.ResetBytesWritten();
 
         if (err == E2BIG) {
-          // 返回HTTP报文，错误码 408
-          //(void)QTSSModuleUtils::SendErrorResponse(fRequest, qtssClientBadRequest, qtssMsgRequestTooLong);
+          fResponse->SetStatusCode(httpInternalServerError);
           fState = kSendingResponse;
           break;
         }
 
         // Check for a corrupt base64 error, return an error
         if (err == CF_BadArgument) {
-          // 返回HTTP报文，错误码 408
-          //(void)QTSSModuleUtils::SendErrorResponse(fRequest, qtssClientBadRequest, qtssMsgBadBase64);
+          fResponse->SetStatusCode(httpInternalServerError);
           fState = kSendingResponse;
           break;
         }
@@ -157,20 +154,20 @@ SInt64 HTTPSession::Run() {
         // 对请求报文进行解析
         CF_Error theErr = SetupRequest();
 
-        // 当SetupRequest步骤未读取到完整的网络报文，需要进行等待
+        // 当 SetupRequest 步骤未读取到完整的网络报文，需要进行等待
         if (theErr == CF_WouldBlock) {
           this->ForceSameThread();
           fInputSocketP->RequestEvent(EV_RE);
           // We are holding mutexes, so we need to force
           // the same thread to be used for next Run()
-          return 0; // 返回0表示有事件才进行通知，返回>0表示规定事件后调用Run
+          return 0; // 返回0表示有事件才进行通知，返回>0表示规定时间后调用Run
         }
 
         // 每一步都检测响应报文是否已完成，完成则直接进行回复响应
-        if (fOutputStream.GetBytesWritten() > 0) {
-          fState = kSendingResponse;
-          break;
-        }
+//        if (fOutputStream.GetBytesWritten() > 0) {
+//          fState = kSendingResponse;
+//          break;
+//        }
 
         fState = kPreprocessingRequest;
         break;
@@ -178,18 +175,46 @@ SInt64 HTTPSession::Run() {
 
       case kPreprocessingRequest: {
         // 请求预处理过程
+
+        if (fRequest->GetVersion() == httpIllegalVersion) {
+          fResponse->SetStatusCode(httpHTTPVersionNotSupported);
+          fState = kSendingResponse;
+        }
+
         fState = kProcessingRequest;
         break;
       }
 
       case kProcessingRequest: {
 
-        StrPtrLen content("nothing\n", 8);
-        SendHTTPPacket(&content, true, true);
+        // doDispatch
+
+        if (fRequest->GetRequestPath() != nullptr) {
+          string sRequest(fRequest->GetRequestPath());
+//
+//          if (!sRequest.empty()) {
+//            boost::to_lower(sRequest);
+//
+//            vector<string> path;
+//            if (boost::ends_with(sRequest, "/")) {
+//              boost::erase_tail(sRequest, 1);
+//            }
+//            boost::split(path, sRequest,
+//                         boost::is_any_of("/"),
+//                         boost::token_compress_on);
+//            if (path.size() == 3) {
+//
+//            }
+//
+//            return CF_NoErr;
+//          }
+          fResponse->SetStatusCode(httpNotFound);
+        }
+
+        // 构造响应信息
+        CF_Error theErr = SetupResponse();
 
         if (fOutputStream.GetBytesWritten() == 0) {
-          // 响应报文还没有形成
-          //QTSSModuleUtils::SendErrorResponse(fRequest, qtssServerInternal, qtssMsgNoModuleForRequest);
           fState = kCleaningUp;
           break;
         }
@@ -200,6 +225,7 @@ SInt64 HTTPSession::Run() {
       case kSendingResponse: {
         // 响应报文发送，确保完全发送
         Assert(fRequest != nullptr);
+        Assert(fResponse != nullptr);
 
         // 发送响应报文
         err = fOutputStream.Flush();
@@ -237,7 +263,7 @@ SInt64 HTTPSession::Run() {
         }
 
         // 一次请求的读取、处理、响应过程完整，等待下一次网络报文！
-        this->CleanupRequest();
+        this->CleanupRequestAndResponse();
         fState = kReadingRequest;
       }
       default: break;
@@ -245,7 +271,7 @@ SInt64 HTTPSession::Run() {
   }
 
   // 清空Session占用的所有资源
-  this->CleanupRequest();
+  this->CleanupRequestAndResponse();
 
   // Session引用数为0，返回-1后，系统会将此Session删除
   if (fObjectHolders == 0)
@@ -258,8 +284,8 @@ SInt64 HTTPSession::Run() {
 CF_Error HTTPSession::SendHTTPPacket(StrPtrLen *contentXML,
                                        bool connectionClose,
                                        bool decrement) {
-  HTTPRequest httpAck(&HTTPSessionInterface::GetServerHeader(), httpResponseType);
-  httpAck.CreateResponseHeader(contentXML->Len ? httpOK : httpNotImplemented);
+  HTTPPacket httpAck(&HTTPSessionInterface::GetServerHeader());
+  httpAck.CreateResponseHeader();
   if (contentXML->Len)
     httpAck.AppendContentLengthHeader(contentXML->Len);
 
@@ -293,30 +319,11 @@ CF_Error HTTPSession::SendHTTPPacket(StrPtrLen *contentXML,
  * 解析请求报文
  */
 CF_Error HTTPSession::SetupRequest() {
+
+  // 解析 head
   CF_Error theErr = fRequest->Parse();
   if (theErr != CF_NoErr)
     return CF_BadArgument;
-
-  if (fRequest->GetRequestPath() != nullptr) {
-    string sRequest(fRequest->GetRequestPath());
-
-    if (!sRequest.empty()) {
-//      boost::to_lower(sRequest);
-//
-//      vector<string> path;
-//      if (boost::ends_with(sRequest, "/")) {
-//        boost::erase_tail(sRequest, 1);
-//      }
-//      boost::split(path, sRequest,
-//                   boost::is_any_of("/"),
-//                   boost::token_compress_on);
-//      if (path.size() == 3) {
-//
-//      }
-
-      return CF_NoErr;
-    }
-  }
 
   // 解析 body
 
@@ -334,20 +341,10 @@ CF_Error HTTPSession::SetupRequest() {
     char *theRequestBody = nullptr;
     UInt32 theLen = sizeof(theRequestBody);
     // 获取 easyHTTPSesContentBody
-    if (theErr != CF_NoErr) {
-      // First time we've been here for this request. Create a buffer for the
-      // content body and shove it in the request.
-      theRequestBody = new char[content_length + 1];
-      memset(theRequestBody, 0, content_length + 1);
-      theLen = sizeof(theRequestBody);
-      // 设置 easyHTTPSesContentBody
-
-      // Also store the offset in the buffer
-      theLen = sizeof(theBufferOffset);
-      // 设置 easyHTTPSesContentBodyOffset
-
-      Assert(theErr == CF_NoErr);
-    }
+    theRequestBody = new char[content_length + 1];
+    memset(theRequestBody, 0, content_length + 1);
+    StrPtrLen *requestBody = new StrPtrLen(theRequestBody, content_length);
+    fRequest->SetBody(requestBody);
 
     theLen = sizeof(theBufferOffset);
     // 获取 easyHTTPSesContentBodyOffset
@@ -367,8 +364,8 @@ CF_Error HTTPSession::SetupRequest() {
     }
 
     qtss_printf("Add Len:%d \n", theLen);
-    if ((theErr == CF_WouldBlock)
-        || (theLen < (content_length - theBufferOffset))) {
+    if ((theErr == CF_WouldBlock) ||
+        (theLen < (content_length - theBufferOffset))) {
       //
       // Update our offset in the buffer
       theBufferOffset += theLen;
@@ -399,7 +396,49 @@ CF_Error HTTPSession::SetupRequest() {
   return CF_NoErr;
 }
 
-void HTTPSession::CleanupRequest() {
+CF_Error HTTPSession::SetupResponse() {
+  if (fResponse->GetVersion() == httpIllegalVersion) {
+    HTTPVersion requestVersion = fRequest->GetVersion();
+    fResponse->SetVersion(
+        requestVersion != httpIllegalVersion ? requestVersion : http11Version);
+  }
+
+  // construct response header
+  fResponse->CreateResponseHeader();
+
+  StrPtrLen *respBody = fResponse->GetBody();
+  if (respBody != NULL && respBody->Len > 0)
+    fResponse->AppendContentLengthHeader(respBody->Len);
+
+  fResponse->AppendConnectionCloseHeader();
+
+  char respHeader[2048] = {0};
+  StrPtrLen *ackPtr = fResponse->GetCompleteHTTPHeader();
+  strncpy(respHeader, ackPtr->Ptr, ackPtr->Len);
+
+  fOutputStream.Put(respHeader);
+
+  // construct response body
+  if (respBody != NULL && respBody->Len > 0)
+    fOutputStream.Put(*respBody);
+
+  this->Signal(Task::kKillEvent);
+
+  return CF_NoErr;
+}
+
+void HTTPSession::CleanupRequestAndResponse() {
+
+  if (fRequest != nullptr) {
+    // nullptr out any references to the current request
+    delete fRequest;
+    fRequest = nullptr;
+  }
+
+  if (fResponse != nullptr) {
+    delete fResponse;
+    fResponse = nullptr;
+  }
 
   fSessionMutex.Unlock();
   fReadMutex.Unlock();

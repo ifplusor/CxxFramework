@@ -28,7 +28,6 @@
 
 #include <limits.h>
 
-#include <CF.h>
 
 #ifndef TRUE
 #define TRUE 1
@@ -37,7 +36,6 @@
 #ifndef FALSE
 #define FALSE 0
 #endif
-
 
 
 /* Platform-specific components */
@@ -563,7 +561,8 @@ typedef FourCharCode        OSType;
 
 #endif
 
-typedef CF_Error OS_Error;
+
+#include <CF.h>
 
 
 #endif /* __OS_HEADERS_H__ */

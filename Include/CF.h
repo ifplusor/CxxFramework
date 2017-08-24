@@ -8,6 +8,7 @@
 #include "PlatformHeader.h"
 #include "revision.h"
 
+#include <OSHeaders.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,15 +32,19 @@ extern "C" {
 
 
 // Network Constants
-#define CF_MAX_REQUEST_BUFFER_SIZE    2*1024
-#define CF_MAX_RESPONSE_BUFFER_SIZE   2048
+#define CF_MAX_REQUEST_BUFFER_SIZE    2*1024  // 2k
+#define CF_MAX_RESPONSE_BUFFER_SIZE   2048    // 2k
 
 
 //*******************************
 // ENUMERATED TYPES
 
 // Error Codes
+#ifdef USE_ENUM
 typedef enum {
+#else
+enum {
+#endif
   // CxxFramework Error
   CF_NoErr = 0,
   CF_RequestFailed = -1,
@@ -66,9 +71,18 @@ typedef enum {
 
   // OS Error
   OS_NoErr = 0,
-  OS_BadURLFormat =  -100,
-  OS_NotEnoughSpace =  -101
+  OS_BadURLFormat = -100,
+  OS_NotEnoughSpace = -101
+#ifdef USE_ENUM
 } CF_Error;
+#else
+};
+
+typedef SInt32 CF_Error;
+#endif
+
+typedef CF_Error OS_Error;
+
 
 // Events
 typedef enum {

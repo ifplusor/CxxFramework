@@ -69,7 +69,7 @@ class HTTPSessionInterface : public Task {
   static StrPtrLen &GetServerVersion() { return sServerVersionStr; }
   static StrPtrLen &GetServerPlatform() { return sServerPlatformStr; }
   static StrPtrLen &GetServerBuildDate() { return sServerBuildDateStr; }
-  static StrPtrLen &GetServerHeader() { return sServerHeaderPtr; }
+  static StrPtrLen &GetServerHeader() { return sServerHeaderStr; }
   static StrPtrLen &GetServerBuild() { return sServerBuildStr; }
   static StrPtrLen &GetServerComment() { return sServerCommentStr; }
 
@@ -95,8 +95,7 @@ class HTTPSessionInterface : public Task {
   //+rt  socket we get from "accept()"
   TCPSocket fSocket;
   TCPSocket *fOutputSocketP;
-  TCPSocket *
-      fInputSocketP;  // <-- usually same as fSocketP, unless we're HTTP Proxying
+  TCPSocket *fInputSocketP;  // <-- usually same as fSocketP, unless we're HTTP Proxying
 
   void SnarfInputSocket(HTTPSessionInterface *fromHTTPSession);
 
@@ -132,7 +131,7 @@ class HTTPSessionInterface : public Task {
   static StrPtrLen sServerPlatformStr;
   static StrPtrLen sServerBuildDateStr;
   static char sServerHeader[kMaxServerHeaderLen];
-  static StrPtrLen sServerHeaderPtr;
+  static StrPtrLen sServerHeaderStr;
 };
 
 #endif // __HTTP_SESSION_INTERFACE_H__

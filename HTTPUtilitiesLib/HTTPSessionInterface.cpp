@@ -57,12 +57,12 @@ StrPtrLen HTTPSessionInterface::sServerCommentStr(kCommentString);
 StrPtrLen HTTPSessionInterface::sServerPlatformStr(kPlatformNameString);
 StrPtrLen HTTPSessionInterface::sServerBuildDateStr(__DATE__ ", " __TIME__);
 char      HTTPSessionInterface::sServerHeader[kMaxServerHeaderLen];
-StrPtrLen HTTPSessionInterface::sServerHeaderPtr(sServerHeader, kMaxServerHeaderLen);
+StrPtrLen HTTPSessionInterface::sServerHeaderStr(sServerHeader, kMaxServerHeaderLen);
 
 void HTTPSessionInterface::Initialize() {
 
   //Write out a premade server header
-  StringFormatter serverFormatter(sServerHeaderPtr.Ptr, kMaxServerHeaderLen);
+  StringFormatter serverFormatter(sServerHeaderStr.Ptr, kMaxServerHeaderLen);
 //  serverFormatter.Put(HTTPProtocol::GetHeaderString(httpServerHeader));
 //  serverFormatter.Put(": ");
   serverFormatter.Put(sServerNameStr);
@@ -85,8 +85,8 @@ void HTTPSessionInterface::Initialize() {
 
   serverFormatter.PutChar(')');
 
-  sServerHeaderPtr.Len = serverFormatter.GetCurrentOffset();
-  Assert(sServerHeaderPtr.Len < kMaxServerHeaderLen);
+  sServerHeaderStr.Len = serverFormatter.GetCurrentOffset();
+  Assert(sServerHeaderStr.Len < kMaxServerHeaderLen);
 }
 
 HTTPSessionInterface::HTTPSessionInterface()

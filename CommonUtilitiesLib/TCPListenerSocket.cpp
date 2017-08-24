@@ -52,12 +52,15 @@ OS_Error TCPListenerSocket::listen(UInt32 queueLength) {
   return OS_NoErr;
 }
 
+/*
+ * 创建打开流套接字(SOCK_STREAM)端口,并绑定 IP 地址、端口，执行 listen 操作。
+ * 注意在这个函数里调用了 SetSocketRcvBufSize 成员函数,以设置这个 socket 的
+ * 接收缓冲区大小为 96K。而内核规定该值最大为 sysctl_rmem_max，可以通过
+ * /proc/sys/net/core/rmem_default 和 /proc/sys/net/core/rmem_max 来了解缺省值
+ * 和最大值。(注意 proc 下的这两个值也是可写的，可以通过调整这些值来达到优化
+ * TCP/IP 的目的。
+ */
 OS_Error TCPListenerSocket::Initialize(UInt32 addr, UInt16 port) {
-  // 创建打开流套接字(SOCK_STREAM)端口,并绑定 IP 地址、端口,执行 listen 操作。
-  // 注意在这个函数里调用了 SetSocketRcvBufSize 成员函数,以设置这个 socket 的接收缓冲区大小为
-  // 96K。而内核规定该值最大为 sysctl_rmem_max,可以通过/proc/sys/net/core/rmem_default
-  // rmem_max 来了解缺省值和最大值。(注意 proc 下的这两个值也是可写的,可以通过调整这些值来
-  // 达到优化 TCP/IP 的目的。
 
   OS_Error err = this->TCPSocket::Open();
   if (0 == err)
@@ -85,21 +88,23 @@ OS_Error TCPListenerSocket::Initialize(UInt32 addr, UInt16 port) {
   return err;
 }
 
+/*
+ * 在 fListeners 申请监听流套接字端口后，一旦 socket 端口有数据,该函数会被调用。
+ * 这个函数的流程是这样的:
+ *   1.首先通过 accept 获得客户端的地址以及服务器端新创建的 socket 端口。
+ *   2.通过 GetSessionTask 创建一个 RTSPSession 的类对象<每个 RTSPSession
+ *     对象对应一个 RTSP 连接>，并将新创建的 socket 端口描述符、sockaddr
+ *     信息保存到 RTSPSession 的 TCPSocket 类型成员 fSocket。
+ *   3.同时调用 fSocket::SetTask 和 RequestEvent(EV_RE)，这样 EventThread
+ *     在监听到这个 socket 端口有数据时，会调用 EventContext::processEvent
+ *     函数，在这个函数里会调用 fTask->Signal(Task::kReadEvent)，
+ *   4.最终 TaskThread 会调用 RTSPSession::Run 函数。
+ * 而 TCPListenerSocket 自己的 socket 端口会继续被申请监听。
+ */
 void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
-  // 在 fListeners 申请监听流套接字端口后,一旦 socket 端口有数据,该函数会被调用。
-  // 这个函数的流程是这样的:
-  //   1.首先通过 accept 获得客户端的地址以及服务器端新创建的 socket 端口。
-  //   2.通过 GetSessionTask 创建一个 RTSPSession 的类对象<每个 RTSPSession
-  //     对象对应一个 RTSP 连接>，并将新创建的 socket 端口描述符、sockaddr
-  //     信息保存到 RTSPSession 的 TCPSocket 类型成员 fSocket。
-  //   3.同时调用 fSocket::SetTask 和 RequestEvent(EV_RE)，这样 EventThread
-  //     在监听到这个 socket 端口有数据时，会调用 EventContext::processEvent
-  //     函数，在这个函数里会调用 fTask->Signal(Task::kReadEvent)，
-  //   4.最终 TaskThread 会调用 RTSPSession::Run 函数。
-  // 而 TCPListenerSocket 自己的 socket 端口会继续被申请监听。
 
-  //we are executing on the same thread as every other
-  //socket, so whatever you do here has to be fast.
+  // we are executing on the same thread as every other
+  // socket, so whatever you do here has to be fast.
 
   struct sockaddr_in addr;
 #if __Win32__ || __osf__ || __sgi__ || __hpux__
@@ -110,28 +115,30 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
   Task *theTask = nullptr;
   TCPSocket *theSocket = nullptr;
 
-  //fSocket data member of TCPSocket.
+  // fSocket data member of TCPSocket.
   int osSocket = accept(fFileDesc, (struct sockaddr *) &addr, &size);
 
-  //test osSocket = -1;
+  // test osSocket = -1;
   if (osSocket == -1) {
-    //take a look at what this error is.
+    // take a look at what this error is.
     int acceptError = OSThread::GetErrno();
+
     if (acceptError == EAGAIN) {
-      //If it's EAGAIN, there's nothing on the listen queue right now,
-      //so modwatch and return
+      // If it's EAGAIN, there's nothing on the listen queue right now,
+      // so modwatch and return
       this->RequestEvent(EV_RE);
       return;
     }
 
-    //test acceptError = ENFILE;
-    //test acceptError = EINTR;
-    //test acceptError = ENOENT;
-
-    //if these error gets returned, we're out of file desciptors,
-    //the server is going to be failing on sockets, logs, qtgroups and qtuser auth file accesses and movie files. The server is not functional.
+    // test acceptError = ENFILE;
+    // test acceptError = EINTR;
+    // test acceptError = ENOENT;
     if (acceptError == EMFILE || acceptError == ENFILE) {
-      qtss_printf("Out of File Descriptors. Set max connections lower and check for competing usage from other processes. Exiting.");
+      // if these error gets returned, we're out of file desciptors, the server
+      // is going to be failing on sockets, logs, qtgroups and qtuser auth file
+      // accesses and movie files. The server is not functional.
+      qtss_printf("Out of File Descriptors. Set max connections lower and check"
+                      " for competing usage from other processes. Exiting.");
       exit(EXIT_FAILURE);
     } else {
       char errStr[256];
@@ -164,9 +171,9 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
       theSocket->fState &= ~kConnected; // turn off connected state
   } else {
     Assert(osSocket != EventContext::kInvalidFileDesc);
+    // set options on the socket
 
-    //set options on the socket
-    //we are a server, always disable nagle algorithm
+    // we are a server, always disable nagle algorithm
     int one = 1;
     int err = ::setsockopt(osSocket,
                            IPPROTO_TCP,
@@ -190,15 +197,11 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
                        sizeof(int));
     AssertV(err == 0, OSThread::GetErrno());
 
-    //setup the socket. When there is data on the socket,
-    //theTask will get an kReadEvent event
-    // TCPSocket::Set 函数通过 getsockname 将 osSocket 描述字对应的 sockaddr 保存到
-    // TCPSocket::fLocalAddr,并设置 TCPSocket:: fState |= kBound | kConnected。
-    // 同时将 osSocket 保存为 TCPSocket::fFileDesc
+    // setup the socket. When there is data on the socket,
+    // theTask will get an kReadEvent event
     theSocket->Set(osSocket, &addr);
     theSocket->InitNonBlocking(osSocket);
-    // 实际上是调用 EventContext::SetTask
-    theSocket->SetTask(theTask);
+    theSocket->SetTask(theTask); // 实际上是调用 EventContext::SetTask
     theSocket->RequestEvent(EV_RE);
 
     theTask->SetThreadPicker(Task::GetBlockingTaskThreadPicker()); //The Message Task processing threads

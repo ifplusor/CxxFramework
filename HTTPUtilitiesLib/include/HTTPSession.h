@@ -2,7 +2,7 @@
 #define __HTTP_SESSION_H__
 
 #include "HTTPSessionInterface.h"
-#include "HTTPRequest.h"
+#include "HTTPPacket.h"
 
 class HTTPSession : public HTTPSessionInterface {
  public:
@@ -20,14 +20,16 @@ class HTTPSession : public HTTPSessionInterface {
   // Does request prep & request cleanup, respectively
 
   CF_Error SetupRequest();
-  void CleanupRequest();
+  CF_Error SetupResponse();
+  void CleanupRequestAndResponse();
 
   // test current connections handled by this object against server pref connection limit
   static inline bool OverMaxConnections(UInt32 buffer);
 
   CF_Error dumpRequestData();
 
-  HTTPRequest *fRequest;
+  HTTPPacket *fRequest;
+  HTTPPacket *fResponse;
   OSMutex fReadMutex;
 
   enum {
@@ -37,12 +39,9 @@ class HTTPSession : public HTTPSessionInterface {
     kProcessingRequest = 3,
     kSendingResponse = 4,
     kCleaningUp = 5,
-
     kReadingFirstRequest = 6,
     kHaveCompleteMessage = 7
-  };
-
-  UInt32 fState;
+  } fState;
 };
 
 #endif // __HTTP_SESSION_H__

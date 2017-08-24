@@ -2,7 +2,7 @@ set(HEADER_FILES
         include/HTTPClientRequestStream.h
         include/HTTPClientResponseStream.h
         include/HTTPProtocol.h
-        include/HTTPRequest.h
+        include/HTTPPacket.h
         include/HTTPRequestStream.h
         include/HTTPResponseStream.h
         include/HTTPSessionInterface.h
@@ -13,7 +13,7 @@ set(SOURCE_FILES
         HTTPClientRequestStream.cpp
         HTTPClientResponseStream.cpp
         HTTPProtocol.cpp
-        HTTPRequest.cpp
+        HTTPPacket.cpp
         HTTPRequestStream.cpp
         HTTPResponseStream.cpp
         HTTPSessionInterface.cpp

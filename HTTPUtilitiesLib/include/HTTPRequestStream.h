@@ -43,7 +43,8 @@
 class HTTPRequestStream {
  public:
 
-  //CONSTRUCTOR / DESTRUCTOR
+  // CONSTRUCTOR / DESTRUCTOR
+
   HTTPRequestStream(TCPSocket *sock);
 
   // We may have to delete this memory if it was allocated due to base64 decoding
@@ -52,37 +53,53 @@ class HTTPRequestStream {
       delete[] fRequest.Ptr;
   }
 
-  //ReadRequest
-  //This function will not block.
-  //Attempts to read data into the stream, stopping when we hit the EOL - EOL that
-  //ends an RTSP header.
-  //
-  //Returns:          QTSS_NoErr:     Out of data, haven't hit EOL - EOL yet
-  //                  QTSS_RequestArrived: full request has arrived
-  //                  E2BIG: ran out of buffer space
-  //                  QTSS_RequestFailed: if the client has disconnected
-  //                  EINVAL: if we are base64 decoding and the stream is corrupt
-  //                  QTSS_OutOfState:
+  /**
+   * ReadRequest - read request header
+   *
+   * Attempts to read data into the stream, stopping when we hit the EOL - EOL
+   * that ends an HTTP header.
+   *
+   * <b>NOTE:</b> This function will not block.
+   *
+   * @return
+   * <ul>
+   * <li> CF_NoErr          - Out of data, haven't hit EOL - EOL yet </li>
+   * <li> CF_RequestArrived - full request has arrived </li>
+   * <li> CF_RequestFailed  - if the client has disconnected </li>
+   * <li> CF_OutOfState </li>
+   * <li> E2BIG             - ran out of buffer space </li>
+   * <li> EINVAL            - if we are base64 decoding and the stream is corrupt
+   * </li><ul>
+   */
   CF_Error ReadRequest();
 
-  // Read
-  //
-  // This function reads data off of the stream, and places it into the buffer provided
-  // Returns: QTSS_NoErr, EAGAIN if it will block, or another socket error.
+  /**
+   * This function reads data off of the stream, and places it into the buffer
+   * provided
+   *
+   * @return CF_NoErr, EAGAIN if it will block, or another socket error.
+   */
   CF_Error Read(void *ioBuffer, UInt32 inBufLen, UInt32 *outLengthRead);
 
-  // Use a different TCPSocket to read request data
-  // this will be used by RTSPSessionInterface::SnarfInputSocket
+  /**
+   * Use a different TCPSocket to read request data
+   *
+   * this will be used by <code>RTSPSessionInterface::SnarfInputSocket</code>
+   */
   void AttachToSocket(TCPSocket *sock) { fSocket = sock; }
 
-  // Tell the request stream whether or not to decode from base64.
+  /**
+   * Tell the request stream whether or not to decode from base64.
+   */
   void IsBase64Encoded(bool isDataEncoded) { fDecode = isDataEncoded; }
 
-  //GetRequestBuffer
-  //This returns a buffer containing the full client request. The length is set to
-  //the exact length of the request headers. This will return NULL UNLESS this object
-  //is in the proper state (has been initialized, ReadRequest has been called until it returns
-  //RequestArrived).
+  /**
+   * This returns a buffer containing the full client request. The length is
+   * set to the exact length of the request headers.
+   *
+   * This will return NULL UNLESS this object is in the proper state (has been
+   * initialized, ReadRequest has been called until it returns RequestArrived).
+   */
   StrPtrLen *GetRequestBuffer() { return fRequestPtr; }
 
   bool IsDataPacket() { return fIsDataPacket; }
