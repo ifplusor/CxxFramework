@@ -27,6 +27,7 @@
 #include "DateTranslator.h"
 #include <OSThread.h>
 #include <HTTPSessionInterface.h>
+#include <CFEnv.h>
 
 StrPtrLen HTTPPacket::sColonSpace(": ", 2);
 static bool sFalse = false;
@@ -68,7 +69,7 @@ UInt8 HTTPPacket::sURLStopConditions[] =
 
 // Constructor for parse a packet header
 HTTPPacket::HTTPPacket(StrPtrLen *packetPtr)
-    : fSvrHeader(HTTPSessionInterface::GetServerHeader()),
+    : fSvrHeader(CFEnv::GetServerHeader()),
       fPacketHeader(*packetPtr), // 浅拷贝
       fMethod(httpIllegalMethod),
       fVersion(httpIllegalVersion),
@@ -90,7 +91,7 @@ HTTPPacket::HTTPPacket(StrPtrLen *packetPtr)
 
 // Constructor for creating a new packet
 HTTPPacket::HTTPPacket(HTTPType httpType)
-    : fSvrHeader(HTTPSessionInterface::GetServerHeader()),
+    : fSvrHeader(CFEnv::GetServerHeader()),
 //      fPacketHeader(),
       fMethod(httpIllegalMethod),
       fVersion(httpIllegalVersion),
@@ -355,6 +356,12 @@ void HTTPPacket::setKeepAlive(StrPtrLen *keepAliveValue) {
   }
 }
 
+StrPtrLen *HTTPPacket::GetHeaderValue(HTTPHeader inHeader) {
+  if (inHeader != httpIllegalHeader)
+    return &fFieldValues[inHeader];
+  return NULL;
+}
+
 void HTTPPacket::putStatusLine(StringFormatter *putStream,
                                HTTPStatusCode status,
                                HTTPVersion version) {
@@ -366,7 +373,8 @@ void HTTPPacket::putStatusLine(StringFormatter *putStream,
   putStream->PutEOL();
 }
 
-void HTTPPacket::putMethedLine(StringFormatter *putStream, HTTPMethod method,
+void HTTPPacket::putMethedLine(StringFormatter *putStream,
+                               HTTPMethod method,
                                HTTPVersion version) {
   putStream->Put(HTTPProtocol::GetMethodString(method));
   putStream->PutSpace();
@@ -374,12 +382,6 @@ void HTTPPacket::putMethedLine(StringFormatter *putStream, HTTPMethod method,
   putStream->PutSpace();
   putStream->Put(HTTPProtocol::GetVersionString(version));
   putStream->PutEOL();
-}
-
-StrPtrLen *HTTPPacket::GetHeaderValue(HTTPHeader inHeader) {
-  if (inHeader != httpIllegalHeader)
-    return &fFieldValues[inHeader];
-  return NULL;
 }
 
 bool HTTPPacket::CreateResponseHeader() {
@@ -410,6 +412,7 @@ bool HTTPPacket::CreateResponseHeader() {
   // Access-Control-Allow-Origin: *
   AppendResponseHeader(httpAccessControlAllowOriginHeader, &sAllString);
 
+  fHTTPHeader->Len = fHTTPHeaderFormatter->GetCurrentOffset();
   return true;
 }
 
@@ -433,9 +436,10 @@ bool HTTPPacket::CreateRequestHeader() {
 
   //make a partial header for the given version and status code
   putMethedLine(fHTTPHeaderFormatter, fMethod, fVersion);
-  Assert(fSvrHeader.Ptr != NULL);
 
+  Assert(fSvrHeader.Ptr != NULL);
   AppendResponseHeader(httpUserAgentHeader, &fSvrHeader);
+
   fHTTPHeader->Len = fHTTPHeaderFormatter->GetCurrentOffset();
   return true;
 }

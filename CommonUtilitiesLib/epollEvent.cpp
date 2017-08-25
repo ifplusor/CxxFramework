@@ -11,7 +11,9 @@
 #include "OSMutex.h"
 
 using namespace std;
+
 #if defined(__linux__)
+
 #define MAX_EPOLL_FD    20000
 
 static int epollfd = 0;             // epoll 描述符
@@ -162,5 +164,6 @@ int epollDestory() {
   delete[] _events;
   return 0;
 }
+
 #endif
 

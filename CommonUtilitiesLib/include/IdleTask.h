@@ -50,15 +50,19 @@
 
 class IdleTask;
 
-// merely a private implementation detail of IdleTask
-// 这套机制实际上是利用一个线程专门来处理一个定时事件,平时睡眠,一旦发现有任务到期,就会
-// 通过 signal 通知另外的线程处理这个事件。而别的模块可以通过 IdleTaskThread::SetIdleTimer 函数
-// 将自己的信息插入到 IdleTaskThread 的堆栈里。
+/*
+ * merely a private implementation detail of IdleTask
+ *
+ * 这套机制实际上是利用一个线程专门来处理一个定时事件，平时睡眠，一旦发现有
+ * 任务到期，就会通过 signal 通知另外的线程处理这个事件。
+ * 而别的模块可以通过 IdleTaskThread::SetIdleTimer 函数将自己的信息插入到
+ * IdleTaskThread 的堆栈里。
+ */
 class IdleTaskThread : private OSThread {
  private:
 
   IdleTaskThread() : OSThread(), fHeapMutex() {}
-  virtual ~IdleTaskThread() {Assert(fIdleHeap.CurrentHeapSize() == 0); }
+  virtual ~IdleTaskThread() { Assert(fIdleHeap.CurrentHeapSize() == 0); }
 
   void SetIdleTimer(IdleTask *idleObj, SInt64 msec);
   void CancelTimeout(IdleTask *idleObj);

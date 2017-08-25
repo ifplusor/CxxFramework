@@ -3,7 +3,10 @@
 #include <SocketUtils.h>
 #include <TimeoutTask.h>
 #include <HTTPSessionInterface.h>
-#include "HTTPListenerSocket.h"
+#include <HTTPListenerSocket.h>
+#include <CFEnv.h>
+#include <CFConfigure.h>
+
 
 bool isStop = false;
 
@@ -14,6 +17,11 @@ void willExit() {
 int main() {
 
   atexit(willExit);
+
+  CFEnv::Initialize();
+
+  // user define
+  CFConfigure::Initialize();
 
   // Initialize utility classes
   OS::Initialize();
@@ -33,18 +41,15 @@ int main() {
 
 #endif
 
-  OSThread::SetPersonality("root", "root");
+  OSThread::SetPersonality(CFConfigure::GetPersonalityUser(),
+                           CFConfigure::GetPersonalityGroup());
 
-  UInt32 numShortTaskThreads = 0;
-  UInt32 numBlockingThreads = 0;
-  UInt32 numThreads = 0;
-  UInt32 numProcessors = 0;
+  UInt32 numShortTaskThreads = CFConfigure::GetShortTaskThreads();
+  UInt32 numBlockingThreads = CFConfigure::GetBlockingThreads();
 
   if (OS::ThreadSafe()) {
-//    numShortTaskThreads =
-//        sServer->GetPrefs()->GetNumThreads(); // whatever the prefs say
     if (numShortTaskThreads == 0) {
-      numProcessors = OS::GetNumProcessors();
+      UInt32 numProcessors = OS::GetNumProcessors();
       // 1 worker thread per processor, up to 2 threads.
       // Note: Limiting the number of worker threads to 2 on a MacOS X system
       //     with > 2 cores results in better performance on those systems, as
@@ -56,8 +61,6 @@ int main() {
         numShortTaskThreads = numProcessors;
     }
 
-//    numBlockingThreads =
-//        sServer->GetPrefs()->GetNumBlockingThreads(); // whatever the prefs say
     if (numBlockingThreads == 0)
       numBlockingThreads = 1;
   }
@@ -68,8 +71,9 @@ int main() {
   if (numBlockingThreads == 0)
     numBlockingThreads = 1;
 
-  numThreads = numShortTaskThreads + numBlockingThreads;
-  qtss_printf("Add threads shortask=%lu blocking=%lu\n",
+  UInt32 numThreads = numShortTaskThreads + numBlockingThreads;
+  qtss_printf("Add threads short_task=%" _U32BITARG_
+                  " blocking=%" _U32BITARG_ "\n",
               numShortTaskThreads, numBlockingThreads);
 
   TaskThreadPool::SetNumShortTaskThreads(numShortTaskThreads);
@@ -88,9 +92,10 @@ int main() {
   // is in the process of staring up
   IdleTask::Initialize();
   Socket::StartThread();
+
   OSThread::Sleep(1000);
 
-  HTTPSessionInterface::Initialize();
+  HTTPSessionInterface::Initialize(CFConfigure::GetHttpMapping());
 
   HTTPListenerSocket *httpSocket = new HTTPListenerSocket();
   httpSocket->Initialize(SocketUtils::GetIPAddr(0), 8081);

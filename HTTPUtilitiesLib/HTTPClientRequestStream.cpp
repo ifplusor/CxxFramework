@@ -93,7 +93,7 @@ CF_Error HTTPClientRequestStream::ReadRequest() {
         Assert(fEncodedBytesRemaining == 0);
       } else {
         // We don't have any new data, get some from the socket...
-        CF_Error sockErr = fSocket->Read(&fRequestBuffer[fCurOffset],
+        OS_Error sockErr = fSocket->Read(&fRequestBuffer[fCurOffset],
                                          (CF_MAX_REQUEST_BUFFER_SIZE
                                              - fCurOffset) - 1,
                                          &newOffset);

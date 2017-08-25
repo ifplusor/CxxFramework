@@ -31,13 +31,10 @@
                 low priority timing mechanism. Timeouts may not happen exactly when
                 they are supposed to, but who cares?
 
-
-
-
 */
 
-#ifndef __TIMEOUTTASK_H__
-#define __TIMEOUTTASK_H__
+#ifndef __TIMEOUT_TASK_H__
+#define __TIMEOUT_TASK_H__
 
 #include "StrPtrLen.h"
 #include "IdleTask.h"
@@ -49,23 +46,27 @@
 
 #include <memory>
 
-#define TIMEOUT_DEBUGGING 0 //messages to help debugging timeouts
+//messages to help debugging timeouts
+#define TIMEOUT_DEBUGGING 1
 
-// TimeoutTaskThread 是 IdleTask 的派生类,IdleTask 是 Task 的派生类。
-// 实际上这个类的名字容易产生混淆,它并不是一个线程类,而是一个基于 Task类的任务类,它配合
-// TimeoutTask类实现一个周期性运行的基础任务。
+/*
+ * TimeoutTaskThread 是 IdleTask 的派生类, IdleTask 是 Task 的派生类。
+ * 实际上这个类的名字容易产生混淆，它并不是一个线程类，而是一个基于 Task 类的
+ * 任务类，它配合 TimeoutTaskDaemon 类实现一个周期性运行的基础任务。
+ */
 class TimeoutTaskThread : public IdleTask {
  public:
 
   //All timeout tasks get timed out from this thread
-  TimeoutTaskThread()
-      : IdleTask(), fMutex() { this->SetTaskName("TimeoutTask"); }
+  TimeoutTaskThread() : IdleTask(), fMutex() {
+    this->SetTaskName("TimeoutTask");
+  }
 
-  virtual     ~TimeoutTaskThread() {}
+  virtual ~TimeoutTaskThread() {}
 
  private:
 
-  //this thread runs every minute and checks for timeouts
+  // this thread runs every minute and checks for timeouts
   enum {
     kIntervalSeconds = 15   //UInt32
   };
@@ -86,12 +87,11 @@ class TimeoutTask {
  public:
 
   /**
-   * construct TimeoutTaskThread.
+   * @brief construct TimeoutTaskThread.
+   * @note Call Initialize before using this class
    *
    * TimeoutTaskThread 是 IdleTask 的派生类, IdleTask 是 Task 的派生类。
    * 所以，TimeoutTaskThread 本质上是运行在 TaskThread 上的一个 Task。
-   *
-   * <b>note:</b> Call Initialize before using this class
    */
   static void Initialize();
 
@@ -123,12 +123,10 @@ class TimeoutTask {
   //for putting on our global queue of timeout tasks
   OSQueueElem fQueueElem;
 
-  //static TimeoutTaskThread*   sThread;
-
   static shared_ptr<TimeoutTaskThread> sThread;
 
   friend class TimeoutTaskThread;
 };
 
-#endif //__TIMEOUTTASK_H__
+#endif //__TIMEOUT_TASK_H__
 

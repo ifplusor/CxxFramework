@@ -15,7 +15,6 @@ set(HEADER_FILES
         include/OSCond.h
         include/OSFileSource.h
         include/OSHashTable.h
-        include/OSHeaders.h
         include/OSHeap.h
         include/OSMapEx.h
         include/OSMutex.h
@@ -112,3 +111,5 @@ add_library(CommonUtilities STATIC
 target_include_directories(CommonUtilities
         PUBLIC include
         PUBLIC ${PROJECT_SOURCE_DIR}/ThirdParty)
+target_compile_options(CommonUtilities
+        PRIVATE -fPIC)

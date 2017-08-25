@@ -30,25 +30,34 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
 
 
-add_custom_target(HEADERS
-        SOURCES Include/PlatformHeader.h
-        SOURCES Include/revision.h
-        SOURCES Include/CF.h
-        SOURCES Include/CFMemoryDeleter.h)
-
 include_directories(Include)
-
 
 add_subdirectory(CommonUtilitiesLib)
 add_subdirectory(HTTPUtilitiesLib)
 
+set(HEADER_FILES
+        Include/PlatformHeader.h
+        Include/OSHeaders.h
+        Include/revision.h
+        Include/CFDef.h
+        Include/CFEnv.h
+        Include/CFConfigure.h
+        Include/CF.h)
 
-set(HEADER_FILES )
+set(SOURCE_FILES
+        CFEnv.cpp
+        CFConfigure.cpp)
 
-set(SOURCE_FILES main.cpp)
+add_library(CxxFramework SHARED
+        ${HEADER_FILES} ${SOURCE_FILES})
+target_link_libraries(CxxFramework
+        PUBLIC CommonUtilities
+        PUBLIC HTTPUtilities
+        PUBLIC pthread)
+target_compile_options(CxxFramework
+        PRIVATE -fPIC)
 
-add_executable(demo ${SOURCE_FILES})
+add_executable(demo
+        main.cpp)
 target_link_libraries(demo
-        PRIVATE CommonUtilities
-        PRIVATE HTTPUtilities
-        PRIVATE pthread)
+        PRIVATE CxxFramework)

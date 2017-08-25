@@ -46,7 +46,7 @@ void StringFormatter::Put(const SInt32 num) {
 }
 
 void StringFormatter::Put(char *buffer, UInt32 bufferSize) {
-  //optimization for writing 1 character
+  // optimization for writing 1 character
   if ((bufferSize == 1) && (fCurrentPut != fEndPut)) {
     *(fCurrentPut++) = *buffer;
     fBytesWritten++;

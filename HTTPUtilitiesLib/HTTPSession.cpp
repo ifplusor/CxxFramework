@@ -3,8 +3,8 @@
 	Contains:
 */
 
+#include <CFEnv.h>
 #include "HTTPSession.h"
-#include "OSArrayObjectDeleter.h"
 
 using namespace std;
 
@@ -151,7 +151,7 @@ SInt64 HTTPSession::Run() {
         // 刷新Session保活时间
         fTimeoutTask.RefreshTimeout();
 
-        // 对请求报文进行解析
+        // 对请求报文进行解析，读取 body
         CF_Error theErr = SetupRequest();
 
         // 当 SetupRequest 步骤未读取到完整的网络报文，需要进行等待
@@ -160,14 +160,10 @@ SInt64 HTTPSession::Run() {
           fInputSocketP->RequestEvent(EV_RE);
           // We are holding mutexes, so we need to force
           // the same thread to be used for next Run()
-          return 0; // 返回0表示有事件才进行通知，返回>0表示规定时间后调用Run
+          // when next run, the fState also is kFilteringRequest, so we will
+          // call SetupRequest for continue read body.
+          return 0; // 返回0表示有事件才进行通知，返回>0表示规定时间后调用Run()
         }
-
-        // 每一步都检测响应报文是否已完成，完成则直接进行回复响应
-//        if (fOutputStream.GetBytesWritten() > 0) {
-//          fState = kSendingResponse;
-//          break;
-//        }
 
         fState = kPreprocessingRequest;
         break;
@@ -188,36 +184,7 @@ SInt64 HTTPSession::Run() {
       case kProcessingRequest: {
 
         // doDispatch
-
-        if (fRequest->GetRequestPath() != nullptr) {
-          string sRequest(fRequest->GetRequestPath());
-//
-//          if (!sRequest.empty()) {
-//            boost::to_lower(sRequest);
-//
-//            vector<string> path;
-//            if (boost::ends_with(sRequest, "/")) {
-//              boost::erase_tail(sRequest, 1);
-//            }
-//            boost::split(path, sRequest,
-//                         boost::is_any_of("/"),
-//                         boost::token_compress_on);
-//            if (path.size() == 3) {
-//
-//            }
-//
-//            return CF_NoErr;
-//          }
-          fResponse->SetStatusCode(httpNotFound);
-        }
-
-        // 构造响应信息
-        CF_Error theErr = SetupResponse();
-
-        if (fOutputStream.GetBytesWritten() == 0) {
-          fState = kCleaningUp;
-          break;
-        }
+        CF_Error theErr = Dispatch(*fRequest, *fResponse);
 
         fState = kSendingResponse;
       }
@@ -226,6 +193,14 @@ SInt64 HTTPSession::Run() {
         // 响应报文发送，确保完全发送
         Assert(fRequest != nullptr);
         Assert(fResponse != nullptr);
+
+        // 构造响应信息
+        CF_Error theErr = SetupResponse();
+
+        if (fOutputStream.GetBytesWritten() == 0) {
+          fState = kCleaningUp;
+          break;
+        }
 
         // 发送响应报文
         err = fOutputStream.Flush();
@@ -277,14 +252,15 @@ SInt64 HTTPSession::Run() {
   if (fObjectHolders == 0)
     return -1;
 
-  // 如果流程走到这里，Session实际已经无效了，应该被删除，但没有，因为还有其他地方引用了Session对象
+  // 如果流程走到这里，Session实际已经无效了，应该被删除。
+  // 但没有，因为还有其他地方引用了Session对象
   return 0;
 }
 
 CF_Error HTTPSession::SendHTTPPacket(StrPtrLen *contentXML,
                                        bool connectionClose,
                                        bool decrement) {
-  HTTPPacket httpAck(&HTTPSessionInterface::GetServerHeader());
+  HTTPPacket httpAck(&CFEnv::GetServerHeader());
   httpAck.CreateResponseHeader();
   if (contentXML->Len)
     httpAck.AppendContentLengthHeader(contentXML->Len);
@@ -319,14 +295,16 @@ CF_Error HTTPSession::SendHTTPPacket(StrPtrLen *contentXML,
  * 解析请求报文
  */
 CF_Error HTTPSession::SetupRequest() {
+  CF_Error theErr;
 
   // 解析 head
-  CF_Error theErr = fRequest->Parse();
-  if (theErr != CF_NoErr)
-    return CF_BadArgument;
+  if (fRequest->GetHTTPType() == httpIllegalType) {
+    theErr = fRequest->Parse();
+    if (theErr != CF_NoErr)
+      return CF_BadArgument;
+  }
 
   // 解析 body
-
   StrPtrLen *lengthPtr = fRequest->GetHeaderValue(httpContentLengthHeader);
   StringParser theContentLenParser(lengthPtr);
   theContentLenParser.ConsumeWhitespace();
@@ -339,54 +317,44 @@ CF_Error HTTPSession::SetupRequest() {
     // then we've already been here for this request. If they don't exist, add them.
     UInt32 theBufferOffset = 0;
     char *theRequestBody = nullptr;
-    UInt32 theLen = sizeof(theRequestBody);
-    // 获取 easyHTTPSesContentBody
-    theRequestBody = new char[content_length + 1];
-    memset(theRequestBody, 0, content_length + 1);
-    StrPtrLen *requestBody = new StrPtrLen(theRequestBody, content_length);
-    fRequest->SetBody(requestBody);
+    StrPtrLen *requestBody = fRequest->GetBody();
+    if (requestBody != nullptr) {
+      theRequestBody = requestBody->Ptr;
+      theBufferOffset = requestBody->Len;
+    } else {
+      theRequestBody = new char[content_length + 1];
+      memset(theRequestBody, 0, content_length + 1);
+      requestBody = new StrPtrLen(theRequestBody, 0);
+      fRequest->SetBody(requestBody);
+    }
 
-    theLen = sizeof(theBufferOffset);
-    // 获取 easyHTTPSesContentBodyOffset
+    UInt32 theLen;
 
     // We have our buffer and offset. Read the data.
-    //theErr = QTSS_Read(this, theRequestBody + theBufferOffset, content_length - theBufferOffset, &theLen);
     theErr = fInputStream.Read(theRequestBody + theBufferOffset,
                                content_length - theBufferOffset,
                                &theLen);
     Assert(theErr != CF_BadArgument);
 
     if (theErr == CF_RequestFailed) {
-      OSCharArrayDeleter charArrayPathDeleter(theRequestBody);
-      //
       // NEED TO RETURN HTTP ERROR RESPONSE
       return CF_RequestFailed;
     }
 
+    // Update our offset in the buffer
+    requestBody->Len = theBufferOffset + theLen;
+
     qtss_printf("Add Len:%d \n", theLen);
     if ((theErr == CF_WouldBlock) ||
         (theLen < (content_length - theBufferOffset))) {
-      //
-      // Update our offset in the buffer
-      theBufferOffset += theLen;
-      // 设置 easyHTTPSesContentBodyOffset
 
-      // The entire content body hasn't arrived yet. Request a read event and wait for it.
+      // The entire content body hasn't arrived yet.
+      // Request a read event and wait for it.
 
-      Assert(theErr == CF_NoErr);
       return CF_WouldBlock;
     }
 
     Assert(theErr == CF_NoErr);
-
-    OSCharArrayDeleter charArrayPathDeleter(theRequestBody);
-    // 处理 body
-
-    UInt32 offset = 0;
-    // 清空 easyHTTPSesContentBodyOffset
-
-    char *content = nullptr;
-    // 清空 easyHTTPSesContentBody
   }
 
   qtss_printf("get complete http msg:%s QueryString:%s \n",
@@ -409,8 +377,12 @@ CF_Error HTTPSession::SetupResponse() {
   StrPtrLen *respBody = fResponse->GetBody();
   if (respBody != NULL && respBody->Len > 0)
     fResponse->AppendContentLengthHeader(respBody->Len);
+  else
+    fResponse->AppendContentLengthHeader((UInt32) 0);
 
-  fResponse->AppendConnectionCloseHeader();
+  if (!fRequest->IsRequestKeepAlive()) {
+    fResponse->AppendConnectionCloseHeader();
+  }
 
   char respHeader[2048] = {0};
   StrPtrLen *ackPtr = fResponse->GetCompleteHTTPHeader();
@@ -422,7 +394,52 @@ CF_Error HTTPSession::SetupResponse() {
   if (respBody != NULL && respBody->Len > 0)
     fOutputStream.Put(*respBody);
 
-  this->Signal(Task::kKillEvent);
+  return CF_NoErr;
+}
+
+Bool8 HTTPSession::MatchPath(const char *pattern, string &path) {
+
+//          if (!sRequest.empty()) {
+//            boost::to_lower(sRequest);
+//
+//            vector<string> path;
+//            if (boost::ends_with(sRequest, "/")) {
+//              boost::erase_tail(sRequest, 1);
+//            }
+//            boost::split(path, sRequest,
+//                         boost::is_any_of("/"),
+//                         boost::token_compress_on);
+//            if (path.size() == 3) {
+//
+//            }
+//
+//            return CF_NoErr;
+//          }
+
+  return TRUE;
+}
+
+CF_Error HTTPSession::Dispatch(HTTPPacket &request, HTTPPacket &response) {
+  int i;
+
+  if (request.GetRequestPath() != nullptr) {
+    string strRequest(request.GetRequestPath());
+    for (i = 0; true; i++) {
+      if (sMapping[i].path == NULL || sMapping[i].func == NULL) break;
+      if (MatchPath(sMapping[i].path, strRequest)) {
+        CF_Error theErr = sMapping[i].func(request, response);
+        if (theErr != CF_NoErr) {
+          response.SetStatusCode(httpInternalServerError);
+          return theErr;
+        }
+      }
+    }
+    if (i == 0) {
+      response.SetStatusCode(httpNotFound);
+    }
+  } else {
+    response.SetStatusCode(httpBadRequest);
+  }
 
   return CF_NoErr;
 }
@@ -430,6 +447,9 @@ CF_Error HTTPSession::SetupResponse() {
 void HTTPSession::CleanupRequestAndResponse() {
 
   if (fRequest != nullptr) {
+    if (!fRequest->IsRequestKeepAlive())
+      this->Signal(Task::kKillEvent);
+
     // nullptr out any references to the current request
     delete fRequest;
     fRequest = nullptr;
@@ -443,7 +463,8 @@ void HTTPSession::CleanupRequestAndResponse() {
   fSessionMutex.Unlock();
   fReadMutex.Unlock();
 
-  // Clear out our last value for request body length before moving onto the next request
+  // Clear out our last value for request body length before moving onto
+  // the next request
   this->SetRequestBodyLength(-1);
 }
 

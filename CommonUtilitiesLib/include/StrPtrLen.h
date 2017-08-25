@@ -40,12 +40,11 @@
 #define __STRPTRLEN_H__
 
 #include <string.h>
-#include "OSHeaders.h"
 #include <ctype.h>
 #include "MyAssert.h"
-#include "SafeStdLib.h"
 
-#define STRPTRLENTESTING 0
+#define STRPTRLEN_TESTING 0
+
 
 class StrPtrLen {
  public:
@@ -72,6 +71,7 @@ class StrPtrLen {
     Ptr = nullptr;
     Len = 0;
   }
+
   char *ToUpper() {
     for (UInt32 x = 0; x < Len; x++) Ptr[x] = toupper(Ptr[x]);
     return Ptr;
@@ -189,7 +189,7 @@ class StrPtrLen {
     TrimTrailingWhitespace();
   }
 
-#if STRPTRLENTESTING
+#if STRPTRLEN_TESTING
   static bool   Test();
 #endif
 

@@ -37,9 +37,6 @@
 				be cleared before the Run() function returns, or Run() will be invoked again
 				immediately.
 
-
-
-
 */
 
 #ifndef __TASK_H__
@@ -75,7 +72,7 @@ class Task {
     kWriteEvent = 0x1 << 0x5,
 
     //update event
-        kUpdateEvent = 0x1 << 0x6
+    kUpdateEvent = 0x1 << 0x6
   };
 
   //CONSTRUCTOR / DESTRUCTOR

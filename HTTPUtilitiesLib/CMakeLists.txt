@@ -26,3 +26,5 @@ target_include_directories(HTTPUtilities
         PUBLIC include)
 target_link_libraries(HTTPUtilities
         PUBLIC CommonUtilities)
+target_compile_options(HTTPUtilities
+        PRIVATE -fPIC)

@@ -29,18 +29,16 @@
                 Construct object with a buffer, then call one
                 of many Put methods to write into that buffer.
 
-
-
 */
 
-#ifndef __STRINGFORMATTER_H__
-#define __STRINGFORMATTER_H__
+#ifndef __STRING_FORMATTER_H__
+#define __STRING_FORMATTER_H__
 
-#include <string.h>
 #include "StrPtrLen.h"
-#include "MyAssert.h"
 
-//Use a class like the ResizeableStringFormatter if you want a buffer that will dynamically grow
+
+// Use a class like the ResizeableStringFormatter if you want a buffer
+// that will dynamically grow
 class StringFormatter {
  public:
 
@@ -157,5 +155,5 @@ inline void StringFormatter::PutFilePath(char *inPath, char *inFileName) {
   PutFilePath(&pathStr, &fileStr);
 }
 
-#endif // __STRINGFORMATTER_H__
+#endif // __STRING_FORMATTER_H__
 

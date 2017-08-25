@@ -34,13 +34,13 @@ class HTTPPacket {
  public:
 
   /**
-   * construct object for parse http packet header.
+   * @brief construct object for parse http packet header.
    * @param packetPtr - http packet data
    */
   HTTPPacket(StrPtrLen *packetPtr);
 
   /**
-   * construct object for build http packet
+   * @brief construct object for build http packet
    * @param httpType - http packet type
    */
   HTTPPacket(HTTPType httpType = httpResponseType);
@@ -48,38 +48,36 @@ class HTTPPacket {
   // Destructor
   virtual ~HTTPPacket();
 
+  HTTPType GetHTTPType() { return fHTTPType; }
+
   /**
-   * Parse - parse http request header
+   * @brief parse http request header
+   * @note Should be called before accessing anything in the request header
    *
    * Calls ParseRequestLine and ParseHeaders
-   *
-   * <b>NOTE:</b> Should be called before accessing anything in the request header
    */
   CF_Error Parse();
 
   // Basic access methods for the HTTP method, the absolute request URI,
   // the host name from URI, the relative request URI, the request file path,
   // the HTTP version, the Status code, the keep-alive tag.
-  HTTPMethod GetMethod() { return fMethod; }
-  HTTPType GetHTTPType() { return fHTTPType; }
 
-  StrPtrLen *GetRequestLine() { return &fRequestLine; }
-  StrPtrLen *GetRequestAbsoluteURI() { return &fAbsoluteURI; }
-  StrPtrLen *GetSchemefromAbsoluteURI() { return &fAbsoluteURIScheme; }
-  StrPtrLen *GetHostfromAbsoluteURI() { return &fHostHeader; }
-  StrPtrLen *GetRequestRelativeURI() { return &fRelativeURI; }
-  char *GetRequestPath() { return fRequestPath; }
-  char *GetQueryString() { return fQueryString; }
+  HTTPMethod GetMethod() { return fMethod; }
   HTTPVersion GetVersion() { return fVersion; }
   HTTPStatusCode GetStatusCode() { return fStatusCode; }
   bool IsRequestKeepAlive() { return fRequestKeepAlive; }
 
+  StrPtrLen *GetRequestLine() { return &fRequestLine; }
+  StrPtrLen *GetRequestAbsoluteURI() { return &fAbsoluteURI; }
+  StrPtrLen *GetSchemeFromAbsoluteURI() { return &fAbsoluteURIScheme; }
+  StrPtrLen *GetHostFromAbsoluteURI() { return &fHostHeader; }
+  StrPtrLen *GetRequestRelativeURI() { return &fRelativeURI; }
+  char *GetRequestPath() { return fRequestPath; }
+  char *GetQueryString() { return fQueryString; }
+
   // If header field exists in the request, it will be found in the dictionary
   // and the value returned. Otherwise, NULL is returned.
   StrPtrLen *GetHeaderValue(HTTPHeader inHeader);
-
-  StrPtrLen *GetBody() { return fHTTPBody; }
-  void SetBody(StrPtrLen *body) { fHTTPBody = body; }
 
   // Creates a header
   bool CreateResponseHeader();
@@ -97,15 +95,32 @@ class HTTPPacket {
   void AppendContentLengthHeader(UInt64 length_64bit) const;
   void AppendContentLengthHeader(UInt32 length_32bit) const;
 
-  // Returns the completed response header by appending CRLF to the end of the header
-  // fields buffer
+  // Returns the completed response header by appending CRLF to the end of
+  // the header fields buffer
   StrPtrLen *GetCompleteHTTPHeader() const;
+
+  StrPtrLen *GetBody() { return fHTTPBody; }
+
+  /**
+   * @note body 的内存将交由 Packet 对象管理
+   */
+  void SetBody(StrPtrLen *body) {
+    if (fHTTPBody != nullptr) delete[] fHTTPBody->Ptr;
+    delete fHTTPBody;
+    fHTTPBody = body;
+  }
+
+  //
+  // Other utils
 
   // Parse if-modified-since header
   time_t ParseIfModSinceHeader();
 
  private:
   enum { kMinHeaderSizeInBytes = 512 };
+
+  //
+  // For parse
 
   // Gets the method, version and calls ParseURI
   CF_Error parseRequestLine(StringParser *parser);
@@ -117,6 +132,10 @@ class HTTPPacket {
 
   // Sets fRequestKeepAlive
   void setKeepAlive(StrPtrLen *keepAliveValue);
+
+  //
+  // For construct
+
   // Used in initialize and CreateResponseHeader
   static void putStatusLine(StringFormatter *putStream,
                             HTTPStatusCode status,
@@ -125,21 +144,26 @@ class HTTPPacket {
   static void putMethedLine(StringFormatter *putStream,
                             HTTPMethod method,
                             HTTPVersion version);
-  //For writing into the premade headers
+
+  // For writing into the premade headers
   StrPtrLen *getServerHeader() { return &fSvrHeader; }
 
-  // Complete request and response headers
-  StrPtrLen fPacketHeader;
-  ResizeableStringFormatter *fHTTPHeaderFormatter;
-  StrPtrLen *fHTTPHeader;
+  //
+  // Private members
 
+  // Complete request and response headers
+  StrPtrLen fPacketHeader; // for parse
+  ResizeableStringFormatter *fHTTPHeaderFormatter; // for construct
+  StrPtrLen *fHTTPHeader; // for construct
+
+  // request and repose body
   StrPtrLen *fHTTPBody;
 
-  // Private members
-  HTTPMethod fMethod;
-  HTTPVersion fVersion;
-
   HTTPType fHTTPType;
+
+  HTTPVersion fVersion;
+  HTTPMethod fMethod; // request only
+  HTTPStatusCode fStatusCode; // response only
 
   StrPtrLen fRequestLine;
 
@@ -155,10 +179,10 @@ class HTTPPacket {
   char *fRequestPath; // Also contains the query string
   char *fQueryString;
 
-  HTTPStatusCode fStatusCode;
   bool fRequestKeepAlive;  // Keep-alive information in the client request
   StrPtrLen fFieldValues[httpNumHeaders]; // Array of header field values parsed from the request
   StrPtrLen fSvrHeader;  // Server header set up at initialization
+
   static StrPtrLen sColonSpace;
   static UInt8 sURLStopConditions[];
 };

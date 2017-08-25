@@ -7,6 +7,7 @@
 */
 #ifndef _COMMON_H__
 #define _COMMON_H__
+
 #define EV_RE  1
 #define EV_WR  2
 #define EV_EX  4//not used

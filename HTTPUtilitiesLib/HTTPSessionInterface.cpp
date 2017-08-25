@@ -29,7 +29,6 @@
 
 #include <HTTPProtocol.h>
 #include "HTTPSessionInterface.h"
-#include "revision.h"
 
 #if DEBUG
 #define HTTP_SESSION_INTERFACE_DEBUGGING 1
@@ -39,54 +38,10 @@
 
 std::atomic_uint HTTPSessionInterface::sSessionIndexCounter{kFirstHTTPSessionID};
 
-// STATIC DATA
+HTTPMapping *HTTPSessionInterface::sMapping = NULL;
 
-UInt32 HTTPSessionInterface::sServerAPIVersion = CF_API_VERSION;
-
-#if __MacOSX__
-StrPtrLen HTTPSessionInterface::sServerNameStr("EasyDarwin");
-#else
-StrPtrLen HTTPSessionInterface::sServerNameStr(PLATFORM_SERVER_TEXT_NAME);
-#endif
-
-// kVersionString from revision.h, include with -i at project level
-StrPtrLen HTTPSessionInterface::sServerVersionStr(kVersionString);
-StrPtrLen HTTPSessionInterface::sServerBuildStr(kBuildString);
-StrPtrLen HTTPSessionInterface::sServerCommentStr(kCommentString);
-
-StrPtrLen HTTPSessionInterface::sServerPlatformStr(kPlatformNameString);
-StrPtrLen HTTPSessionInterface::sServerBuildDateStr(__DATE__ ", " __TIME__);
-char      HTTPSessionInterface::sServerHeader[kMaxServerHeaderLen];
-StrPtrLen HTTPSessionInterface::sServerHeaderStr(sServerHeader, kMaxServerHeaderLen);
-
-void HTTPSessionInterface::Initialize() {
-
-  //Write out a premade server header
-  StringFormatter serverFormatter(sServerHeaderStr.Ptr, kMaxServerHeaderLen);
-//  serverFormatter.Put(HTTPProtocol::GetHeaderString(httpServerHeader));
-//  serverFormatter.Put(": ");
-  serverFormatter.Put(sServerNameStr);
-  serverFormatter.PutChar('/');
-  serverFormatter.Put(sServerVersionStr);
-  serverFormatter.PutChar(' ');
-
-  serverFormatter.PutChar('(');
-  serverFormatter.Put("Build/");
-  serverFormatter.Put(sServerBuildStr);
-  serverFormatter.Put("; ");
-  serverFormatter.Put("Platform/");
-  serverFormatter.Put(sServerPlatformStr);
-  serverFormatter.PutChar(';');
-
-  if (sServerCommentStr.Len > 0) {
-    serverFormatter.PutChar(' ');
-    serverFormatter.Put(sServerCommentStr);
-  }
-
-  serverFormatter.PutChar(')');
-
-  sServerHeaderStr.Len = serverFormatter.GetCurrentOffset();
-  Assert(sServerHeaderStr.Len < kMaxServerHeaderLen);
+void HTTPSessionInterface::Initialize(HTTPMapping *mapping) {
+  sMapping = mapping;
 }
 
 HTTPSessionInterface::HTTPSessionInterface()

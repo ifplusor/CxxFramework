@@ -23,9 +23,9 @@
  *
  */
 /*
-    File:       RTSPRequestStream.cpp
+    File:       HTTPRequestStream.cpp
 
-    Contains:   Implementation of RTSPRequestStream class.
+    Contains:   Implementation of HTTPRequestStream class.
 */
 
 
@@ -172,7 +172,8 @@ CF_Error HTTPRequestStream::ReadRequest() {
 
     if (fPrintRTSP) {
       DateBuffer theDate;
-      DateTranslator::UpdateDateBuffer(&theDate, 0); // get the current GMT date and time
+      DateTranslator::UpdateDateBuffer(&theDate,
+                                       0); // get the current GMT date and time
       qtss_printf("\n\n#C->S:\n#time: ms=%"   _U32BITARG_   " date=%s\n",
                   (UInt32) OS::StartTimeMilli_Int(),
                   theDate.GetDateBuffer());
@@ -260,8 +261,8 @@ CF_Error HTTPRequestStream::ReadRequest() {
 }
 
 CF_Error HTTPRequestStream::Read(void *ioBuffer,
-                                   UInt32 inBufLen,
-                                   UInt32 *outLengthRead) {
+                                 UInt32 inBufLen,
+                                 UInt32 *outLengthRead) {
   UInt32 theLengthRead = 0;
   UInt8 *theIoBuffer = (UInt8 *) ioBuffer;
 
@@ -299,8 +300,8 @@ CF_Error HTTPRequestStream::Read(void *ioBuffer,
   // Read data directly from the socket and place it in our buffer
   UInt32 theNewOffset = 0;
   CF_Error theErr = fSocket->Read(&theIoBuffer[theLengthRead],
-                                    inBufLen - theLengthRead,
-                                    &theNewOffset);
+                                  inBufLen - theLengthRead,
+                                  &theNewOffset);
 #if READ_DEBUGGING
   qtss_printf("In RTSPRequestStream::Read: Got %d bytes off Socket\n", theNewOffset);
 #endif
@@ -311,7 +312,7 @@ CF_Error HTTPRequestStream::Read(void *ioBuffer,
 }
 
 CF_Error HTTPRequestStream::DecodeIncomingData(char *inSrcData,
-                                                 UInt32 inSrcDataLen) {
+                                               UInt32 inSrcDataLen) {
   Assert(fRetreatBytes == 0);
 
   if (fRequest.Ptr == &fRequestBuffer[0]) {

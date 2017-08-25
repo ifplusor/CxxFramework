@@ -36,9 +36,12 @@
 #ifndef __HTTP_RESPONSE_STREAM_H__
 #define __HTTP_RESPONSE_STREAM_H__
 
+#include <CFDef.h>
 #include <ResizeableStringFormatter.h>
 #include <TCPSocket.h>
 #include <TimeoutTask.h>
+
+
 class HTTPResponseStream : public ResizeableStringFormatter {
  public:
 

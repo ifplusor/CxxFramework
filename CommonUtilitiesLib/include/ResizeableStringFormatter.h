@@ -44,8 +44,8 @@ class ResizeableStringFormatter : public StringFormatter {
   ResizeableStringFormatter(char *inBuffer = nullptr, UInt32 inBufSize = 0)
       : StringFormatter(inBuffer, inBufSize), fOriginalBuffer(inBuffer) {}
 
-  //If we've been forced to increase the buffer size, fStartPut WILL be a dynamically allocated
-  //buffer, and it WON'T be equal to fOriginalBuffer (obviously).
+  // If we've been forced to increase the buffer size, fStartPut WILL be a
+  // dynamically allocated buffer, and it WON'T be equal to fOriginalBuffer (obviously).
   virtual ~ResizeableStringFormatter() {
     if (fStartPut != fOriginalBuffer) delete[] fStartPut;
   }

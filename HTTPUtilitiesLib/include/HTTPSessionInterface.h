@@ -12,11 +12,22 @@
 #include <TimeoutTask.h>
 #include "HTTPRequestStream.h"
 #include "HTTPResponseStream.h"
+#include "HTTPPacket.h"
+
+
+typedef CF_Error (*CF_CGIFunction) (HTTPPacket &request, HTTPPacket &response);
+
+struct HTTPMapping {
+  const char *path;
+  CF_CGIFunction func;
+};
+typedef struct HTTPMapping HTTPMapping;
+
 
 class HTTPSessionInterface : public Task {
  public:
 
-  static void Initialize();
+  static void Initialize(HTTPMapping *mapping);
 
   HTTPSessionInterface();
   virtual ~HTTPSessionInterface();
@@ -63,16 +74,6 @@ class HTTPSessionInterface : public Task {
     kMaxUserPasswordLen = 32
   };
 
-  // SERVER NAME & VERSION
-
-  static StrPtrLen &GetServerName() { return sServerNameStr; }
-  static StrPtrLen &GetServerVersion() { return sServerVersionStr; }
-  static StrPtrLen &GetServerPlatform() { return sServerPlatformStr; }
-  static StrPtrLen &GetServerBuildDate() { return sServerBuildDateStr; }
-  static StrPtrLen &GetServerHeader() { return sServerHeaderStr; }
-  static StrPtrLen &GetServerBuild() { return sServerBuildStr; }
-  static StrPtrLen &GetServerComment() { return sServerCommentStr; }
-
  protected:
   enum {
     kFirstHTTPSessionID = 1,    //UInt32
@@ -83,7 +84,7 @@ class HTTPSessionInterface : public Task {
   char fUserNameBuf[kMaxUserNameLen];
   char fUserPasswordBuf[kMaxUserPasswordLen];
 
-  TimeoutTask fTimeoutTask; //allows the session to be timed out
+  TimeoutTask fTimeoutTask; // allows the session to be timed out
 
   HTTPRequestStream fInputStream;
   HTTPResponseStream fOutputStream;
@@ -115,23 +116,10 @@ class HTTPSessionInterface : public Task {
   //static unsigned int	sSessionIndexCounter;
   static std::atomic_uint sSessionIndexCounter;
 
+  static HTTPMapping *sMapping;
+
   // Dictionary support Param retrieval function
   static void *SetupParams(HTTPSessionInterface *inSession, UInt32 *outLen);
-
-
-  enum {
-    kMaxServerHeaderLen = 1000
-  };
-
-  static UInt32 sServerAPIVersion;
-  static StrPtrLen sServerNameStr;
-  static StrPtrLen sServerVersionStr;
-  static StrPtrLen sServerBuildStr;
-  static StrPtrLen sServerCommentStr;
-  static StrPtrLen sServerPlatformStr;
-  static StrPtrLen sServerBuildDateStr;
-  static char sServerHeader[kMaxServerHeaderLen];
-  static StrPtrLen sServerHeaderStr;
 };
 
 #endif // __HTTP_SESSION_INTERFACE_H__

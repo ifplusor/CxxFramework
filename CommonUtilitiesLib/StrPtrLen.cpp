@@ -27,13 +27,11 @@
 
     Contains:   Implementation of class defined in StrPtrLen.h.
 
-
-
-
 */
 
 
 #include "StrPtrLen.h"
+
 
 UInt8 StrPtrLen::sCaseInsensitiveMask[] =
     {
@@ -381,7 +379,7 @@ void StrPtrLen::PrintStrEOL(char *stopStr, char *appendStr) {
 
 }
 
-#if STRPTRLENTESTING
+#if STRPTRLEN_TESTING
 bool  StrPtrLen::Test()
 {
     static char* test1 = "2347.;.][';[;]abcdefghijklmnopqrstuvwxyz#%#$$#";

@@ -82,8 +82,8 @@ bool Task::Valid() {
 }
 
 Task::EventFlags Task::GetEvents() {
-  //Mask off every event currently in the mask except for the alive bit, of course,
-  //which should remain unaffected and unreported by this call.
+  // Mask off every event currently in the mask except for the alive bit,
+  // of course,which should remain unaffected and unreported by this call.
   EventFlags events = fEvents & kAliveOff;
   //(void)atomic_sub(&fEvents, events);
   fEvents.fetch_sub(events);
@@ -104,8 +104,8 @@ void Task::Signal(EventFlags events) {
   events |= kAlive;
   //EventFlags oldEvents = atomic_or(&fEvents, events);
   auto oldEvents = fEvents.fetch_or(events);
-  // 有一点需要注意的是,因为是通过"或"操作,如果该线程的任务队列里已经有了一个事件待处理,那么
-  // 该事件不会被添加,也就是说在事件被处理之前,任务只会被调度一次。
+  // 有一点需要注意的是,因为是通过"或"操作,如果该线程的任务队列里已经有了一个事
+  // 件待处理,那么该事件不会被添加,也就是说在事件被处理之前,任务只会被调度一次。
   if ((!(oldEvents & kAlive)) && (TaskThreadPool::sNumTaskThreads > 0)) {
     if (fDefaultThread != nullptr && fUseThisThread == nullptr)
       fUseThisThread = fDefaultThread;
@@ -471,7 +471,7 @@ bool TaskThreadPool::AddThreads(UInt32 numToAdd) {
     sTaskThreadArray[x] = new TaskThread();
     sTaskThreadArray[x]->Start();
     if (TASK_DEBUG)
-      qtss_printf("TaskThreadPool::AddThreads sTaskThreadArray[%"   _U32BITARG_   "]=%p\n",
+      qtss_printf("TaskThreadPool::AddThreads sTaskThreadArray[%" _U32BITARG_ "]=%p\n",
                   x,
                   sTaskThreadArray[x]);
   }

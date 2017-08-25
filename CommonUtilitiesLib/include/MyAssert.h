@@ -26,7 +26,6 @@
 #ifndef __MY_ASSERT_H__
 #define __MY_ASSERT_H__
 
-#include <stdio.h>
 #include "SafeStdLib.h"
 
 #ifdef __cplusplus

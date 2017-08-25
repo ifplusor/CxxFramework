@@ -54,7 +54,7 @@ class TCPSocket : public Socket {
    * certain events happen on this socket. Those events are:
    * <ul><li>
    *   S_DATA:               Data is currently available on the socket.
-   *   </li><li>
+   * </li><li>
    *   S_CONNECTIONCLOSING:  Client is closing the connection. No longer necessary
    *                         to call Close or Disconnect, Snd & Rcv will fail.
    * </li></ul>

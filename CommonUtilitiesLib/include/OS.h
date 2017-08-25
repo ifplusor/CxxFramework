@@ -42,9 +42,8 @@ class OS {
  public:
 
   /**
-   * set global variables about time.
-   *
-   * <b>note:</b> call this before calling anything else
+   * @brief set global variables about time.
+   * @note call this before calling anything else
    */
   static void Initialize();
 

@@ -26,8 +26,9 @@
 #ifndef __OS_HEADERS_H__
 #define __OS_HEADERS_H__
 
-#include <limits.h>
+#include "PlatformHeader.h"
 
+#include <limits.h>
 
 #ifndef TRUE
 #define TRUE 1
@@ -558,11 +559,24 @@ typedef FourCharCode        OSType;
 
 #define TW0_CHARS_TO_INT( c1, c2 )  ( c1 << 8 | c2 )
 
-
 #endif
 
 
-#include <CF.h>
+#ifdef USE_ENUM
+typedef enum {
+#else
+enum {
+#endif
+  OS_NoErr = 0,
+  OS_BadURLFormat = -100,
+  OS_NotEnoughSpace = -101
+#ifdef USE_ENUM
+} OS_Error;
+#else
+};
+
+typedef SInt32 OS_Error;
+#endif
 
 
 #endif /* __OS_HEADERS_H__ */
