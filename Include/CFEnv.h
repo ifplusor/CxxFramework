@@ -12,8 +12,14 @@
 class CFEnv {
  public:
 
+  /**
+   * @brief initialize environment information
+   * @note this function is the first executor when program start
+   */
   static void Initialize();
 
+  static bool WillExit() { return sExitCode != 0; };
+  static bool Exit(UInt32 exitCode) { sExitCode = exitCode; }
 
   // SERVER NAME & VERSION
 
@@ -26,9 +32,11 @@ class CFEnv {
   static StrPtrLen &GetServerComment() { return sServerCommentStr; }
 
  private:
-  CFEnv() {};
+  CFEnv() = default;;
 
   static void makeServerHeader();
+
+  static SInt32 sExitCode;
 
   enum {
     kMaxServerHeaderLen = 1000

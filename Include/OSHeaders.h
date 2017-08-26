@@ -22,6 +22,11 @@
  * @APPLE_LICENSE_HEADER_END@
  *
  */
+/*
+	File:       OSHeaders.h
+
+	Contains:   define basic data type by length.
+*/
 
 #ifndef __OS_HEADERS_H__
 #define __OS_HEADERS_H__
@@ -127,6 +132,7 @@ typedef UInt8               Bool8;
 #define _64BITARG_ "q"
 #define _S64BITARG_ "lld"
 #define _U64BITARG_ "llu"
+
 #if __LP64__
 #define _S32BITARG_ "d"
 #define _U32BITARG_ "u"
@@ -578,5 +584,6 @@ enum {
 typedef SInt32 OS_Error;
 #endif
 
+#include "MyAssert.h"
 
 #endif /* __OS_HEADERS_H__ */

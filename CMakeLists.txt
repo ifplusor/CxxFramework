@@ -32,8 +32,11 @@ set(CMAKE_CXX_STANDARD 11)
 
 include_directories(Include)
 
-add_subdirectory(CommonUtilitiesLib)
-add_subdirectory(HTTPUtilitiesLib)
+add_subdirectory(CFBasic)
+add_subdirectory(CFCore)
+add_subdirectory(CFThread)
+add_subdirectory(CFSocket)
+add_subdirectory(CFHttp)
 
 set(HEADER_FILES
         Include/PlatformHeader.h
@@ -46,18 +49,25 @@ set(HEADER_FILES
 
 set(SOURCE_FILES
         CFEnv.cpp
-        CFConfigure.cpp)
+        CFMain.cpp)
 
 add_library(CxxFramework SHARED
         ${HEADER_FILES} ${SOURCE_FILES})
 target_link_libraries(CxxFramework
-        PUBLIC CommonUtilities
-        PUBLIC HTTPUtilities
-        PUBLIC pthread)
+        PUBLIC CFBasic
+        PUBLIC CFCore
+        PUBLIC CFThread
+        PUBLIC CFSocket
+        PUBLIC CFHttp)
 target_compile_options(CxxFramework
         PRIVATE -fPIC)
 
+if (${CND_PLATFORM} MATCHES "Linux")
+    target_link_libraries(CxxFramework
+            PUBLIC pthread)
+endif ()
+
 add_executable(demo
-        main.cpp)
+        CFConfigure.cpp)
 target_link_libraries(demo
         PRIVATE CxxFramework)

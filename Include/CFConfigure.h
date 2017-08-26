@@ -6,29 +6,38 @@
 #define __CF_CONFIGURE_H__
 
 #include "CFDef.h"
-#include "HTTPSessionInterface.h"
+#include <HTTPDef.h>
 
+/**
+ * @brief Interface for configure framework.
+ *
+ * CxxFramework only provide this declaration, and developer should give the
+ * completed implement.
+ */
 class CFConfigure {
  public:
 
-  static void Initialize();
+  /**
+   * @brief give user a chance to initialize
+   * @param argc - arguments count
+   * @param argv - arguments vector
+   */
+  static void Initialize(int argc, void **argv);
 
-  static char *GetPersonalityUser() { return defaultUser; };
-  static char *GetPersonalityGroup() { return defaultGroup; };
+  static char *GetPersonalityUser();
+  static char *GetPersonalityGroup();
 
-  static UInt32 GetShortTaskThreads() { return 0; }
-  static UInt32 GetBlockingThreads() { return 0; }
+  //
+  // TaskThreadPool Settings
 
-  static HTTPMapping *GetHttpMapping() { return defaultHttpMapping; }
+  static UInt32 GetShortTaskThreads();
+  static UInt32 GetBlockingThreads();
 
- protected:
+  //
+  // Http Server Settings
 
-  static CF_Error defaultCGI(HTTPPacket &request, HTTPPacket &response);
+  static HTTPMapping *GetHttpMapping();
 
-  static char defaultUser[];
-  static char defaultGroup[];
-
-  static HTTPMapping defaultHttpMapping[];
 };
 
 #endif //__CF_CONFIGURE_H__

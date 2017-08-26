@@ -4,9 +4,12 @@
 
 #include "CFEnv.h"
 #include <StringFormatter.h>
+#include <MyAssert.h>
 
 
 // STATIC DATA
+
+SInt32 CFEnv::sExitCode = 0;
 
 UInt32 CFEnv::sServerAPIVersion = CF_API_VERSION;
 
