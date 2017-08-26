@@ -12,7 +12,7 @@
 #include <TimeoutTask.h>
 #include "HTTPRequestStream.h"
 #include "HTTPResponseStream.h"
-#include "HTTPDef.h"
+#include "HTTPDispatcher.h"
 
 class HTTPSessionInterface : public Task {
  public:
@@ -103,10 +103,9 @@ class HTTPSessionInterface : public Task {
 
   bool fAuthenticated;
 
-  //static unsigned int	sSessionIndexCounter;
   static std::atomic_uint sSessionIndexCounter;
 
-  static HTTPMapping *sMapping;
+  static HTTPDispatcher *sDispatcher;
 
   // Dictionary support Param retrieval function
   static void *SetupParams(HTTPSessionInterface *inSession, UInt32 *outLen);

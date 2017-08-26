@@ -17,7 +17,8 @@ CF_Error defaultCGI(HTTPPacket &request, HTTPPacket &response) {
 }
 
 static HTTPMapping defaultHttpMapping[] = {
-    {"/*", (CF_CGIFunction) defaultCGI},
+    {"*.html", (CF_CGIFunction) defaultCGI},
+    {"test", (CF_CGIFunction) defaultCGI},
     {NULL, NULL}
 };
 

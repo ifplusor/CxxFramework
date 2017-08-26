@@ -8,7 +8,8 @@ set(HEADER_FILES
         include/HTTPSession.h
         include/HTTPListenerSocket.h
         include/HTTPClientRequestStream.h
-        include/HTTPClientResponseStream.h)
+        include/HTTPClientResponseStream.h
+        include/HTTPDispatcher.h)
 
 set(SOURCE_FILES
         HTTPClientRequestStream.cpp
@@ -19,7 +20,8 @@ set(SOURCE_FILES
         HTTPResponseStream.cpp
         HTTPSessionInterface.cpp
         HTTPSession.cpp
-        HTTPListenerSocket.cpp)
+        HTTPListenerSocket.cpp
+        HTTPDispatcher.cpp)
 
 add_library(CFHttp STATIC
         ${HEADER_FILES} ${SOURCE_FILES})

@@ -13,6 +13,6 @@ add_library(CFBasic STATIC
 target_include_directories(CFBasic
         PUBLIC include)
 target_link_libraries(CFBasic
-        )
+        PUBLIC CFCore)
 target_compile_options(CFBasic
         PRIVATE -fPIC)

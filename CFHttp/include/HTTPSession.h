@@ -21,10 +21,7 @@ class HTTPSession : public HTTPSessionInterface {
 
   CF_Error SetupRequest();
   CF_Error SetupResponse();
-  CF_Error Dispatch(HTTPPacket &request, HTTPPacket &response);
   void CleanupRequestAndResponse();
-
-  Bool8 MatchPath(const char *pattern, string &path);
 
   // test current connections handled by this object against server pref connection limit
   static inline bool OverMaxConnections(UInt32 buffer);

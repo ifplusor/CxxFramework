@@ -36,12 +36,14 @@
 #define HTTP_SESSION_INTERFACE_DEBUGGING 0
 #endif
 
-std::atomic_uint HTTPSessionInterface::sSessionIndexCounter{kFirstHTTPSessionID};
+std::atomic_uint
+    HTTPSessionInterface::sSessionIndexCounter{kFirstHTTPSessionID};
 
-HTTPMapping *HTTPSessionInterface::sMapping = NULL;
+HTTPDispatcher *HTTPSessionInterface::sDispatcher = nullptr;
 
 void HTTPSessionInterface::Initialize(HTTPMapping *mapping) {
-  sMapping = mapping;
+  sDispatcher = new HTTPDispatcher(mapping);
+  Assert(sDispatcher != nullptr);
 }
 
 HTTPSessionInterface::HTTPSessionInterface()
@@ -89,7 +91,7 @@ void HTTPSessionInterface::DecrementObjectHolderCount() {
 }
 
 CF_Error HTTPSessionInterface::Write(void *inBuffer, UInt32 inLength,
-                                       UInt32 *outLenWritten, UInt32 inFlags) {
+                                     UInt32 *outLenWritten, UInt32 inFlags) {
   UInt32 sendType = HTTPResponseStream::kDontBuffer;
   if ((inFlags & qtssWriteFlagsBufferData) != 0)
     sendType = HTTPResponseStream::kAlwaysBuffer;
@@ -101,9 +103,9 @@ CF_Error HTTPSessionInterface::Write(void *inBuffer, UInt32 inLength,
 }
 
 CF_Error HTTPSessionInterface::WriteV(iovec *inVec,
-                                        UInt32 inNumVectors,
-                                        UInt32 inTotalLength,
-                                        UInt32 *outLenWritten) {
+                                      UInt32 inNumVectors,
+                                      UInt32 inTotalLength,
+                                      UInt32 *outLenWritten) {
   return fOutputStream.WriteV(inVec,
                               inNumVectors,
                               inTotalLength,
@@ -112,8 +114,8 @@ CF_Error HTTPSessionInterface::WriteV(iovec *inVec,
 }
 
 CF_Error HTTPSessionInterface::Read(void *ioBuffer,
-                                      UInt32 inLength,
-                                      UInt32 *outLenRead) {
+                                    UInt32 inLength,
+                                    UInt32 *outLenRead) {
   //
   // Don't let callers of this function accidently creep past the end of the
   // request body.  If the request body size isn't known, fRequestBodyLen will be -1
@@ -180,7 +182,8 @@ void *HTTPSessionInterface::SetupParams(HTTPSessionInterface *inSession,
   StrPtrLen *theLocalAddrStr = theSession->fSocket.GetLocalAddrStr();
   StrPtrLen *theLocalDNSStr = theSession->fSocket.GetLocalDNSStr();
   StrPtrLen *theRemoteAddrStr = theSession->fSocket.GetRemoteAddrStr();
-  if (theLocalAddrStr == NULL || theLocalDNSStr == NULL || theRemoteAddrStr == NULL) {
+  if (theLocalAddrStr == NULL || theLocalDNSStr == NULL
+      || theRemoteAddrStr == NULL) {
     //the socket is bad most likely values are all 0. If the socket had an error we shouldn't even be here.
     //theLocalDNSStr is set to localAddr if it is unavailable, so it should be present at this point as well.
     Assert(0);   //for debugging
@@ -190,7 +193,7 @@ void *HTTPSessionInterface::SetupParams(HTTPSessionInterface *inSession,
 }
 
 CF_Error HTTPSessionInterface::SendHTTPPacket(StrPtrLen *contentXML,
-                                                bool connectionClose,
-                                                bool decrement) {
+                                              bool connectionClose,
+                                              bool decrement) {
   return CF_NoErr;
 }

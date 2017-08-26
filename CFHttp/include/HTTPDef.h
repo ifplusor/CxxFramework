@@ -10,7 +10,7 @@
 typedef CF_Error (*CF_CGIFunction) (HTTPPacket &request, HTTPPacket &response);
 
 struct HTTPMapping {
-  const char *path;
+  char *path;
   CF_CGIFunction func;
 };
 typedef struct HTTPMapping HTTPMapping;

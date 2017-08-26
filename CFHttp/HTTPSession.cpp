@@ -6,7 +6,6 @@
 #include <CFEnv.h>
 #include "HTTPSession.h"
 
-using namespace std;
 
 #if __FreeBSD__ || __hpux__
 #include <unistd.h>
@@ -184,7 +183,12 @@ SInt64 HTTPSession::Run() {
       case kProcessingRequest: {
 
         // doDispatch
-        CF_Error theErr = Dispatch(*fRequest, *fResponse);
+        CF_Error theErr = sDispatcher->Dispatch(*fRequest, *fResponse);
+        if (theErr == CF_FileNotFound) {
+          fResponse->SetStatusCode(httpNotFound);
+        } else if (theErr != CF_NoErr) {
+          fResponse->SetStatusCode(httpInternalServerError);
+        }
 
         fState = kSendingResponse;
       }
@@ -393,53 +397,6 @@ CF_Error HTTPSession::SetupResponse() {
   // construct response body
   if (respBody != NULL && respBody->Len > 0)
     fOutputStream.Put(*respBody);
-
-  return CF_NoErr;
-}
-
-Bool8 HTTPSession::MatchPath(const char *pattern, string &path) {
-
-//          if (!sRequest.empty()) {
-//            boost::to_lower(sRequest);
-//
-//            vector<string> path;
-//            if (boost::ends_with(sRequest, "/")) {
-//              boost::erase_tail(sRequest, 1);
-//            }
-//            boost::split(path, sRequest,
-//                         boost::is_any_of("/"),
-//                         boost::token_compress_on);
-//            if (path.size() == 3) {
-//
-//            }
-//
-//            return CF_NoErr;
-//          }
-
-  return TRUE;
-}
-
-CF_Error HTTPSession::Dispatch(HTTPPacket &request, HTTPPacket &response) {
-  int i;
-
-  if (request.GetRequestPath() != nullptr) {
-    string strRequest(request.GetRequestPath());
-    for (i = 0; true; i++) {
-      if (sMapping[i].path == NULL || sMapping[i].func == NULL) break;
-      if (MatchPath(sMapping[i].path, strRequest)) {
-        CF_Error theErr = sMapping[i].func(request, response);
-        if (theErr != CF_NoErr) {
-          response.SetStatusCode(httpInternalServerError);
-          return theErr;
-        }
-      }
-    }
-    if (i == 0) {
-      response.SetStatusCode(httpNotFound);
-    }
-  } else {
-    response.SetStatusCode(httpBadRequest);
-  }
 
   return CF_NoErr;
 }
