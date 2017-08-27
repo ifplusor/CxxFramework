@@ -27,7 +27,6 @@
 
     Contains:   Thread safe std lib calls for internal modules and apps
 
-
 */
 
 
@@ -35,6 +34,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include "SafeStdLib.h"
 #include "OSMutex.h"
 
 static UInt64 sTotalChars = 0;
