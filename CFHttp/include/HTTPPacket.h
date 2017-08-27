@@ -22,8 +22,8 @@
  * @APPLE_LICENSE_HEADER_END@
  *
  */
-#ifndef __HTTP_REQUEST_RESPONSE_H__
-#define __HTTP_REQUEST_RESPONSE_H__
+#ifndef __HTTP_PACKET_H__
+#define __HTTP_PACKET_H__
 
 #include <CFDef.h>
 #include <StringParser.h>
@@ -172,8 +172,9 @@ class HTTPPacket {
   StrPtrLen fRelativeURI; // If it is of the form "/path"
 
   // If it is an absolute URI, these fields will be filled in
-  // "http://foo.bar.com/path" => fAbsoluteURIScheme = "http", fHostHeader = "foo.bar.com",
-  // fRequestPath = "path"
+  // "http://foo.bar.com/path" => fAbsoluteURIScheme = "http",
+  //                              fHostHeader = "foo.bar.com",
+  //                              fRequestPath = "path"
   StrPtrLen fAbsoluteURIScheme;
   StrPtrLen fHostHeader; // If the full url is given in the request line
   char *fRequestPath; // Also contains the query string
@@ -187,4 +188,4 @@ class HTTPPacket {
   static UInt8 sURLStopConditions[];
 };
 
-#endif // __HTTP_REQUEST_RESPONSE_H__
+#endif // __HTTP_PACKET_H__

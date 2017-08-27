@@ -25,17 +25,18 @@
 /*
 	File:       Task.h
 
-	Contains:   Tasks are objects that can be scheduled. To schedule a task, you call its
-				signal method, and pass in an event (events are bits and all events are defined
-				below).
+	Contains:   Tasks are objects that can be scheduled. To schedule a task,
+				you call its signal method, and pass in an event (events are
+				bits and all events are defined below).
 
-				Once Signal() is called, the task object will be scheduled. When it runs, its
-				Run() function will get called. In order to clear the event, the derived task
-				object must call GetEvents() (which returns the events that were sent).
+				Once Signal() is called, the task object will be scheduled.
+                When it runs, its Run() function will get called. In order to
+                clear the event, the derived task object must call GetEvents()
+                (which returns the events that were sent).
 
-				Calling GetEvents() implicitly "clears" the events returned. All events must
-				be cleared before the Run() function returns, or Run() will be invoked again
-				immediately.
+				Calling GetEvents() implicitly "clears" the events returned.
+				All events must be cleared before the Run() function returns,
+				or Run() will be invoked again immediately.
 
 */
 
@@ -61,40 +62,42 @@ class Task {
 
   typedef unsigned int EventFlags;
 
-  //EVENTS
-  //here are all the events that can be sent to a task
+  // EVENTS
+  // here are all the events that can be sent to a task
   enum {
     kKillEvent = 0x1 << 0x0, //these are all of type "EventFlags"
     kIdleEvent = 0x1 << 0x1,
     kStartEvent = 0x1 << 0x2,
     kTimeoutEvent = 0x1 << 0x3,
 
-    //socket events
+    /* socket events */
     kReadEvent = 0x1 << 0x4, //All of type "EventFlags"
     kWriteEvent = 0x1 << 0x5,
 
-    //update event
+    /* update event */
     kUpdateEvent = 0x1 << 0x6
   };
 
-  //CONSTRUCTOR / DESTRUCTOR
-  //You must assign priority at create time.
+  // CONSTRUCTOR / DESTRUCTOR
+  // You must assign priority at create time.
   Task();
 
   virtual ~Task() {}
 
-  //return:
-  // >0-> invoke me after this number of MilSecs with a kIdleEvent
-  // 0 don't reinvoke me at all.
-  //-1 delete me
-  //Suggested practice is that any task should be deleted by returning true from the
-  //Run function. That way, we know that the Task is not running at the time it is
-  //deleted. This object provides no protection against calling a method, such as Signal,
-  //at the same time the object is being deleted (because it can't really), so watch
-  //those dangling references!
+  /**
+   * @return >0 invoke me after this number of MilSecs with a kIdleEvent
+   * @return  0 don't reinvoke me at all.
+   * @return -1 delete me
+   *
+   * Suggested practice is that any task should be deleted by returning true
+   * from the Run function. That way, we know that the Task is not running at
+   * the time it is deleted. This object provides no protection against calling
+   * a method, such as Signal, at the same time the object is being deleted
+   * (because it can't really), so watch those dangling references!
+   */
   virtual SInt64 Run() = 0;
 
-  //Send an event to this task.
+  // Send an event to this task.
   void Signal(EventFlags eventFlags);
 
   void GlobalUnlock();
@@ -114,16 +117,16 @@ class Task {
 
  protected:
 
-  //Only the tasks themselves may find out what events they have received
+  // Only the tasks themselves may find out what events they have received
   EventFlags GetEvents();
 
-  // ForceSameThread
-  //
-  // A task, inside its run function, may want to ensure that the same task thread
-  // is used for subsequent calls to Run(). This may be the case if the task is holding
-  // a mutex between calls to run. By calling this function, the task ensures that the
-  // same task thread will be used for the next call to Run(). It only applies to the
-  // next call to run.
+  /**
+   * A task, inside its run function, may want to ensure that the same task
+   * thread is used for subsequent calls to Run(). This may be the case if the
+   * task is holding a mutex between calls to run. By calling this function,
+   * the task ensures that the same task thread will be used for the next call
+   * to Run(). It only applies to the next call to run.
+   */
   void ForceSameThread();
 
   SInt64 CallLocked() {
@@ -135,13 +138,11 @@ class Task {
  private:
 
   enum {
-    kAlive = 0x80000000, //EventFlags, again
+    kAlive = 0x80000000,   // EventFlags, again
     kAliveOff = 0x7fffffff
   };
 
   void SetTaskThread(TaskThread *thread);
-
-  //EventFlags      fEvents;
 
   atomic<EventFlags> fEvents;
 
@@ -155,8 +156,8 @@ class Task {
   volatile UInt32 fInRunCount;
 #endif
 
-  //This could later be optimized by using a timing wheel instead of a heap,
-  //and that way we wouldn't need both a heap elem and a queue elem here (just queue elem)
+  // This could later be optimized by using a timing wheel instead of a heap,
+  // and that way we wouldn't need both a heap elem and a queue elem here (just queue elem)
   OSHeapElem fTimerHeapElem;
   OSQueueElem fTaskQueueElem;
 
@@ -164,18 +165,20 @@ class Task {
 
   OSMutex fAtomicMutex;
 
-  //Variable used for assigning tasks to threads in a round-robin fashion
-  static unsigned int sShortTaskThreadPicker; //default picker
+  // Variable used for assigning tasks to threads in a round-robin fashion
+  static unsigned int sShortTaskThreadPicker; // default picker
   static unsigned int sBlockingTaskThreadPicker;
 
   friend class TaskThread;
 };
 
-// 任务线程类,基于 OSThread 类。
+/**
+ * @brief 任务线程类，非抢占式任务调度
+ */
 class TaskThread : public OSThread {
  public:
 
-  //Implementation detail: all tasks get run on TaskThreads.
+  // Implementation detail: all tasks get run on TaskThreads.
 
   TaskThread() : OSThread(), fTaskThreadPoolElem() {
     fTaskThreadPoolElem.SetEnclosingObject(this);
@@ -203,8 +206,8 @@ class TaskThread : public OSThread {
   friend class TaskThreadPool;
 };
 
-/*
- * 任务线程池类，该类负责生成、删除以及维护内部的任务线程列表。
+/**
+ * @brief 任务线程池类，该类负责生成、删除以及维护内部的任务线程列表。
  *
  * Because task threads share a global queue of tasks to execute,
  * there can only be one pool of task threads. That is why this object
@@ -213,9 +216,12 @@ class TaskThread : public OSThread {
 class TaskThreadPool {
  public:
 
-  // Adds some threads to the pool
-  // creates the threads: takes NumShortTaskThreads + NumBLockingThreads,
-  //   sets num short task threads.
+  /**
+   * @brief Adds some threads to the pool
+   *
+   * creates the threads: takes NumShortTaskThreads + NumBLockingThreads,
+   * sets num short task threads.
+   */
   static bool AddThreads(UInt32 numToAdd);
 
   static void RemoveThreads();

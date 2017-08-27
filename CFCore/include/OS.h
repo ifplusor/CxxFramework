@@ -25,7 +25,7 @@
 /*
     File:       OS.h
 
-    Contains:   OS utility functions. Memory allocation, time, etc.
+    Contains:   OS utility functions. Memory allocation, etc.
 
 */
 
@@ -34,6 +34,7 @@
 
 #include <string.h>
 #include <OSHeaders.h>
+#include "OSTime.h"
 
 class OS {
  public:
@@ -42,7 +43,9 @@ class OS {
    * @brief set global variables about time.
    * @note call this before calling anything else
    */
-  static void Initialize();
+  static void Initialize() {
+    OSTime::Initialize();
+  }
 
   static SInt32 Min(SInt32 a, SInt32 b) {
     return a < b ? a : b;

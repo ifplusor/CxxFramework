@@ -232,8 +232,10 @@ CF_Error HTTPPacket::parseURI(StringParser *parser) {
   // we always should have a slash before the URI
   // If not, that indicates this is a full URI
   if (fAbsoluteURI.Ptr[0] != '/') {
-    //if it is a full URL, store the scheme and host name
-    urlParser.ConsumeLength(&fAbsoluteURIScheme, 7); //consume "http://"
+    // if it is a full URL, store the scheme and host name
+//    urlParser.ConsumeLength(&fAbsoluteURIScheme, 7); //consume "http://"
+    urlParser.ConsumeUntil(&fAbsoluteURIScheme, ':'); // consume "http"
+    urlParser.ConsumeLength(nullptr, 3); // consume "://"
     urlParser.ConsumeUntil(&fHostHeader, '/');
   }
 

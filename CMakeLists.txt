@@ -68,6 +68,6 @@ if (${CND_PLATFORM} MATCHES "Linux")
 endif ()
 
 add_executable(demo
-        CFConfigure.cpp)
+        demo.cpp)
 target_link_libraries(demo
         PRIVATE CxxFramework)

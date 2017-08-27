@@ -75,28 +75,39 @@ class IdleTask : public Task {
   //Call Initialize before using this class
   static void Initialize();
 
+  static void Release() {
+    if (sIdleThread != nullptr) {
+      sIdleThread->SendStopRequest();
+      sIdleThread->Join();
+      sIdleThread = nullptr;
+    }
+  }
+
   IdleTask() : Task(), fIdleElem() {
     this->SetTaskName("IdleTask");
     fIdleElem.SetEnclosingObject(this);
   }
 
-  //This object does a "best effort" of making sure a timeout isn't
-  //pending for an object being deleted. In other words, if there is
-  //a timeout pending, and the destructor is called, things will get cleaned
-  //up. But callers must ensure that SetIdleTimer isn't called at the same
-  //time as the destructor, or all hell will break loose.
+  /**
+   * This object does a "best effort" of making sure a timeout isn't
+   * pending for an object being deleted. In other words, if there is
+   * a timeout pending, and the destructor is called, things will get cleaned
+   * up. But callers must ensure that SetIdleTimer isn't called at the same
+   * time as the destructor, or all hell will break loose.
+   */
   virtual ~IdleTask();
 
-  //SetIdleTimer:
-  //This object will receive an OS_IDLE event in the following number of milliseconds.
-  //Only one timeout can be outstanding, if there is already a timeout scheduled, this
-  //does nothing.
+  /**
+   * This object will receive an OS_IDLE event in the following number of
+   * milliseconds. Only one timeout can be outstanding, if there is already
+   * a timeout scheduled, this does nothing.
+   */
   void SetIdleTimer(SInt64 msec) { sIdleThread->SetIdleTimer(this, msec); }
 
-  //CancelTimeout
-  //If there is a pending timeout for this object, this function cancels it.
-  //If there is no pending timeout, this function does nothing.
-  //Currently not supported because OSHeap doesn't support random remove
+  /**
+   * If there is a pending timeout for this object, this function cancels it.
+   * If there is no pending timeout, this function does nothing.
+   */
   void CancelTimeout() { sIdleThread->CancelTimeout(this); }
 
  private:

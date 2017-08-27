@@ -31,14 +31,13 @@
 
 #include "TimeoutTask.h"
 #include <OSTime.h>
-#include <MyAssert.h>
 
-shared_ptr<TimeoutTaskThread> TimeoutTask::sThread = nullptr;
+TimeoutTaskThread *TimeoutTask::sThread = nullptr;
 
 void TimeoutTask::Initialize() {
   if (sThread == nullptr) {
     // TimeoutTaskThread 是 IdleTask 的派生类, IdleTask 是 Task 的派生类。
-    sThread = make_shared<TimeoutTaskThread>();
+    sThread = new TimeoutTaskThread;
     sThread->Signal(Task::kStartEvent);
   }
 }
@@ -75,6 +74,10 @@ void TimeoutTask::RefreshTimeout() {
 }
 
 SInt64 TimeoutTaskThread::Run() {
+  EventFlags events = GetEvents();
+  if (events & Task::kKillEvent)
+    return -1;
+
   // ok, check for timeouts now. Go through the whole queue
   OSMutexLocker locker(&fMutex);
   SInt64 curTime = OSTime::Milliseconds();

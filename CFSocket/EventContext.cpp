@@ -247,6 +247,7 @@ void EventThread::Entry() {
   while (true) {
     int theErrno = EINTR;
     while (theErrno == EINTR) {
+      if (IsStopRequested()) break;
 
       // wait for net event
 #if MACOSXEVENTQUEUE
@@ -255,13 +256,14 @@ void EventThread::Entry() {
       int theReturnValue = select_waitevent(&theCurrentEvent, NULL);
 #endif
 
-      //Sort of a hack. In the POSIX version of the server, waitevent can return
-      //an actual POSIX errorcode.
+      // Sort of a hack. In the POSIX version of the server, waitevent can
+      // return an actual POSIX error code.
       if (theReturnValue >= 0)
         theErrno = theReturnValue;
       else
         theErrno = OSThread::GetErrno();
     }
+    if (theErrno == EINTR) break; // stop requested
 
     AssertV(theErrno == 0, theErrno);
 

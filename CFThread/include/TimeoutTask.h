@@ -87,6 +87,15 @@ class TimeoutTask {
    */
   static void Initialize();
 
+  static void Release() {
+    if (sThread != nullptr) {
+      sThread->CancelTimeout();
+      // 当响应 kKillEvent 事件，返回 TaskThread 后释放内存
+      sThread->Signal(Task::kKillEvent);
+      sThread = nullptr;
+    }
+  }
+
   //Pass in the task you'd like to send timeouts to.
   //Also pass in the timeout you'd like to use. By default, the timeout is 0 (NEVER).
   TimeoutTask(Task *inTask, SInt64 inTimeoutInMilSecs = 15);
@@ -112,7 +121,7 @@ class TimeoutTask {
   //for putting on our global queue of timeout tasks
   OSQueueElem fQueueElem;
 
-  static shared_ptr<TimeoutTaskThread> sThread;
+  static TimeoutTaskThread *sThread;
 
   friend class TimeoutTaskThread;
 };

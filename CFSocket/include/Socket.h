@@ -60,6 +60,15 @@ class Socket : public EventContext {
 
   static void StartThread() { sEventThread->Start(); }
 
+  static void Release() {
+    if (sEventThread != nullptr) {
+      sEventThread->SendStopRequest();
+      sEventThread->Join();
+      delete sEventThread;
+      sEventThread = nullptr;
+    }
+  }
+
   static EventThread *GetEventThread() { return sEventThread; }
 
   /**

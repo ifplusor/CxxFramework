@@ -57,7 +57,6 @@
 
 #include "OSThread.h"
 #include "OSTime.h"
-#include "MyAssert.h"
 
 #ifdef __sgi__
 #include <time.h>

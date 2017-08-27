@@ -5,9 +5,9 @@
 #ifndef __CF_ENV_H__
 #define __CF_ENV_H__
 
-#include "CFDef.h"
 #include <StrPtrLen.h>
-
+#include "CFDef.h"
+#include "CFConfigure.h"
 
 class CFEnv {
  public:
@@ -18,7 +18,14 @@ class CFEnv {
    */
   static void Initialize();
 
-  static bool WillExit() { return sExitCode != 0; };
+  /**
+   * configure 的内存将交由 CFEnv 管理
+   */
+  static void Register(CFConfigure *configure) { sConfigure = configure; }
+
+  static CFConfigure *GetConfigure() { return sConfigure; }
+
+  static bool WillExit() { return sExitCode != CF_NoErr; };
   static bool Exit(UInt32 exitCode) { sExitCode = exitCode; }
 
   // SERVER NAME & VERSION
@@ -37,6 +44,8 @@ class CFEnv {
   static void makeServerHeader();
 
   static SInt32 sExitCode;
+
+  static CFConfigure *sConfigure;
 
   enum {
     kMaxServerHeaderLen = 1000

@@ -47,7 +47,6 @@
 
 #include "OS.h"
 #include "OSThread.h"
-#include "MyAssert.h"
 
 #if (__FreeBSD__ || __MacOSX__)
 #include <sys/sysctl.h>
@@ -66,10 +65,6 @@ double  OS::sMicroDivisor = 0;
 
 char OS::sUser[128] = "";
 char OS::sGroup[128] = "";
-
-void OS::Initialize() {
-
-}
 
 SInt64 OS::HostToNetworkSInt64(SInt64 hostOrdered) {
 #if BIGENDIAN

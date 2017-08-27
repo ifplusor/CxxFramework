@@ -11,6 +11,8 @@
 
 SInt32 CFEnv::sExitCode = 0;
 
+CFConfigure *CFEnv::sConfigure = nullptr;
+
 UInt32 CFEnv::sServerAPIVersion = CF_API_VERSION;
 
 StrPtrLen CFEnv::sServerNameStr(PLATFORM_SERVER_TEXT_NAME);

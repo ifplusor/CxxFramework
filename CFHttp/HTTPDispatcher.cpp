@@ -4,15 +4,13 @@
 
 #include "HTTPDispatcher.h"
 
-static StrPtrLen sAllSuffix("/*", 2);
-static StrPtrLen sTypePrefix("*.", 2);
-static StrPtrLen sRootPath("/", 1);
+StrPtrLen HTTPPathMapper::sAllSuffix("/*", 2);
+StrPtrLen HTTPPathMapper::sTypePrefix("*.", 2);
+StrPtrLen HTTPPathMapper::sRootPath("/", 1);
 
 int cmp_mapper(const void *a, const void *b) {
-  HTTPPathMapper **aMapper = (HTTPPathMapper **) a;
-  HTTPPathMapper **bMapper = (HTTPPathMapper **) b;
-
-  return (*aMapper)->Type() - (*bMapper)->Type();
+  return HTTPPathMapper::ComparePriority(*(HTTPPathMapper **) a,
+                                         *(HTTPPathMapper **) b);
 }
 
 HTTPDispatcher::HTTPDispatcher(HTTPMapping *mapping) {
@@ -41,10 +39,10 @@ HTTPDispatcher::HTTPDispatcher(HTTPMapping *mapping) {
 
 CF_Error HTTPDispatcher::Dispatch(HTTPPacket &request, HTTPPacket &response) {
 
-  StrPtrLen requestPath(request.GetRequestPath());
+  StrPtrLen *requestPath = request.GetRequestRelativeURI();
 
   for (UInt32 i = 0; i < fMapperNum; i++) {
-    if (fMappers[i]->Match(requestPath))
+    if (fMappers[i]->Match(*requestPath))
       return fMappers[i]->Mapping(request, response);
   }
 
@@ -72,4 +70,9 @@ HTTPPathMapper *HTTPPathMapper::BuildPathMatcher(HTTPMapping &mapping) {
 
   // 其它，exact
   return new ExactPathMapper(mapping);
+}
+
+int HTTPPathMapper::ComparePriority(HTTPPathMapper *aMapper,
+                                    HTTPPathMapper *bMapper) {
+  return aMapper->ItsType() - bMapper->ItsType();
 }

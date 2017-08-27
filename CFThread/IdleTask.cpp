@@ -35,7 +35,6 @@
 
 #include "IdleTask.h"
 #include <OSTime.h>
-#include <MyAssert.h>
 
 // IDLE_TASK_THREAD IMPLEMENTATION:
 std::shared_ptr<IdleTaskThread> IdleTask::sIdleThread = nullptr;
@@ -73,8 +72,10 @@ void IdleTaskThread::Entry() {
 
   while (true) {
     // if there are no events to process, block.
-    if (fIdleHeap.CurrentHeapSize() == 0)
-      fHeapCond.Wait(&fHeapMutex);
+    while (fIdleHeap.CurrentHeapSize() == 0) {
+      fHeapCond.Wait(&fHeapMutex, 1000);
+      if (IsStopRequested()) return;
+    }
 
     SInt64 msec = OSTime::Milliseconds();
 
@@ -100,8 +101,6 @@ void IdleTaskThread::Entry() {
 }
 
 void IdleTask::Initialize() {
-  // 该函数在 StartServer 里会被调用。
-
   if (!sIdleThread) {
     sIdleThread = std::shared_ptr<IdleTaskThread>(
         new IdleTaskThread(),

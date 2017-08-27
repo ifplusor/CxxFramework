@@ -4,10 +4,9 @@
 #include <TimeoutTask.h>
 #include <HTTPSessionInterface.h>
 #include <HTTPListenerSocket.h>
-#include <CFEnv.h>
-#include <CFConfigure.h>
+#include <CF.h>
 
-int CFMain(void) {
+int CFMain(CFConfigure *config) {
 
   //
   // Initialize utility classes
@@ -18,19 +17,19 @@ int CFMain(void) {
   SocketUtils::Initialize(false);
 
 #if !MACOSXEVENTQUEUE
-  //initialize the select() implementation of the event queue
+  // initialize the select() implementation of the event queue
   ::select_startevents();
 #endif
 
-  OS::SetPersonality(CFConfigure::GetPersonalityUser(),
-                     CFConfigure::GetPersonalityGroup());
+  OS::SetPersonality(config->GetPersonalityUser(),
+                     config->GetPersonalityGroup());
 
   // 切换用户和组，LinuxThread库实现的线程模型，setuid() 和 setgid() 可能会
   // 出现不同线程中，uid 和 gid 不一致的问题
   OS::SwitchPersonality();
 
-  UInt32 numShortTaskThreads = CFConfigure::GetShortTaskThreads();
-  UInt32 numBlockingThreads = CFConfigure::GetBlockingThreads();
+  UInt32 numShortTaskThreads = config->GetShortTaskThreads();
+  UInt32 numBlockingThreads = config->GetBlockingThreads();
 
   if (OS::ThreadSafe()) {
     if (numShortTaskThreads == 0) {
@@ -68,6 +67,8 @@ int CFMain(void) {
   //
   // Start up the server's global tasks, and start listening
 
+  IdleTask::Initialize();
+
   // The TimeoutTask mechanism is task based,
   // we therefore must do this after adding task threads.
   // this be done before starting the sockets and server tasks
@@ -76,12 +77,11 @@ int CFMain(void) {
   // Make sure to do this stuff last. Because these are all the threads that
   // do work in the server, this ensures that no work can go on while the
   // server is in the process of staring up
-  IdleTask::Initialize();
   Socket::StartThread();
 
   OSThread::Sleep(1000);
 
-  HTTPSessionInterface::Initialize(CFConfigure::GetHttpMapping());
+  HTTPSessionInterface::Initialize(config->GetHttpMapping());
 
   HTTPListenerSocket *httpSocket = new HTTPListenerSocket();
   httpSocket->Initialize(0, 8081);
@@ -95,19 +95,32 @@ int CFMain(void) {
 #endif
   }
 
+  // clean EventThread
+  Socket::Release();
+
+  // clean TimeoutTaskThread and IdleTaskThread
+  TimeoutTask::Release();
+  IdleTask::Release();
+
   // Now, make sure that the server can't do any work
   TaskThreadPool::RemoveThreads();
 
   return 0;
 }
 
-int main(int argc, void **argv) {
+int main(int argc, char **argv) {
 
   // initialize global information
   CFEnv::Initialize();
 
   // wait for user configure
-  CFConfigure::Initialize(argc, argv);
+  CF_Error theErr = CFInit(argc, argv);
+  if (theErr != CF_NoErr) return EXIT_FAILURE;
 
-  return CFMain();
+  CFConfigure *config = CFEnv::GetConfigure();
+  if (config == nullptr) return EXIT_FAILURE;
+
+  theErr = CFMain(config);
+
+  return CFExit(theErr);
 }

@@ -16,28 +16,45 @@
  */
 class CFConfigure {
  public:
+  CFConfigure() = default;
+  virtual ~CFConfigure() = default;
 
-  /**
-   * @brief give user a chance to initialize
-   * @param argc - arguments count
-   * @param argv - arguments vector
-   */
-  static void Initialize(int argc, void **argv);
+  virtual char *GetPersonalityUser() {
+    static char defaultUser[] = "root";
+    return defaultUser;
+  };
 
-  static char *GetPersonalityUser();
-  static char *GetPersonalityGroup();
+  virtual char *GetPersonalityGroup() {
+    static char defaultGroup[] = "root";
+    return defaultGroup;
+  };
 
   //
   // TaskThreadPool Settings
 
-  static UInt32 GetShortTaskThreads();
-  static UInt32 GetBlockingThreads();
+  virtual UInt32 GetShortTaskThreads() { return 1; }
+  virtual UInt32 GetBlockingThreads() { return 1; }
 
   //
   // Http Server Settings
 
-  static HTTPMapping *GetHttpMapping();
+  virtual HTTPMapping *GetHttpMapping() {
+    static HTTPMapping defaultHttpMapping[] = {
+        {"/", (CF_CGIFunction) defaultCGI},
+        {NULL, NULL}
+    };
+    return defaultHttpMapping;
+  }
 
+ private:
+  static CF_Error defaultCGI(HTTPPacket &request, HTTPPacket &response) {
+    ResizeableStringFormatter formatter(nullptr, 0);
+    formatter.Put("test content\n");
+    StrPtrLen *content = new StrPtrLen(formatter.GetAsCString(),
+                                       formatter.GetCurrentOffset());
+    response.SetBody(content);
+    return CF_NoErr;
+  }
 };
 
 #endif //__CF_CONFIGURE_H__

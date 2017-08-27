@@ -26,19 +26,23 @@ class HTTPDispatcher {
 
 class HTTPPathMapper {
  public:
-  static HTTPPathMapper *BuildPathMatcher(HTTPMapping &mapping);
-
-  virtual ~HTTPPathMapper() = default;;
-
+  // 四种类型的映射器
   enum {
     httpExactMapper = 0,
     httpWildcardMapper = 1,
     httpExtensionMapper = 2,
     httpDefaultMapper = 4
   };
-  virtual UInt32 Type() = 0;
 
-  virtual bool Match(StrPtrLen &path) = 0;
+  static HTTPPathMapper *BuildPathMatcher(HTTPMapping &mapping);
+
+  static int ComparePriority(HTTPPathMapper *aMapper, HTTPPathMapper *bMapper);
+
+  virtual ~HTTPPathMapper() = default;;
+
+  virtual UInt32 ItsType() = 0;
+
+  virtual bool Match(const StrPtrLen &path) = 0;
 
   CF_Error Mapping(HTTPPacket &request, HTTPPacket &response) {
     return fFunc(request, response);
@@ -48,6 +52,10 @@ class HTTPPathMapper {
   HTTPPathMapper(HTTPMapping mapping) : fFunc(mapping.func) {}
 
   CF_CGIFunction fFunc;
+
+  static StrPtrLen sAllSuffix;
+  static StrPtrLen sTypePrefix;
+  static StrPtrLen sRootPath;
 };
 
 class ExactPathMapper : public HTTPPathMapper {
@@ -61,9 +69,9 @@ class ExactPathMapper : public HTTPPathMapper {
   }
   ~ExactPathMapper() override { delete[] pattern.Ptr; }
 
-  UInt32 Type() override { return httpExactMapper; }
+  UInt32 ItsType() override { return httpExactMapper; }
 
-  bool Match(StrPtrLen &path) override { return pattern.Equal(path); }
+  bool Match(const StrPtrLen &path) override { return pattern.Equal(path); }
 
  private:
   StrPtrLen pattern;
@@ -81,9 +89,9 @@ class WildcardPathMapper : public HTTPPathMapper {
   }
   ~WildcardPathMapper() override { delete[] pattern.Ptr; }
 
-  UInt32 Type() override { return httpWildcardMapper; }
+  UInt32 ItsType() override { return httpWildcardMapper; }
 
-  bool Match(StrPtrLen &path) override {
+  bool Match(const StrPtrLen &path) override {
     if (path.Len < pattern.Len) return false;
     StrPtrLen op(path.Ptr, pattern.Len);
     return pattern.Equal(op);
@@ -104,9 +112,9 @@ class ExtensionPathMapper : public HTTPPathMapper {
   }
   ~ExtensionPathMapper() override { delete[] pattern.Ptr; }
 
-  UInt32 Type() override { return httpExtensionMapper; }
+  UInt32 ItsType() override { return httpExtensionMapper; }
 
-  bool Match(StrPtrLen &path) override {
+  bool Match(const StrPtrLen &path) override {
     if (path.Len < pattern.Len) return false;
     StrPtrLen op(path.Ptr + (path.Len - pattern.Len), pattern.Len);
     return pattern.Equal(op);
@@ -120,9 +128,9 @@ class DefaultPathMapper : public HTTPPathMapper {
   DefaultPathMapper(HTTPMapping mapping) : HTTPPathMapper(mapping) {}
   ~DefaultPathMapper() override = default;
 
-  UInt32 Type() override { return httpDefaultMapper; }
+  UInt32 ItsType() override { return httpDefaultMapper; }
 
-  bool Match(StrPtrLen &path) override { return true; }
+  bool Match(const StrPtrLen &path) override { return true; }
 };
 
 #endif // __HTTP_DISPATCHER_H__
