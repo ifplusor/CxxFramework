@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-#ifndef __Win32__
+#if !defined(__Win32__) && !defined(__MinGW__)
 #include <sys/uio.h>
 #endif
 

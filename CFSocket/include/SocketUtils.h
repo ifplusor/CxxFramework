@@ -32,15 +32,15 @@
 #ifndef __SOCKET_UTILS_H__
 #define __SOCKET_UTILS_H__
 
-#ifndef __Win32__
+#include <OSHeaders.h>
+#include <StrPtrLen.h>
+#include <OSMutex.h>
+
+#if !__WinSock__
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if.h>
 #endif
-
-#include <OSHeaders.h>
-#include <StrPtrLen.h>
-#include <OSMutex.h>
 
 #ifdef __solaris__
 #ifndef INADDR_NONE
@@ -82,7 +82,7 @@ class SocketUtils {
  private:
 
   //Utility function used by Initialize
-#ifndef __Win32__
+#if !__WinSock__
   static bool IncrementIfReqIter(char **inIfReqIter, ifreq *ifr);
 #endif
   //For storing relevent information about each IP interface

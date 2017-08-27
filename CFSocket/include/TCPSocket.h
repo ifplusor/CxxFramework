@@ -32,19 +32,19 @@
 
 */
 
-#ifndef __TCPSOCKET_H__
-#define __TCPSOCKET_H__
+#ifndef __TCP_SOCKET_H__
+#define __TCP_SOCKET_H__
 
-#ifndef __Win32__
+#include "Socket.h"
+#include "Task.h"
+#include "StrPtrLen.h"
+
+#if !__WinSock__
 
 #include <sys/types.h>
 #include <sys/socket.h>
 
 #endif
-
-#include "Socket.h"
-#include "Task.h"
-#include "StrPtrLen.h"
 
 class TCPSocket : public Socket {
  public:
@@ -106,5 +106,5 @@ class TCPSocket : public Socket {
   friend class TCPListenerSocket;
 };
 
-#endif // __TCPSOCKET_H__
+#endif // __TCP_SOCKET_H__
 

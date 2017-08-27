@@ -30,9 +30,9 @@
 */
 
 #include <string.h>
-#include <MyAssert.h>
+#include "SocketUtils.h"
 
-#ifndef __Win32__
+#if !__WinSock__
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -50,8 +50,6 @@
 #include <sys/sockio.h>
 #endif
 #endif
-
-#include "SocketUtils.h"
 
 #ifdef SIOCGIFNUM
 #define USE_SIOCGIFNUM 1
@@ -157,18 +155,18 @@ void SocketUtils::Initialize(bool lookupDNSName)
 
 }
 
-#else //__FreeBSD__
+#else // !__FreeBSD__
 
 //Version for all non-FreeBSD platforms.
 
 void SocketUtils::Initialize(bool lookupDNSName) {
-#if defined(__Win32__) || defined(USE_SIOCGIFNUM)
+#if __WinSock__ || defined(USE_SIOCGIFNUM)
 
   int tempSocket = ::socket(AF_INET, SOCK_DGRAM, 0);
   if (tempSocket == -1)
       return;
 
-#ifdef __Win32__
+#if __WinSock__
 
   static const UInt32 kMaxAddrBufferSize = 2048;
   char inBuffer[kMaxAddrBufferSize];
@@ -227,9 +225,8 @@ void SocketUtils::Initialize(bool lookupDNSName) {
   //for (UInt32 addrCount = 0; addrCount < sNumIPAddrs; addrCount++)
   UInt32 currentIndex = 0;
   for (UInt32 theIfCount = sNumIPAddrs, addrCount = 0;
-      addrCount < theIfCount; addrCount++)
-  {
-#ifdef __Win32__
+      addrCount < theIfCount; addrCount++) {
+#if __WinSock__
       // We *should* count the loopback interface as a valid interface.
       //if (addrListP[addrCount].iiFlags & IFF_LOOPBACK)
       //{
@@ -288,19 +285,15 @@ void SocketUtils::Initialize(bool lookupDNSName) {
 
 
       struct hostent* theDNSName = nullptr;
-      if (lookupDNSName) //convert this addr to a dns name, and store it
-      {
+      if (lookupDNSName) { // convert this addr to a dns name, and store it
           theDNSName = ::gethostbyaddr((char *)&theAddr->sin_addr, sizeof(theAddr->sin_addr), AF_INET);
       }
 
-      if (theDNSName != nullptr)
-      {
+      if (theDNSName != nullptr) {
           sIPAddrInfoArray[currentIndex].fDNSNameStr.Len = ::strlen(theDNSName->h_name);
           sIPAddrInfoArray[currentIndex].fDNSNameStr.Ptr = new char[sIPAddrInfoArray[currentIndex].fDNSNameStr.Len + 2];
           ::strcpy(sIPAddrInfoArray[currentIndex].fDNSNameStr.Ptr, theDNSName->h_name);
-      }
-      else
-      {
+      } else {
           //if we failed to look up the DNS name, just store the IP addr as a string
           sIPAddrInfoArray[currentIndex].fDNSNameStr.Len = sIPAddrInfoArray[currentIndex].fIPAddrStr.Len;
           sIPAddrInfoArray[currentIndex].fDNSNameStr.Ptr = new char[sIPAddrInfoArray[currentIndex].fDNSNameStr.Len + 2];
@@ -310,7 +303,7 @@ void SocketUtils::Initialize(bool lookupDNSName) {
       currentIndex++;
 
   }
-#ifdef __Win32__
+#if __WinSock__
   ::closesocket(tempSocket);
 #elif defined(USE_SIOCGIFNUM)
   delete[] ifc.ifc_buf;
@@ -536,9 +529,9 @@ void SocketUtils::Initialize(bool lookupDNSName) {
   }
 }
 
-#endif  //__FreeBSD__
+#endif  // !__FreeBSD__
 
-#ifndef __Win32__
+#if !__WinSock__
 
 bool SocketUtils::IncrementIfReqIter(char **inIfReqIter, ifreq *ifr) {
   //returns true if successful, false otherwise
@@ -576,8 +569,10 @@ bool SocketUtils::IsMulticastIPAddr(UInt32 inAddress) {
 }
 
 bool SocketUtils::IsLocalIPAddr(UInt32 inAddress) {
-  // NOTE: 本地 IP 是通过 SIOCGIFCONF 获取的网卡信息，如果服务隐藏在 NAT 后面，
-  //   则不能支持
+  /*
+     NOTE: 本地 IP 是通过 SIOCGIFCONF 获取的网卡信息，如果服务隐藏在 NAT 后面，
+       则不能支持
+   */
   for (UInt32 x = 0; x < sNumIPAddrs; x++)
     if (sIPAddrInfoArray[x].fIPAddr == inAddress)
       return true;

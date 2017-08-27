@@ -43,3 +43,14 @@ target_include_directories(CFCore
         PUBLIC include)
 target_compile_options(CFCore
         PRIVATE -fPIC)
+
+if (${CND_PLATFORM} MATCHES "Linux")
+    target_link_libraries(CFCore
+            PUBLIC pthread)
+elseif (${CND_PLATFORM} MATCHES "Win32")
+    target_link_libraries(CFCore
+            PUBLIC winmm)
+elseif (${CND_PLATFORM} MATCHES "MinGW")
+    target_link_libraries(CFCore
+            PUBLIC winmm)
+endif ()

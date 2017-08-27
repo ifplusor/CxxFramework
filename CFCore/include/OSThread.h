@@ -39,7 +39,7 @@
 
 #if __PTHREADS__
 
-#if __solaris__ || __sgi__ || __hpux__
+#if __solaris__ || __sgi__ || __hpux__ || __MinGW__
 #include <errno.h>
 #else
 #include <sys/errno.h>
@@ -110,9 +110,13 @@ class OSThread {
 
 #endif
 
+#ifdef __WinSock__
+  static int TransferErrno(int winErr);
+#endif
+
 #ifdef __Win32__
-  static int          GetErrno();
-  static DWORD        GetCurrentThreadID() { return ::GetCurrentThreadId(); }
+  static int GetErrno();
+  static DWORD GetCurrentThreadID() { return ::GetCurrentThreadId(); }
 #elif __PTHREADS__
 
   static int GetErrno() { return errno; }
@@ -141,11 +145,11 @@ class OSThread {
   bool fJoined;
 
 #ifdef __Win32__
-  HANDLE          fThreadID;
+  HANDLE fThreadID;
 #elif __PTHREADS__
   pthread_t fThreadID;
 #else
-  UInt32          fThreadID;
+  UInt32 fThreadID;
 #endif
   void *fThreadData;
   DateBuffer fDateBuffer;

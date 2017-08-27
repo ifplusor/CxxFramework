@@ -131,10 +131,10 @@ CF_Error HTTPClientResponseStream::Flush() {
   CF_Error theErr = CF_NoErr;
 
   while (true) {
-    // 获取缓冲区中需要发送的数据长度
+    /* 获取缓冲区中需要发送的数据长度 */
     UInt32 amtInBuffer = this->GetCurrentOffset() - fBytesSentInBuffer;
 
-    // 多次发送缓冲区中的数据
+    /* 多次发送缓冲区中的数据 */
     if (amtInBuffer > CF_MAX_RESPONSE_BUFFER_SIZE)
       amtInBuffer = CF_MAX_RESPONSE_BUFFER_SIZE;
 
@@ -163,7 +163,7 @@ CF_Error HTTPClientResponseStream::Flush() {
       //if (theLengthSent > 0)
       //    fTimeoutTask->RefreshTimeout();
 
-      // 单次发送成功,继续发送
+      /* 单次发送成功,继续发送 */
       if (theErr == OS_NoErr) {
         fBytesSentInBuffer += amtInBuffer;
         Assert(fBytesSentInBuffer <= this->GetCurrentOffset());

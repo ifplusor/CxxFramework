@@ -53,7 +53,7 @@
 
 using namespace std;
 
-#define TASK_DEBUG 0
+#define TASK_DEBUG 1
 
 class TaskThread;
 
@@ -113,7 +113,9 @@ class Task {
 
   void SetThreadPicker(unsigned int *picker);
 
-  static unsigned int *GetBlockingTaskThreadPicker() { return &sBlockingTaskThreadPicker; }
+  static unsigned int *GetBlockingTaskThreadPicker() {
+    return &sBlockingTaskThreadPicker;
+  }
 
  protected:
 
@@ -144,15 +146,20 @@ class Task {
 
   void SetTaskThread(TaskThread *thread);
 
+  /*
+     当事件发生时，Task 进入调度队列，并设置相应的 event flag。
+     Task 进入调度队列时设置 alive 标志位，执行完毕后撤销 alive 标志位。
+     Task 在某一时刻，只会处于唯一调度队列。
+   */
   atomic<EventFlags> fEvents;
 
-  TaskThread *fUseThisThread;
-  TaskThread *fDefaultThread;
+  TaskThread *fUseThisThread; /* 强制执行线程 */
+  TaskThread *fDefaultThread; /* 默认执行线程 */
   bool fWriteLock;
 
 #if DEBUG
-  //The whole premise of a task is that the Run function cannot be re-entered.
-  //This debugging variable ensures that that is always the case
+  // The whole premise of a task is that the Run function cannot be re-entered.
+  // This debugging variable ensures that that is always the case
   volatile UInt32 fInRunCount;
 #endif
 
@@ -173,7 +180,7 @@ class Task {
 };
 
 /**
- * @brief 任务线程类，非抢占式任务调度
+ * @brief 任务执行线程，非抢占式任务调度
  */
 class TaskThread : public OSThread {
  public:
@@ -198,8 +205,8 @@ class TaskThread : public OSThread {
 
   OSQueueElem fTaskThreadPoolElem;
 
-  OSHeap fHeap;
-  OSQueue_Blocking fTaskQueue;
+  OSHeap fHeap;                /* 延时-优先队列 */
+  OSQueue_Blocking fTaskQueue; /* 事件-触发队列 */
 
   friend class Task;
 

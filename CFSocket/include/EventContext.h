@@ -48,7 +48,7 @@ using namespace std;
 #endif
 #else
 
-#include "epollev.h"
+#include "ev.h"
 
 #endif
 
@@ -162,13 +162,16 @@ class EventContext {
   bool          fModwatched;
 #endif
 
-  //static unsigned int sUniqueID;
-  //static atomic_uint sUniqueID;
   static atomic<unsigned int> sUniqueID;
 
   friend class EventThread;
 };
 
+/**
+ * @brief 基于“IO多路复用”的网络事件守护线程
+ *
+ * Linux 下为 epoll，Windows 下为 WSAAsyncSelect，OSX 下为 event queue
+ */
 class EventThread : public OSThread {
  public:
 

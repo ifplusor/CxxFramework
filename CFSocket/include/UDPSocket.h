@@ -36,15 +36,15 @@
 #ifndef __UDPSOCKET_H__
 #define __UDPSOCKET_H__
 
-#ifndef __Win32__
+#include "Socket.h"
+#include "UDPDemuxer.h"
+
+#if !__WinSock__
 
 #include <sys/socket.h>
 #include <sys/uio.h>
 
 #endif
-
-#include "Socket.h"
-#include "UDPDemuxer.h"
 
 /*
  * Socket 的继承类,Socket 是 EventContext 的继承类。注意在 Socket 的构建函数里,调用了

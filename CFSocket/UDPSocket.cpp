@@ -27,11 +27,11 @@
 
     Contains:   Implementation of object defined in UDPSocket.h.
 
-
-
 */
 
-#ifndef __Win32__
+#include "UDPSocket.h"
+
+#if !__WinSock__
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -47,8 +47,6 @@
 #endif
 #endif
 #endif
-
-#include "UDPSocket.h"
 
 #ifdef USE_NETLOG
 #include <netlog.h>

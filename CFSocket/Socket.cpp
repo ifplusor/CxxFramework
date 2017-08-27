@@ -31,7 +31,13 @@
 
 #include <string.h>
 
-#ifndef __Win32__
+#include <errno.h>
+
+#include "Socket.h"
+#include "SocketUtils.h"
+
+#if !__WinSock__
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -39,17 +45,14 @@
 
 #endif
 
-#include <errno.h>
-
-#include "Socket.h"
-#include "SocketUtils.h"
-
 #ifdef USE_NETLOG
 #include <netlog.h>
 #else
-#if defined(__Win32__) || defined(__sgi__) || defined(__osf__) || defined(__hpux__)
+
+#if defined(__sgi__) || defined(__osf__) || defined(__hpux__)
 typedef int socklen_t; // missing from some platform includes
 #endif
+
 #endif
 
 EventThread *Socket::sEventThread = nullptr;
@@ -66,7 +69,7 @@ Socket::Socket(Task *notifytask, UInt32 inSocketType)
   fDestAddr.sin_addr.s_addr = 0;
   fDestAddr.sin_port = 0;
 
-  // SetTask 是 EventContext 的成员函数,执行”fTask = notifytask”操作。
+  /* SetTask 是 EventContext 的成员函数,执行”fTask = notifytask”操作。 */
   this->SetTask(notifytask);
 
 #if SOCKET_DEBUG
@@ -124,7 +127,7 @@ void Socket::SetSocketBufSize(UInt32 inNewSize) {
 #if SOCKET_DEBUG
   int value;
   int buffSize = sizeof(value);
-  int error = ::getsockopt(fFileDesc, SOL_SOCKET, SO_SNDBUF, (void*)&value, (socklen_t*)&buffSize);
+  int error = ::getsockopt(fFileDesc, SOL_SOCKET, SO_SNDBUF, (char*)&value, (socklen_t*)&buffSize);
 #endif
 
   int bufSize = inNewSize;
@@ -137,10 +140,9 @@ void Socket::SetSocketBufSize(UInt32 inNewSize) {
 
 #if SOCKET_DEBUG
   int setValue;
-  error = ::getsockopt(fFileDesc, SOL_SOCKET, SO_SNDBUF, (void*)&setValue, (socklen_t*)&buffSize);
+  error = ::getsockopt(fFileDesc, SOL_SOCKET, SO_SNDBUF, (char*)&setValue, (socklen_t*)&buffSize);
   qtss_printf("Socket::SetSocketBufSize ");
-  if (fState & kBound)
-  {
+  if (fState & kBound) {
       if (nullptr != this->GetLocalAddrStr())
           this->GetLocalAddrStr()->PrintStr(":");
       if (nullptr != this->GetLocalPortStr())
@@ -157,7 +159,7 @@ OS_Error Socket::SetSocketRcvBufSize(UInt32 inNewSize) {
 #if SOCKET_DEBUG
   int value;
   int buffSize = sizeof(value);
-  int error = ::getsockopt(fFileDesc, SOL_SOCKET, SO_RCVBUF, (void*)&value, (socklen_t*)&buffSize);
+  int error = ::getsockopt(fFileDesc, SOL_SOCKET, SO_RCVBUF, (char*)&value, (socklen_t*)&buffSize);
 #endif
 
   int bufSize = inNewSize;
@@ -169,7 +171,7 @@ OS_Error Socket::SetSocketRcvBufSize(UInt32 inNewSize) {
 
 #if SOCKET_DEBUG
   int setValue;
-  error = ::getsockopt(fFileDesc, SOL_SOCKET, SO_RCVBUF, (void*)&setValue, (socklen_t*)&buffSize);
+  error = ::getsockopt(fFileDesc, SOL_SOCKET, SO_RCVBUF, (char*)&setValue, (socklen_t*)&buffSize);
   qtss_printf("Socket::SetSocketRcvBufSize ");
   if (fState & kBound)
   {
@@ -199,16 +201,12 @@ OS_Error Socket::Bind(UInt32 addr, UInt16 port, bool test) {
   int err;
 
 #if 0
-  if (test) // pick some ports or conditions to return an error on.
-  {
-      if (6971 == port)
-      {
+  if (test) { // pick some ports or conditions to return an error on.
+      if (6971 == port) {
           fLocalAddr.sin_port = 0;
           fLocalAddr.sin_addr.s_addr = 0;
           return EINVAL;
-      }
-      else
-      {
+      } else {
           err = ::bind(fFileDesc, (sockaddr *)&fLocalAddr, sizeof(fLocalAddr));
       }
   }
@@ -221,9 +219,8 @@ OS_Error Socket::Bind(UInt32 addr, UInt16 port, bool test) {
     fLocalAddr.sin_addr.s_addr = 0;
     return (OS_Error) OSThread::GetErrno();
   } else
-    ::getsockname(fFileDesc,
-                  (sockaddr *) &fLocalAddr,
-                  &len); // get the kernel to fill in unspecified values
+    // get the kernel to fill in unspecified values
+    ::getsockname(fFileDesc, (sockaddr *) &fLocalAddr, &len);
   fState |= kBound;
   return OS_NoErr;
 }
@@ -330,7 +327,7 @@ OS_Error Socket::WriteV(const struct iovec *iov,
 
   int err;
   do {
-#ifdef __Win32__
+#if __WinSock__
     DWORD theBytesSent = 0;
     err = ::WSASend(fFileDesc, (LPWSABUF)iov, numIOvecs, &theBytesSent, 0, nullptr, nullptr);
     if (err == 0)
@@ -364,6 +361,13 @@ OS_Error Socket::Read(void *buffer, const UInt32 length, UInt32 *outRecvLenP) {
   long theRecvLen;
   do {
     theRecvLen = ::recv(fFileDesc, (char *) buffer, length, 0); //flags??
+#if __WinSock__
+  } while ((theRecvLen == SOCKET_ERROR) && (::WSAGetLastError() == WSAEINTR));
+
+  if (theRecvLen == SOCKET_ERROR) {
+    int theErr = ::WSAGetLastError();
+    if ((theErr != WSAEWOULDBLOCK) && (this->IsConnected()))
+#else
   } while ((theRecvLen == -1) && (OSThread::GetErrno() == EINTR));
 
   if (theRecvLen == -1) {
@@ -371,6 +375,7 @@ OS_Error Socket::Read(void *buffer, const UInt32 length, UInt32 *outRecvLenP) {
     // Yes... EAGAIN. Means the socket is now flow-controled
     int theErr = OSThread::GetErrno();
     if ((theErr != EAGAIN) && (this->IsConnected()))
+#endif
       fState ^= kConnected; // turn off connected state flag
     return (OS_Error) theErr;
   } else if (theRecvLen == 0) {

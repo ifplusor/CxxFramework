@@ -116,25 +116,27 @@ void OSThread::Start() {
 
 #ifdef __Win32__
   unsigned int theId = 0; // We don't care about the identifier
-  fThreadID = (HANDLE)_beginthreadex(nullptr,   // Inherit security
-      0,      // Inherit stack size
-      _Entry, // Entry function
-      (void*)this,    // Entry arg
-      0,      // Begin executing immediately
+  fThreadID = (HANDLE) _beginthreadex(
+      nullptr,    // Inherit security
+      0,          // Inherit stack size
+      _Entry,     // Entry function
+      (void *) this,    // Entry arg
+      0,          // Begin executing immediately
       &theId);
   Assert(fThreadID != nullptr);
 #elif __PTHREADS__
   pthread_attr_t *theAttrP;
 #ifdef _POSIX_THREAD_PRIORITY_SCHEDULING
-  // 注意:对于有_POSIX_THREAD_PRIORITY_SCHEDULING 宏定义的 pthread 库,创建线程的时候,应该添
-  // 加属性 PTHREAD_SCOPE_SYSTEM,但是这里被注释掉了!!!
+  /*
+     注意:对于有_POSIX_THREAD_PRIORITY_SCHEDULING 宏定义的 pthread 库,创建线程
+     的时候,应该添加属性 PTHREAD_SCOPE_SYSTEM,但是这里被注释掉了!!!
+   */
   //theAttrP = &sThreadAttr;
   theAttrP = 0;
 #else
   theAttrP = nullptr;
 #endif
-  int err =
-      pthread_create((pthread_t *) &fThreadID, theAttrP, _Entry, (void *) this);
+  int err = pthread_create(&fThreadID, theAttrP, _Entry, (void *) this);
   Assert(err == 0);
 #else
   fThreadID = (UInt32)cthread_fork((cthread_fn_t)_Entry, (any_t)this);
@@ -238,17 +240,18 @@ void *OSThread::_Entry(void *inThread) { //static
   Assert(theErr == TRUE);
 #elif __PTHREADS__
   theThread->fThreadID = (pthread_t) pthread_self();
-  // 注意:在这里调用了 pthread_setspecific 将 theThread 和线程的 key 相关联
+  /* 注意:在这里调用了 pthread_setspecific 将 theThread 和线程的 key 相关联 */
   pthread_setspecific(OSThread::gMainKey, theThread);
 #else
   theThread->fThreadID = (UInt32)cthread_self();
   cthread_set_data(cthread_self(), (any_t)theThread);
 #endif
 
-  //
-  // Run the thread
-  // Entry 函数是 OSThread 的纯虚函数,所以这里实际上会调用派生类的 Entry
-  // 函数,也就是 TaskThread::Entry 函数。
+  /*
+     Run the thread
+     Entry 函数是 OSThread 的纯虚函数,所以这里实际上会调用派生类的 Entry
+     函数,也就是 TaskThread::Entry 函数。
+   */
   theThread->Entry();
 
 #ifdef __Win32__
@@ -268,40 +271,56 @@ OSThread *OSThread::GetCurrent() {
 #endif
 }
 
-#ifdef __Win32__
-int OSThread::GetErrno()
-{
-    int winErr = ::GetLastError();
+#ifdef __WinSock__
 
+int OSThread::TransferErrno(int winErr) {
+  switch (winErr)
+  {
+    case ERROR_FILE_NOT_FOUND: return ENOENT;
+    case ERROR_PATH_NOT_FOUND: return ENOENT;
+    case WSAEINTR:          return EINTR;
+    case WSAENETRESET:      return EPIPE;
+    case WSAENOTCONN:       return ENOTCONN;
+    case WSAEWOULDBLOCK:    return EAGAIN;
+    case WSAECONNRESET:     return EPIPE;
+    case WSAEADDRINUSE:     return EADDRINUSE;
+    case WSAEMFILE:         return EMFILE;
+    case WSAEINPROGRESS:    return EINPROGRESS;
+    case WSAEADDRNOTAVAIL:  return EADDRNOTAVAIL;
+    case WSAECONNABORTED:   return EPIPE;
+    case 0:                 return 0;
+    default:                return ENOTCONN;
+  }
+}
+
+#endif
+
+#ifdef __Win32__
+int OSThread::GetErrno() {
+    int winErr = ::GetLastError();
 
     // Convert to a POSIX errorcode. The *major* assumption is that
     // the meaning of these codes is 1-1 and each Winsock, etc, etc
-    // function is equivalent in errors to the POSIX standard. This is
-    // a big assumption, but the server only checks for a small subset of
-    // the real errors, on only a small number of functions, so this is probably ok.
+    // function is equivalent in errors to the POSIX standard. This is a big
+    // assumption, but the server only checks for a small subset of the real
+    // errors, on only a small number of functions, so this is probably ok.
     switch (winErr)
     {
-
     case ERROR_FILE_NOT_FOUND: return ENOENT;
-
     case ERROR_PATH_NOT_FOUND: return ENOENT;
-
-
-
-
-    case WSAEINTR:      return EINTR;
-    case WSAENETRESET:  return EPIPE;
-    case WSAENOTCONN:   return ENOTCONN;
-    case WSAEWOULDBLOCK:return EAGAIN;
-    case WSAECONNRESET: return EPIPE;
-    case WSAEADDRINUSE: return EADDRINUSE;
-    case WSAEMFILE:     return EMFILE;
-    case WSAEINPROGRESS:return EINPROGRESS;
-    case WSAEADDRNOTAVAIL: return EADDRNOTAVAIL;
-    case WSAECONNABORTED: return EPIPE;
-    case 0:             return 0;
-
-    default:            return ENOTCONN;
+    case WSAEINTR:          return EINTR;
+    case WSAENETRESET:      return EPIPE;
+    case WSAENOTCONN:       return ENOTCONN;
+    case WSAEWOULDBLOCK:    return EAGAIN;
+    case WSAECONNRESET:     return EPIPE;
+    case WSAEADDRINUSE:     return EADDRINUSE;
+    case WSAEMFILE:         return EMFILE;
+    case WSAEINPROGRESS:    return EINPROGRESS;
+    case WSAEADDRNOTAVAIL:  return EADDRNOTAVAIL;
+    case WSAECONNABORTED:   return EPIPE;
+    case 0:                 return 0;
+    default:                return ENOTCONN;
     }
 }
+
 #endif

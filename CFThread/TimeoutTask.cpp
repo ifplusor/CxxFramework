@@ -36,7 +36,7 @@ TimeoutTaskThread *TimeoutTask::sThread = nullptr;
 
 void TimeoutTask::Initialize() {
   if (sThread == nullptr) {
-    // TimeoutTaskThread 是 IdleTask 的派生类, IdleTask 是 Task 的派生类。
+    /* TimeoutTaskThread 是 IdleTask 的派生类, IdleTask 是 Task 的派生类。 */
     sThread = new TimeoutTaskThread;
     sThread->Signal(Task::kStartEvent);
   }
@@ -46,8 +46,6 @@ TimeoutTask::TimeoutTask(Task *inTask, SInt64 inTimeoutInMilSecs)
     : fTask(inTask), fQueueElem() {
   fQueueElem.SetEnclosingObject(this);
   this->SetTimeout(inTimeoutInMilSecs);
-  if (nullptr == inTask)
-    fTask = (Task *) this;
 
   Assert(sThread != nullptr); // this can happen if RunServer initializes tasks in the wrong order
 
@@ -74,9 +72,9 @@ void TimeoutTask::RefreshTimeout() {
 }
 
 SInt64 TimeoutTaskThread::Run() {
-  EventFlags events = GetEvents();
+  EventFlags events = this->GetEvents(); // we must clear the event mask!
   if (events & Task::kKillEvent)
-    return -1;
+    return 0; // we will release later, not in TaskThread
 
   // ok, check for timeouts now. Go through the whole queue
   OSMutexLocker locker(&fMutex);
@@ -88,7 +86,7 @@ SInt64 TimeoutTaskThread::Run() {
     TimeoutTask *theTimeoutTask =
         (TimeoutTask *) iter.GetCurrent()->GetEnclosingObject();
 
-    //if it's time to time this task out, signal it
+    // if it's time to time this task out, signal it
     if ((theTimeoutTask->fTimeoutAtThisTime > 0)
         && (curTime >= theTimeoutTask->fTimeoutAtThisTime)) {
 #if TIMEOUT_DEBUGGING
@@ -99,10 +97,11 @@ SInt64 TimeoutTaskThread::Run() {
                   curTime,
                   theTimeoutTask->fTimeoutAtThisTime);
 #endif
-      theTimeoutTask->fTask->Signal(Task::kTimeoutEvent);
+      if (theTimeoutTask->fTask != nullptr)
+        theTimeoutTask->fTask->Signal(Task::kTimeoutEvent);
     } else {
       taskInterval = theTimeoutTask->fTimeoutAtThisTime - curTime;
-      // 更新 TimeoutTaskThread 的唤醒时间
+      /* 更新 TimeoutTaskThread 的唤醒时间 */
       if ((taskInterval > 0) && (theTimeoutTask->fTimeoutInMilSecs > 0)
           && (intervalMilli > taskInterval))
         // set timeout to 1 second past this task's timeout
@@ -117,7 +116,6 @@ SInt64 TimeoutTaskThread::Run() {
 #endif
     }
   }
-  (void) this->GetEvents(); // we must clear the event mask!
 
   OSThread::ThreadYield();
 
@@ -126,8 +124,10 @@ SInt64 TimeoutTaskThread::Run() {
               (SInt32)intervalMilli / 1000);
 #endif
 
-  // 注意：在 TaskThread::Entry 将 TimeoutTaskThread 项从线程的 fTaskQueue 里
-  // 取出处理后，根据 Run 返回值，决定是否插入线程的 fHeap，而不会再次插入到
-  // fTaskQueue 里。如果插入 fHeap，在 TaskThread::WaitForTask 里会被得到处理。
+  /*
+     注意：在 TaskThread::Entry 将 TimeoutTaskThread 项从线程的 fTaskQueue 里
+     取出处理后，根据 Run 返回值，决定是否插入线程的 fHeap，而不会再次插入到
+     fTaskQueue 里。如果插入 fHeap，在 TaskThread::WaitForTask 里会被得到处理。
+   */
   return intervalMilli; // don't delete me!
 }

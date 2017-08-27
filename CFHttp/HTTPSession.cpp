@@ -17,6 +17,7 @@
 HTTPSession::HTTPSession()
     : HTTPSessionInterface(),
       fRequest(nullptr),
+      fResponse(nullptr),
       fReadMutex(),
       fState(kReadingFirstRequest) {
   this->SetTaskName("HTTPSession");
@@ -44,18 +45,20 @@ SInt64 HTTPSession::Run() {
     fLiveSession = false;
 
   if (events & Task::kTimeoutEvent) {
-    // Session超时,释放Session
+    /* Session超时,释放Session */
     return -1;
   }
 
   while (this->IsLiveSession()) {
     switch (fState) {
       case kReadingFirstRequest: {
-        // 读取请求报文
+        /* 读取请求报文 */
 
         if ((err = fInputStream.ReadRequest()) == CF_NoErr) {
-          // 如果 RequestStream 返回 CF_NoErr，就表示已经读取了目前所到达的
-          // 网络数据。但还不能构成一个整体报文，还要继续等待读取...
+          /*
+             如果 RequestStream 返回 CF_NoErr，就表示已经读取了目前所到达的
+             网络数据。但还不能构成一个整体报文，还要继续等待读取...
+           */
           fInputSocketP->RequestEvent(EV_RE);
           return 0;
         }
@@ -76,7 +79,7 @@ SInt64 HTTPSession::Run() {
       }
 
       case kReadingRequest: {
-        // 读取请求报文
+        /* 读取请求报文 */
 
         OSMutexLocker readMutexLocker(&fReadMutex);
 
@@ -110,7 +113,7 @@ SInt64 HTTPSession::Run() {
       }
 
       case kHaveCompleteMessage: {
-        // 已经读取到完整的请求报文，进行初始化
+        /* 已经读取到完整的请求报文，进行初始化 */
 
         Assert(fInputStream.GetRequestBuffer());
 
@@ -119,9 +122,11 @@ SInt64 HTTPSession::Run() {
         fRequest = new HTTPPacket(fInputStream.GetRequestBuffer());
         fResponse = new HTTPPacket(httpResponseType);
 
-        // 在这里，我们已经读取了一个完整的 Request，并准备进行请求的处理，
-        // 直到响应报文发出。
-        // 在此过程中，此 Session 的 Socket 不进行任何网络数据的读/写；
+        /*
+           在这里，我们已经读取了一个完整的 Request，并准备进行请求的处理，
+           直到响应报文发出。
+           在此过程中，此 Session 的 Socket 不进行任何网络数据的读/写；
+         */
         fReadMutex.Lock();
         fSessionMutex.Lock();
 
@@ -145,15 +150,15 @@ SInt64 HTTPSession::Run() {
       }
 
       case kFilteringRequest: {
-        // 对请求进行过滤，解析报文
+        /* 对请求进行过滤，解析报文 */
 
-        // 刷新Session保活时间
+        /* 刷新Session保活时间 */
         fTimeoutTask.RefreshTimeout();
 
-        // 对请求报文进行解析，读取 body
+        /* 对请求报文进行解析，读取 body */
         CF_Error theErr = SetupRequest();
 
-        // 当 SetupRequest 步骤未读取到完整的网络报文，需要进行等待
+        /* 当 SetupRequest 步骤未读取到完整的网络报文，需要进行等待 */
         if (theErr == CF_WouldBlock) {
           this->ForceSameThread();
           fInputSocketP->RequestEvent(EV_RE);
@@ -161,7 +166,7 @@ SInt64 HTTPSession::Run() {
           // the same thread to be used for next Run()
           // when next run, the fState also is kFilteringRequest, so we will
           // call SetupRequest for continue read body.
-          return 0; // 返回0表示有事件才进行通知，返回>0表示规定时间后调用Run()
+          return 0;
         }
 
         fState = kPreprocessingRequest;
@@ -169,7 +174,7 @@ SInt64 HTTPSession::Run() {
       }
 
       case kPreprocessingRequest: {
-        // 请求预处理过程
+        /* 请求预处理过程 */
 
         if (fRequest->GetVersion() == httpIllegalVersion) {
           fResponse->SetStatusCode(httpHTTPVersionNotSupported);
@@ -194,11 +199,11 @@ SInt64 HTTPSession::Run() {
       }
 
       case kSendingResponse: {
-        // 响应报文发送，确保完全发送
+        /* 响应报文发送，确保完全发送 */
         Assert(fRequest != nullptr);
         Assert(fResponse != nullptr);
 
-        // 构造响应信息
+        /* 构造响应信息 */
         CF_Error theErr = SetupResponse();
 
         if (fOutputStream.GetBytesWritten() == 0) {
@@ -206,13 +211,13 @@ SInt64 HTTPSession::Run() {
           break;
         }
 
-        // 发送响应报文
+        /* 发送响应报文 */
         err = fOutputStream.Flush();
 
         if (err == EAGAIN) {
           // If we get this error, we are currently flow-controlled and should
           // wait for the socket to become writeable again
-          // 如果收到Socket EAGAIN错误，那么我们需要等Socket再次可写的时候再调用发送
+          /* 如果收到Socket EAGAIN错误，那么我们需要等Socket再次可写的时候再调用发送 */
           fSocket.RequestEvent(EV_WR);
           this->ForceSameThread();
           // We are holding mutexes, so we need to force
@@ -241,7 +246,7 @@ SInt64 HTTPSession::Run() {
           }
         }
 
-        // 一次请求的读取、处理、响应过程完整，等待下一次网络报文！
+        /* 一次请求的读取、处理、响应过程完整，等待下一次网络报文！ */
         this->CleanupRequestAndResponse();
         fState = kReadingRequest;
       }
@@ -249,15 +254,17 @@ SInt64 HTTPSession::Run() {
     }
   }
 
-  // 清空Session占用的所有资源
+  /* 清空Session占用的所有资源 */
   this->CleanupRequestAndResponse();
 
-  // Session引用数为0，返回-1后，系统会将此Session删除
+  /* Session引用数为0，返回-1后，系统会将此Session删除 */
   if (fObjectHolders == 0)
     return -1;
 
-  // 如果流程走到这里，Session实际已经无效了，应该被删除。
-  // 但没有，因为还有其他地方引用了Session对象
+  /*
+     如果流程走到这里，Session实际已经无效了，应该被删除。
+     但没有，因为还有其他地方引用了Session对象
+   */
   return 0;
 }
 
@@ -285,7 +292,7 @@ CF_Error HTTPSession::SendHTTPPacket(StrPtrLen *contentXML,
     pOutputStream->Flush();
   }
 
-  //将对HTTPSession的引用减少一
+  /* 将对HTTPSession的引用减少 1 */
   if (fObjectHolders && decrement)
     DecrementObjectHolderCount();
 
@@ -301,14 +308,14 @@ CF_Error HTTPSession::SendHTTPPacket(StrPtrLen *contentXML,
 CF_Error HTTPSession::SetupRequest() {
   CF_Error theErr;
 
-  // 解析 head
+  /* 解析 head */
   if (fRequest->GetHTTPType() == httpIllegalType) {
     theErr = fRequest->Parse();
     if (theErr != CF_NoErr)
       return CF_BadArgument;
   }
 
-  // 解析 body
+  /* 解析 body */
   StrPtrLen *lengthPtr = fRequest->GetHeaderValue(httpContentLengthHeader);
   StringParser theContentLenParser(lengthPtr);
   theContentLenParser.ConsumeWhitespace();

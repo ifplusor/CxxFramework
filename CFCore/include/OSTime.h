@@ -75,7 +75,7 @@ class OSTime {
   static SInt32 GetGMTOffset();
 
  private:
-#if !defined(EASY_DEVICE)
+#if !defined(__Win32__) && !defined(EASY_DEVICE) && !defined(__MinGW__)
   static inline int getCpuSpeed_mhz(unsigned int wait_us);
   static int getCpuSpeed();
 

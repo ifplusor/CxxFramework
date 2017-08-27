@@ -27,8 +27,6 @@
 
     Contains:   Implements objects defined in UDPDemuxer.h
 
-
-
 */
 
 #include "UDPDemuxer.h"

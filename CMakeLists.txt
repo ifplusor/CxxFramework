@@ -12,9 +12,18 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_definitions(-D__linux__)
     #    add_compile_options(-O2)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    set(CND_PLATFORM Win32)
-    set(CND_DLIB_EXT dll)
-    add_definitions(-D__Win32__)
+    if (MINGW)
+        message("use mingw toolchain")
+        set(CND_PLATFORM MinGW)
+        add_definitions(-D__MinGW__)
+    elseif (MSYS)
+        message("use msys toolchain")
+    else()
+        message("use msvc toolchain")
+        set(CND_PLATFORM Win32)
+        set(CND_DLIB_EXT dll)
+        add_definitions(-D__Win32__)
+    endif ()
 else ()
     message("no build confg for ${CMAKE_SYSTEM_NAME}")
 endif ()
@@ -51,8 +60,16 @@ set(SOURCE_FILES
         CFEnv.cpp
         CFMain.cpp)
 
+if (${CND_PLATFORM} MATCHES "Win32")
+add_library(CxxFramework STATIC
+        ${HEADER_FILES} ${SOURCE_FILES})
+elseif (${CND_PLATFORM} MATCHES "MinGW")
+add_library(CxxFramework STATIC
+        ${HEADER_FILES} ${SOURCE_FILES})
+else ()
 add_library(CxxFramework SHARED
         ${HEADER_FILES} ${SOURCE_FILES})
+endif ()
 target_link_libraries(CxxFramework
         PUBLIC CFBasic
         PUBLIC CFCore
@@ -61,11 +78,6 @@ target_link_libraries(CxxFramework
         PUBLIC CFHttp)
 target_compile_options(CxxFramework
         PRIVATE -fPIC)
-
-if (${CND_PLATFORM} MATCHES "Linux")
-    target_link_libraries(CxxFramework
-            PUBLIC pthread)
-endif ()
 
 add_executable(demo
         demo.cpp)

@@ -29,13 +29,11 @@
 
     Written By: Denis Serenyi
 
-
 */
 
 #include "ev.h"
 #include "OSHeaders.h"
 #include "OSThread.h"
-#include "MyAssert.h"
 
 //
 // You have to create a window to get socket events? What's up with that?
@@ -52,6 +50,10 @@ void select_startevents() {
   // This call occurs from the main thread. In Win32, apparently, you
   // have to create your WSA window from the same thread that calls GetMessage.
   // So, we have to create the window from select_waitevent
+}
+
+void select_stopevents() {
+
 }
 
 int select_removeevent(int /*which*/) {
@@ -111,7 +113,7 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
     theWndClass.hCursor = NULL;
     theWndClass.hbrBackground = NULL;
     theWndClass.lpszMenuName = NULL;
-    theWndClass.lpszClassName = "EasyDarwinServerWindow";
+    theWndClass.lpszClassName = "CFSelectWindow";
     theWndClass.hIconSm = NULL;
 
     ATOM theWndAtom = ::RegisterClassEx(&theWndClass);
@@ -119,8 +121,8 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
     if (theWndAtom == NULL)
       ::exit(-1); // Poor error recovery, but this should never happen.
 
-    sMsgWindow = ::CreateWindow("EasyDarwinServerWindow",  // Window class name
-                                "EasyDarwinServerWindow",  // Window title bar
+    sMsgWindow = ::CreateWindow("CFSelectWindow",  // Window class name
+                                "CFSelectWindow",  // Window title bar
                                 WS_POPUP,   // Window style ( a popup doesn't need a parent )
                                 0,          // x pos
                                 0,          // y pos
@@ -150,8 +152,7 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
     UInt32 theEvent = WSAGETSELECTEVENT(theMessage.lParam);
 
     req->er_handle = theMessage.wParam; // the wParam is the FD
-    req->er_eventbits =
-        EV_RE;          // WSA events & socket events don't map...
+    req->er_eventbits = EV_RE;          // WSA events & socket events don't map...
     // but the server state machines never care
     // what the event is anyway.
 
@@ -172,13 +173,12 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
 }
 
 LRESULT CALLBACK
-select_wndproc(HWND /*inWIndow*/, UINT
-inMsg, WPARAM /*inParam*/, LPARAM /*inOtherParam*/)
-{
-// If we don't return true for this message, window creation will not proceed
-if (inMsg == WM_NCCREATE)
-return TRUE;
+select_wndproc(HWND /*inWIndow*/, UINT inMsg,
+               WPARAM /*inParam*/, LPARAM /*inOtherParam*/) {
+  // If we don't return true for this message, window creation will not proceed
+  if (inMsg == WM_NCCREATE)
+    return TRUE;
 
-// All other messages we can ignore and return 0
-return 0;
+  // All other messages we can ignore and return 0
+  return 0;
 }

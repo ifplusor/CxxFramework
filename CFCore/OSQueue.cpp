@@ -239,10 +239,12 @@ OSQueueElem::~OSQueueElem() {
 OSQueueElem *OSQueue_Blocking::DeQueueBlocking(OSThread *inCurThread,
                                                SInt32 inTimeoutInMilSecs) {
   OSMutexLocker theLocker(&fMutex);
-  // 如果 fQueue.GetLength() == 0,则调用 fCond.Wait 即调用 pthread_cond_timedwait 等待条件变量有效
+  /*
+   * 如果 fQueue.GetLength() == 0,则调用 fCond.Wait 即调用 pthread_cond_timedwait
+   * 等待条件变量有效
+   */
 #ifdef __Win32_
-  if (fQueue.GetLength() == 0)
-  {
+  if (fQueue.GetLength() == 0) {
       fCond.Wait(&fMutex, inTimeoutInMilSecs);
       return nullptr;
   }
@@ -251,8 +253,11 @@ OSQueueElem *OSQueue_Blocking::DeQueueBlocking(OSThread *inCurThread,
     fCond.Wait(&fMutex, inTimeoutInMilSecs);
 #endif
 
-  // fCond.wait 返回或者 fQueue.GetLength() != 0,调用 fQueue.DeQueue 返回队列里的任务对象。这里
-  // 要注意一点,pthread_cond_timedwait 可能只是超时退出,所以 fQueue.DeQueue 可能只是返回空指针。
+  /*
+     fCond.wait 返回或者 fQueue.GetLength() != 0,调用 fQueue.DeQueue 返回队列
+     里的任务对象。这里要注意一点,pthread_cond_timedwait 可能只是超时退出,所以
+     fQueue.DeQueue 可能只是返回空指针。
+   */
   OSQueueElem *retval = fQueue.DeQueue();
   return retval;
 }

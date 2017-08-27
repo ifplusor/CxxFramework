@@ -27,18 +27,16 @@
 
     Contains:   implements TCPSocket class
 
-
-
 */
 
-#ifndef __Win32__
+#include "TCPSocket.h"
+#include "SocketUtils.h"
+
+#if !__WinSock__
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #endif
-
-#include "TCPSocket.h"
-#include "SocketUtils.h"
 
 #ifdef USE_NETLOG
 #include <netlog.h>

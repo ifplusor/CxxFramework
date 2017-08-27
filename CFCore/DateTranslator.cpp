@@ -34,7 +34,6 @@
 #include "DateTranslator.h"
 #include "StringParser.h"
 #include "OSTime.h"
-#include "MyAssert.h"
 
 // If you assign values of 0 - 25 for all the letters, and sum up the values
 // of the letters in each month, you get a table that looks like this. For

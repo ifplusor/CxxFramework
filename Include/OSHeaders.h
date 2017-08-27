@@ -34,6 +34,7 @@
 #include "PlatformHeader.h"
 
 #include <limits.h>
+#include <stdlib.h>
 
 #ifndef TRUE
 #define TRUE 1
@@ -43,6 +44,18 @@
 #define FALSE 0
 #endif
 
+#if __WinSock__
+
+#include <winsock2.h>
+#include <ws2tcpip.h>
+
+// Winsock does not use iovecs
+struct iovec {
+	u_long iov_len; // this is not the POSIX definition, it is rather defined to be
+	char FAR *iov_base; // equivalent to a WSABUF for easy integration into Win32
+};
+
+#endif
 
 /* Platform-specific components */
 #if __MacOSX__
@@ -199,7 +212,7 @@ typedef FourCharCode OSType;
 #define TW0_CHARS_TO_INT(c1, c2)  ( c1 << 8 | c2 )
 #define MAX_PATH 260
 
-#elif __Win32__
+#elif __Win32__ || __MinGW__
 
 /* Defines */
 #define _64BITARG_ "I64"
@@ -229,17 +242,16 @@ typedef FourCharCode OSType;
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
-#include <winsock2.h>
 #include <mswsock.h>
 #include <process.h>
-#include <ws2tcpip.h>
 #include <io.h>
 #include <direct.h>
 #include <errno.h>
 
-
+#ifndef __MinGW__
 #define R_OK 0
 #define W_OK 1
+#endif
 
 // POSIX errorcodes
 #ifndef ENOTCONN
@@ -257,12 +269,6 @@ typedef FourCharCode OSType;
 #ifndef EADDRNOTAVAIL
 #define EADDRNOTAVAIL 1009
 #endif
-
-// Winsock does not use iovecs
-struct iovec {
-    u_long  iov_len; // this is not the POSIX definition, it is rather defined to be
-    char FAR*   iov_base; // equivalent to a WSABUF for easy integration into Win32
-};
 
 /* Constants */
 #define QT_TIME_TO_LOCAL_TIME   (-2082844800)
@@ -566,7 +572,6 @@ typedef FourCharCode        OSType;
 #define TW0_CHARS_TO_INT( c1, c2 )  ( c1 << 8 | c2 )
 
 #endif
-
 
 #ifdef USE_ENUM
 typedef enum {

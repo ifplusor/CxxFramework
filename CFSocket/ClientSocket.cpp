@@ -25,17 +25,19 @@
 /*
     File:       ClientSocket.cpp
 
-
-
 */
-#ifndef __Win32__
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#endif
+
 
 #include <base64.h>
 #include "ClientSocket.h"
+
+#if !__WinSock__
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+#endif
 
 #define CLIENT_SOCKET_DEBUG 0
 

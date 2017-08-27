@@ -34,15 +34,15 @@
 #ifndef __SOCKET_H__
 #define __SOCKET_H__
 
-#ifndef __Win32__
+#include "EventContext.h"
+
+#if !__WinSock__
 
 #include <netinet/in.h>
 
 #endif
 
-#include "EventContext.h"
-
-#define SOCKET_DEBUG 0
+#define SOCKET_DEBUG 1
 
 class Socket : public EventContext {
  public:
@@ -50,13 +50,37 @@ class Socket : public EventContext {
   enum {
     // Pass this in on socket constructors to specify whether the
     // socket should be non-blocking or blocking
-        kNonBlockingSocketType = 1
+    kNonBlockingSocketType = 1
   };
 
   /**
    * This class provides a global event thread, construct it.
    */
-  static void Initialize() { sEventThread = new EventThread(); }
+  static void Initialize() {
+#if __WinSock__
+    WORD wVersionRequested;
+    WSADATA wsaData;
+    wVersionRequested = MAKEWORD(2, 2);
+    int err = ::WSAStartup(wVersionRequested, &wsaData);
+    if (err != 0) {
+      /* Tell the user that we could not find a usable */
+      /* Winsock DLL.                                  */
+      qtss_printf("WSAStartup failed with error: %d\n", err);
+      exit(EXIT_FAILURE);
+    }
+    if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2) {
+      /* Tell the user that we could not find a usable */
+      /* WinSock DLL.                                  */
+      qtss_printf("Could not find a usable version of Winsock.dll\n");
+      WSACleanup();
+      exit(EXIT_FAILURE);
+    }
+    else
+      qtss_printf("The Winsock 2.2 dll was found okay\n");
+#endif
+
+    sEventThread = new EventThread();
+  }
 
   static void StartThread() { sEventThread->Start(); }
 
@@ -67,6 +91,10 @@ class Socket : public EventContext {
       delete sEventThread;
       sEventThread = nullptr;
     }
+
+#if __WinSock__
+    ::WSACleanup();
+#endif
   }
 
   static EventThread *GetEventThread() { return sEventThread; }

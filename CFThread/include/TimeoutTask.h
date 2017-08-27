@@ -25,11 +25,11 @@
 /*
     File:       TimeoutTask.h
 
-    Contains:   Just like a normal task, but can be scheduled for timeouts. Unlike
-                IdleTask, which is VERY aggressive about being on time, but high
-                overhead for maintaining the timing information, this is a low overhead,
-                low priority timing mechanism. Timeouts may not happen exactly when
-                they are supposed to, but who cares?
+    Contains:   Just like a normal task, but can be scheduled for timeouts.
+                Unlike IdleTask, which is VERY aggressive about being on time,
+                but high overhead for maintaining the timing information, this
+                is a low overhead, low priority timing mechanism. Timeouts may
+                not happen exactly when they are supposed to, but who cares?
 
 */
 
@@ -41,10 +41,12 @@
 //messages to help debugging timeouts
 #define TIMEOUT_DEBUGGING 1
 
-/*
+/**
+ * @brief TimeoutTask 守护线程
+ *
  * TimeoutTaskThread 是 IdleTask 的派生类, IdleTask 是 Task 的派生类。
- * 实际上这个类的名字容易产生混淆，它并不是一个线程类，而是一个基于 Task 类的
- * 任务类，它配合 TimeoutTaskDaemon 类实现一个周期性运行的基础任务。
+ * 本质上，TimeoutTaskThread 并不是一个线程类，而是一个基于 Task 类的
+ * 任务类，它配合 TimeoutTask 类实现一个周期性运行的基础任务。
  */
 class TimeoutTaskThread : public IdleTask {
  public:
@@ -71,7 +73,9 @@ class TimeoutTaskThread : public IdleTask {
   friend class TimeoutTask;
 };
 
-/*
+/**
+ * @brief 超时通知
+ *
  * TimeoutTask is not a derived object off of Task, to add flexibility as
  * to how this object can be utilitized
  */
@@ -81,23 +85,21 @@ class TimeoutTask {
   /**
    * @brief construct TimeoutTaskThread.
    * @note Call Initialize before using this class
-   *
-   * TimeoutTaskThread 是 IdleTask 的派生类, IdleTask 是 Task 的派生类。
-   * 所以，TimeoutTaskThread 本质上是运行在 TaskThread 上的一个 Task。
    */
   static void Initialize();
 
   static void Release() {
     if (sThread != nullptr) {
       sThread->CancelTimeout();
-      // 当响应 kKillEvent 事件，返回 TaskThread 后释放内存
+      /* 当响应 kKillEvent 事件，返回 TaskThread 后释放内存 */
       sThread->Signal(Task::kKillEvent);
       sThread = nullptr;
     }
   }
 
-  //Pass in the task you'd like to send timeouts to.
-  //Also pass in the timeout you'd like to use. By default, the timeout is 0 (NEVER).
+  // Pass in the task you'd like to send timeouts to.
+  // Also pass in the timeout you'd like to use. By default,
+  // the timeout is 0 (NEVER).
   TimeoutTask(Task *inTask, SInt64 inTimeoutInMilSecs = 15);
 
   ~TimeoutTask();

@@ -29,9 +29,8 @@
 */
 
 #include "EventContext.h"
-#include <MyAssert.h>
 
-#ifndef __Win32__
+#if !__WinSock__
 
 #include <fcntl.h>
 
@@ -47,12 +46,11 @@
 #include "OS.h"
 #endif
 
-#ifdef __Win32__
-//unsigned int EventContext::sUniqueID = WM_USER; // See commentary in RequestEvent
-atomic_uint EventContext::sUniqueID = WM_USER;
+#ifdef __WinSock__
+// See commentary in RequestEvent
+atomic<unsigned int> EventContext::sUniqueID(WM_USER);
 #else
-//unsigned int EventContext::sUniqueID = 1;
-atomic<unsigned int> EventContext::sUniqueID{1};
+atomic<unsigned int> EventContext::sUniqueID(1);
 #endif
 
 EventContext::EventContext(int inFileDesc, EventThread *inThread)
@@ -68,7 +66,7 @@ EventContext::EventContext(int inFileDesc, EventThread *inThread)
 void EventContext::InitNonBlocking(int inFileDesc) {
   fFileDesc = inFileDesc;
 
-#ifdef __Win32__
+#if __WinSock__
   u_long one = 1;
   int err = ::ioctlsocket(fFileDesc, FIONBIO, &one);
 #else
@@ -88,24 +86,25 @@ void EventContext::Cleanup() {
 
 #if !MACOSXEVENTQUEUE
       select_removeevent(fFileDesc);//The eventqueue / select shim requires this
-#ifdef __Win32__
+#if __WinSock__
       err = ::closesocket(fFileDesc);
 #else
       err = close(fFileDesc);
 #endif
 
 #else
-      //On Linux (possibly other UNIX implementations) you MUST NOT close the fd before
-      //removing the fd from the select mask, and having the select function wake up
-      //to register this fact. If you close the fd first, bad things may happen, like
-      //the socket not getting unbound from the port & IP addr.
+      // On Linux (possibly other UNIX implementations) you MUST NOT close the
+      // fd before removing the fd from the select mask, and having the select
+      // function wake up to register this fact. If you close the fd first,
+      // bad things may happen, like the socket not getting unbound from the
+      // port & IP addr.
       //
-      //So, what we do is have the select thread itself call close. This is triggered
-      //by calling removeevent.
+      // So, what we do is have the select thread itself call close. This is
+      // triggered by calling removeevent.
       err = close(fFileDesc);
 #endif
     } else
-#ifdef __Win32__
+#if __WinSock__
       err = ::closesocket(fFileDesc);
 #else
       err = close(fFileDesc);
@@ -115,7 +114,12 @@ void EventContext::Cleanup() {
   fFileDesc = kInvalidFileDesc;
   fUniqueID = 0;
 
-  AssertV(err == 0, OSThread::GetErrno());//we don't really care if there was an error, but it's nice to know
+  // we don't really care if there was an error, but it's nice to know
+#if __WinSock__
+  AssertV(err == 0, ::WSAGetLastError());
+#else
+  AssertV(err == 0, OSThread::GetErrno());
+#endif
 }
 
 void EventContext::SnarfEventContext(EventContext &fromContext) {
@@ -160,49 +164,39 @@ void EventContext::RequestEvent(int theMask) {
 #else
     if (select_modwatch(&fEventReq, theMask) != 0)
 #endif
-    AssertV(false, OSThread::GetErrno());
+#if __WinSock__
+      AssertV(false, ::WSAGetLastError());
+#else
+      AssertV(false, OSThread::GetErrno());
+#endif
   } else {
     //allocate a Unique ID for this socket, and add it to the ref table
 
     //johnson find the bug
     bool bFindValid = false;
-#ifdef __Win32__
+#if __WinSock__
     //
     // Kind of a hack. On Win32, the way that we pass around the unique ID is
     // by making it the message ID of our Win32 message (see win32ev.cpp).
     // Messages must be >= WM_USER. Hence this code to restrict the numberspace
     // of our UniqueIDs.
-    do
-    {
-        //if (!compare_and_store(8192, WM_USER, &sUniqueID))  // Fix 2466667: message IDs above a
-        //	fUniqueID = (PointerSizedInt)atomic_add(&sUniqueID, 1);         // level are ignored, so wrap at 8192
-        //else
-        //	fUniqueID = (PointerSizedInt)WM_USER;
-
+    do {
         unsigned int topVal = 8192;
         if (!sUniqueID.compare_exchange_weak(topVal, WM_USER))  // Fix 2466667: message IDs above a
             fUniqueID = ++sUniqueID;         // level are ignored, so wrap at 8192
         else
-            fUniqueID = (PointerSizedInt)WM_USER;
+            fUniqueID = (PointerSizedInt) WM_USER;
 
         //If the fUniqueID is used, find a new one until it's free
         OSRef * ref = fEventThread->fRefTable.Resolve(&fUniqueIDStr);
-        if (ref != NULL)
-        {
+        if (ref != NULL) {
             fEventThread->fRefTable.Release(ref);
-        }
-        else
-        {
+        } else {
             bFindValid = true;// ok, it's free
         }
     } while (0);
 #else
     do {
-      //if (!compare_and_store(10000000, 1, &sUniqueID))
-      //	fUniqueID = (PointerSizedInt)atomic_add(&sUniqueID, 1);
-      //else
-      //	fUniqueID = 1;
-
       unsigned int topVal = 10000000;
       if (!sUniqueID.compare_exchange_weak(topVal, 1))  // Fix 2466667: message IDs above a
         fUniqueID = ++sUniqueID;         // level are ignored, so wrap at 8192
@@ -222,7 +216,7 @@ void EventContext::RequestEvent(int theMask) {
     fRef.Set(fUniqueIDStr, this);
     fEventThread->fRefTable.Register(&fRef);
 
-    //fill out the eventreq data structure
+    // fill out the eventreq data structure
     ::memset(&fEventReq, '\0', sizeof(fEventReq));
     fEventReq.er_type = EV_FD;
     fEventReq.er_handle = fFileDesc;
@@ -233,7 +227,7 @@ void EventContext::RequestEvent(int theMask) {
 #if MACOSXEVENTQUEUE
     if (watchevent(&fEventReq, theMask) != 0)
 #else
-    if (select_modwatch(&fEventReq, theMask) != 0)
+    if (select_watchevent(&fEventReq, theMask) != 0)
 #endif
       //this should never fail, but if it does, cleanup.
     AssertV(false, OSThread::GetErrno());
@@ -267,11 +261,10 @@ void EventThread::Entry() {
 
     AssertV(theErrno == 0, theErrno);
 
-    //ok, there's data waiting on this socket. Send a wakeup.
+    // ok, there's data waiting on this socket. Send a wakeup.
     if (theCurrentEvent.er_data != NULL) {
       // The cookie in this event is an ObjectID. Resolve that objectID into
       // a pointer.
-      //StrPtrLen idStr((char*)&theCurrentEvent.er_data, sizeof(theCurrentEvent.er_data));
       StrPtrLen idStr((char *) &theCurrentEvent.er_data, sizeof(PointerSizedInt));
       OSRef *ref = fRefTable.Resolve(&idStr);
       if (ref != NULL) {
@@ -298,12 +291,10 @@ void EventThread::Entry() {
     SInt64  yieldDur = OS::Milliseconds() - yieldStart;
     static SInt64   numZeroYields;
 
-    if (yieldDur > 1)
-    {
+    if (yieldDur > 1) {
         qtss_printf("EventThread time in OSTHread::Yield %i, numZeroYields %i\n", (SInt32)yieldDur, (SInt32)numZeroYields);
         numZeroYields = 0;
-    }
-    else
+    } else
         numZeroYields++;
 #endif
   }

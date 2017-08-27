@@ -26,7 +26,7 @@ class CFEnv {
   static CFConfigure *GetConfigure() { return sConfigure; }
 
   static bool WillExit() { return sExitCode != CF_NoErr; };
-  static bool Exit(UInt32 exitCode) { sExitCode = exitCode; }
+  static void Exit(UInt32 exitCode) { sExitCode = exitCode; }
 
   // SERVER NAME & VERSION
 

@@ -35,9 +35,8 @@ void select_startevents() {
   m_curTotalEvents = 0;
 }
 
-int epoll_stopevents() {
+void select_stopevents() {
   delete[] _events;
-  return 0;
 }
 
 int select_modwatch(struct eventreq *req, int which) {

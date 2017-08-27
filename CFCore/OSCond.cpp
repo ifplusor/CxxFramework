@@ -30,7 +30,6 @@
 */
 
 #include "OSCond.h"
-#include "MyAssert.h"
 
 #if __PTHREADS_MUTEXES__
 #include <sys/time.h>

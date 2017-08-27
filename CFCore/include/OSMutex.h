@@ -39,7 +39,11 @@
 #include <OSHeaders.h>
 
 #ifndef __Win32__
+
+#ifndef __MinGW__
 #include <sys/errno.h>
+#endif
+
 #if __PTHREADS_MUTEXES__
 
 #if __MacOSX__

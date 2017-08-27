@@ -40,6 +40,7 @@
 std::shared_ptr<IdleTaskThread> IdleTask::sIdleThread = nullptr;
 
 IdleTaskThread::~IdleTaskThread() {
+  this->StopAndWaitForThread();
   Assert(fIdleHeap.CurrentHeapSize() == 0);
 }
 
@@ -73,8 +74,8 @@ void IdleTaskThread::Entry() {
   while (true) {
     // if there are no events to process, block.
     while (fIdleHeap.CurrentHeapSize() == 0) {
-      fHeapCond.Wait(&fHeapMutex, 1000);
       if (IsStopRequested()) return;
+      fHeapCond.Wait(&fHeapMutex, 1000);
     }
 
     SInt64 msec = OSTime::Milliseconds();

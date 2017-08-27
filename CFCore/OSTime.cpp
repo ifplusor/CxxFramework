@@ -4,8 +4,6 @@
 #include <string.h>
 #include <math.h>
 #include "OSTime.h"
-#include "MyAssert.h"
-
 
 #if __MacOSX__
 
@@ -16,7 +14,7 @@
 
 #endif
 
-#if DEBUG || __Win32__
+#if DEBUG || __Win32__ || __MinGW__
 #include "OSMutex.h"
 static OSMutex* sLastMillisMutex = nullptr;
 #endif
@@ -50,7 +48,7 @@ void OSTime::Initialize() {
   sMsecSince1970 *= 1000;           // Convert to msec
 
 
-#if DEBUG || __Win32__
+#if DEBUG || __Win32__ || __MinGW__
   sLastMillisMutex = new OSMutex();
 #endif
 }
@@ -77,7 +75,7 @@ SInt64 OSTime::Milliseconds() {
   #endif
       return scalarMicros;
   */
-#if __Win32__
+#if __Win32__ || __MinGW__
   OSMutexLocker locker(sLastMillisMutex);
   // curTimeMilli = timeGetTime() + ((sLastTimeMilli/ 2^32) * 2^32)
   // using binary & to reduce it to one operation from two
@@ -126,7 +124,7 @@ SInt64 OSTime::Microseconds() {
       theMillis += theMicros.lo;
       return theMillis;
   */
-#if __Win32__
+#if __Win32__ || __MinGW__
   SInt64 curTime = (SInt64)::timeGetTime(); //  system time in milliseconds
   curTime -= sInitialMsec; // convert to application time
   curTime *= 1000; // convert to microseconds
@@ -162,7 +160,7 @@ SInt64 OSTime::TimeMilli_To_Fixed64Secs(SInt64 inMilliseconds) {
   return result;
 }
 
-#if !defined(EASY_DEVICE)
+#if !defined(__Win32__) && !defined(EASY_DEVICE) && !defined(__MinGW__)
 #include <sys/time.h>
 
 #define RELOAD_TIME_US 1
@@ -241,7 +239,7 @@ int OSTime::GetTimeOfDay(struct timeval *tv) {
 #endif
 
 SInt32 OSTime::GetGMTOffset() {
-#ifdef __Win32__
+#if defined(__Win32__) || defined(__MinGW__)
   TIME_ZONE_INFORMATION tzInfo;
   DWORD theErr = ::GetTimeZoneInformation(&tzInfo);
   if (theErr == TIME_ZONE_ID_INVALID)
@@ -255,6 +253,6 @@ SInt32 OSTime::GetGMTOffset() {
   if (tmptr == nullptr)
     return 0;
 
-  return tmptr->tm_gmtoff / 3600;//convert seconds to  hours before or after GMT
+  return tmptr->tm_gmtoff / 3600; //convert seconds to hours before or after GMT
 #endif
 }

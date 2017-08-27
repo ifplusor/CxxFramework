@@ -30,12 +30,11 @@
                 object. Derived classes must implement a method of getting new
                 Task & socket objects
 
-
 */
 
 
-#ifndef __TCPLISTENERSOCKET_H__
-#define __TCPLISTENERSOCKET_H__
+#ifndef __TCP_LISTENER_SOCKET_H__
+#define __TCP_LISTENER_SOCKET_H__
 
 #include "TCPSocket.h"
 #include "IdleTask.h"
@@ -93,5 +92,6 @@ class TCPListenerSocket : public TCPSocket, public IdleTask {
   bool fOutOfDescriptors;
   bool fSleepBetweenAccepts;
 };
-#endif // __TCPLISTENERSOCKET_H__
+
+#endif // __TCP_LISTENER_SOCKET_H__
 

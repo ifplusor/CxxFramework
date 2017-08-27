@@ -26,7 +26,7 @@
 #ifndef _DSS_SYS_EV_H_
 #define _DSS_SYS_EV_H_
 
-#if !defined(__Win32__) && !defined(__solaris__) && !defined(__sgi__) && !defined(__osf__) && !defined(__hpux__)
+#if !defined(__Win32__) && !defined(__solaris__) && !defined(__sgi__) && !defined(__osf__) && !defined(__hpux__) && !defined(__MinGW__)
 #include <sys/queue.h>
 #endif
 
@@ -77,10 +77,11 @@ struct eventqelt {
 
 #endif /* _KERNEL */
 
+void select_startevents();
+void select_stopevents();
 int select_watchevent(struct eventreq *req, int which);
 int select_modwatch(struct eventreq *req, int which);
 int select_waitevent(struct eventreq *req, void *onlyForMOSX);
-void select_startevents();
 int select_removeevent(int which);
 
 #endif /* !MACOSXEVENTQUEUE */

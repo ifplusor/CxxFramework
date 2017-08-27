@@ -27,7 +27,6 @@
 
     Contains:   Object that creates & maintains UDP socket pairs in a pool.
 
-
 */
 
 #include "UDPSocketPool.h"

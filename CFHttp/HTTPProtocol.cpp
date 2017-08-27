@@ -49,7 +49,7 @@ HTTPMethod HTTPProtocol::GetMethod(const StrPtrLen *inMethodStr) {
   if (inMethodStr->Len == 0)
     return httpIllegalMethod;
 
-  // 快速预测
+  /* 快速预测 */
   switch ((inMethodStr->Ptr)[0]) {
     case 'G': theMethod = httpGetMethod;
       break;
@@ -68,7 +68,7 @@ HTTPMethod HTTPProtocol::GetMethod(const StrPtrLen *inMethodStr) {
     default: break;
   }
 
-  // 检查确认
+  /* 检查确认 */
   if ((theMethod != httpIllegalMethod)
       && (inMethodStr->Equal(sMethods[theMethod])))
     return theMethod;

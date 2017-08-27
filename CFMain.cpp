@@ -6,6 +6,10 @@
 #include <HTTPListenerSocket.h>
 #include <CF.h>
 
+/*
+ * TaskThreadPool，EventThread，IdleTaskThread，TimeoutTaskThread 只会在主线程
+ * 中创建和销毁
+ */
 int CFMain(CFConfigure *config) {
 
   //
@@ -24,8 +28,10 @@ int CFMain(CFConfigure *config) {
   OS::SetPersonality(config->GetPersonalityUser(),
                      config->GetPersonalityGroup());
 
-  // 切换用户和组，LinuxThread库实现的线程模型，setuid() 和 setgid() 可能会
-  // 出现不同线程中，uid 和 gid 不一致的问题
+  /*
+     切换用户和组，LinuxThread库实现的线程模型，setuid() 和 setgid() 可能会
+     出现不同线程中，uid 和 gid 不一致的问题
+   */
   OS::SwitchPersonality();
 
   UInt32 numShortTaskThreads = config->GetShortTaskThreads();
@@ -56,8 +62,8 @@ int CFMain(CFConfigure *config) {
     numBlockingThreads = 1;
 
   UInt32 numThreads = numShortTaskThreads + numBlockingThreads;
-  qtss_printf("Add threads short_task=%" _U32BITARG_
-                  " blocking=%" _U32BITARG_ "\n",
+  qtss_printf("Add threads short_task=%" _U32BITARG_ " "
+                  "blocking=%" _U32BITARG_ "\n",
               numShortTaskThreads, numBlockingThreads);
 
   TaskThreadPool::SetNumShortTaskThreads(numShortTaskThreads);
@@ -84,7 +90,7 @@ int CFMain(CFConfigure *config) {
   HTTPSessionInterface::Initialize(config->GetHttpMapping());
 
   HTTPListenerSocket *httpSocket = new HTTPListenerSocket();
-  httpSocket->Initialize(0, 8081);
+  httpSocket->Initialize(SocketUtils::ConvertStringToAddr("127.0.0.1"), 8080);
   httpSocket->RequestEvent(EV_RE);
 
   while (!CFEnv::WillExit()) {
@@ -95,15 +101,35 @@ int CFMain(CFConfigure *config) {
 #endif
   }
 
-  // clean EventThread
-  Socket::Release();
+  //
+  // exit, release resources
 
-  // clean TimeoutTaskThread and IdleTaskThread
+  // 1. stop network event
+#if !MACOSXEVENTQUEUE
+  ::select_stopevents();
+#endif
+
+  // 2. send kKillEvent for all task. they (except TimeoutTaskThread) will
+  //    be released in TaskThread scheduler
+  // Now, make sure that the server can't do any work
+
+
+  // 3. release TimeoutTaskThread
   TimeoutTask::Release();
+
+  // 4. release IdleTaskThread
   IdleTask::Release();
 
-  // Now, make sure that the server can't do any work
+  // 5. release TaskThread in TaskThreadPool
   TaskThreadPool::RemoveThreads();
+
+  // 6. release EventThread
+  /*
+   * Socket 析构的时候，会触发 EventContext 的 AutoCleanup，解除 ContextThread
+   * 的引用表里的引用。而 Socket 将被 SessionTask 持有，所以对 EventThread 的
+   * 释放的时机需要在全部 Socket 执行完 Cleanup 以后。
+   */
+  Socket::Release();
 
   return 0;
 }

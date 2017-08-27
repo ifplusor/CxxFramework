@@ -80,6 +80,8 @@ extern struct tm *qtss_localtime(const time_t *, struct tm *result);
 
 #else //USE_DEFAULT_STD_LIB
 
+#include <stdio.h>
+
 #define qtss_sprintf sprintf
 
 #define qtss_fprintf fprintf
@@ -109,5 +111,5 @@ extern char* qtss_asctime(const struct tm* timeptr, char* buffer, int buffLen);
 extern struct tm* qtss_gmtime(const time_t*, struct tm* result);
 extern struct tm* qtss_localtime(const time_t*, struct tm* result);
 
-#endif  //USE_DEFAULT_STD_LIB
-#endif //_INTERNAL_STDLIB_H_
+#endif // USE_DEFAULT_STD_LIB
+#endif // _INTERNAL_STDLIB_H_

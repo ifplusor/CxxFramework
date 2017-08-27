@@ -85,7 +85,11 @@
 
 #elif __Win32__
 
-#define USE_ATOMICLIB 0
+//#include "Win32header.h"
+
+#define __WinSock__     1
+
+#define USE_ATOMICLIB   0
 #define MACOSXEVENTQUEUE 0
 #define __PTHREADS__    0
 #define __PTHREADS_MUTEXES__    0
@@ -99,6 +103,21 @@
 #ifndef USE_DEFAULT_STD_LIB
 #define USE_DEFAULT_STD_LIB 1
 #endif
+
+#elif __MinGW__
+
+#define __WinSock__     1
+
+#define USE_ATOMICLIB   0
+#define MACOSXEVENTQUEUE 0
+#define __PTHREADS__    1
+#define __PTHREADS_MUTEXES__    1
+#define ALLOW_NON_WORD_ALIGN_ACCESS 1
+#define USE_THREAD      0       //Flag used in QTProxy
+#define THREADING_IS_COOPERATIVE        0
+#define USE_THR_YIELD   0
+#define kPlatformNameString     "MinGW"
+#define EXPORT
 
 #elif __linux__
 

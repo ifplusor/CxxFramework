@@ -30,7 +30,9 @@
 
 */
 
-#ifndef __Win32__
+#include "TCPListenerSocket.h"
+
+#if !__WinSock__
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -39,8 +41,6 @@
 #include <unistd.h>
 
 #endif
-
-#include "TCPListenerSocket.h"
 
 OS_Error TCPListenerSocket::listen(UInt32 queueLength) {
   if (fFileDesc == EventContext::kInvalidFileDesc)
@@ -66,7 +66,7 @@ OS_Error TCPListenerSocket::Initialize(UInt32 addr, UInt16 port) {
   if (0 == err)
     do {
       // set SO_REUSEADDR socket option before calling bind.
-#ifndef __Win32__
+#if !__WinSock__
       // this causes problems on NT (multiple processes can bind simultaneously),
       // so don't do it on NT.
       this->ReuseAddr();
@@ -207,9 +207,11 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
     theTask->SetThreadPicker(Task::GetBlockingTaskThreadPicker()); //The Message Task processing threads
   }
 
-  // 如果 RTSPSession、HTTPSession 的连接数超过超过限制,则利用 IdleTaskThread 定时调用
-  // Signal 函数,在 TCPListenerSocket::Run 函数里会调用 TCPListenerSocket::ProcessEvent 函数
-  // 执行 accept(接收下一个连接)和 RequestEvent(继续申请监听)。
+  /*
+     如果 RTSPSession、HTTPSession 的连接数超过超过限制,则利用 IdleTaskThread 定时调用
+     Signal 函数,在 TCPListenerSocket::Run 函数里会调用 TCPListenerSocket::ProcessEvent 函数
+     执行 accept(接收下一个连接)和 RequestEvent(继续申请监听)。
+   */
   if (fSleepBetweenAccepts) {
     // We are at our maximum supported sockets
     // slow down so we have time to process the active ones (we will respond with errors or service).
@@ -222,7 +224,7 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
     this->RequestEvent(EV_RE);
   }
 
-  fOutOfDescriptors = false; // always false for now  we don't properly handle this elsewhere in the code
+  fOutOfDescriptors = false; // always false for now we don't properly handle this elsewhere in the code
 }
 
 SInt64 TCPListenerSocket::Run() {

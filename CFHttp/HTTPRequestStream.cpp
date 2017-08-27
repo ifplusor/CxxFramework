@@ -125,7 +125,11 @@ CF_Error HTTPRequestStream::ReadRequest() {
             (kRequestBufferSizeInBytes - fCurOffset) - 1,
             &newOffset);
         // assume the client is dead if we get an error back
+#if __WinSock__
+        if (sockErr == WSAEWOULDBLOCK)
+#else
         if (sockErr == EAGAIN)
+#endif
           return CF_NoErr;
         if (sockErr != CF_NoErr) {
           Assert(!fSocket->IsConnected());
