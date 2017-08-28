@@ -39,7 +39,7 @@
 #include "IdleTask.h"
 
 //messages to help debugging timeouts
-#define TIMEOUT_DEBUGGING 1
+#define TIMEOUT_DEBUGGING 0
 
 /**
  * @brief TimeoutTask 守护线程

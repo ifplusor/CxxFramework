@@ -43,11 +43,10 @@ class MessageTimer : public IdleTask {
  private:
   SInt64 Run() override {
     EventFlags events = GetEvents();
-    if (events & Task::kKillEvent) return -1;
+//    if (events & Task::kKillEvent) return -1;
     if (sMsgWindow != NULL) {
-//      SendMessageTimeout(sMsgWindow, WM_TIMER, 0, 0, );
-      PostMessage(sMsgWindow, WM_TIMER, 0, 0);
-      SetIdleTimer(15000);
+      LRESULT theErr = ::PostMessage(sMsgWindow, WM_TIMER, 0, 0);
+//      SetIdleTimer(15000);
     }
     return 0;
   }
@@ -69,7 +68,9 @@ void select_startevents() {
 }
 
 void select_stopevents() {
-  timer->Signal(Task::kKillEvent);
+  delete timer;
+  timer = nullptr;
+//  ::PostMessage(sMsgWindow, WM_TIMER, 0, 0);
 }
 
 int select_removeevent(int /*which*/) {
@@ -162,11 +163,15 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
   // Convienently, this function blocks until there is a message, so it works
   // much like waitevent would on Mac OS X.
   timer->SetIdleTimer(15000);
-  UInt32 theErr = ::GetMessage(&theMessage, sMsgWindow, 0, 0);
+  BOOL theErr = ::GetMessage(&theMessage, sMsgWindow, 0, 0);
   timer->CancelTimeout();
-
-  if (theErr > 0) {
-    if (theMessage.message == WM_TIMER) return EINTR;
+  if (theErr != 0) {
+    // TODO: there may have an error
+    if (theErr == -1) {
+      qtss_printf("encounter error when getmessage");
+      Assert(0);
+    }
+    if (theMessage.message == WM_TIMER) return EINTR; // timeout
 
     UInt32 theSelectErr = WSAGETSELECTERROR(theMessage.lParam);
     UInt32 theEvent = WSAGETSELECTEVENT(theMessage.lParam);

@@ -42,7 +42,7 @@
 
 #endif
 
-#define SOCKET_DEBUG 1
+#define SOCKET_DEBUG 0
 
 class Socket : public EventContext {
  public:

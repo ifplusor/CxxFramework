@@ -117,36 +117,45 @@ int CFMain(CFConfigure *config) {
   // exit, release resources
 
   // 1. stop socket listen, refuse all new connect
+  qtss_printf("release: step 1\n");
   CFState::WaitProcessState(CFState::kKillListener);
 
   // 2. disable request new event, but process already exists
+  qtss_printf("release: step 2\n");
   CFState::sState |= CFState::kDisableEvent;
 
   // 3. clean all event watch
+  qtss_printf("release: step 3\n");
   CFState::WaitProcessState(CFState::kCleanEvent);
   // in here, all event stop. EventThread is needless.
 
   // 4. release EventThread
+  qtss_printf("release: step 4\n");
   Socket::Release();
 
   // 5. stop events
   //    must after step 4, because select_waitevent is called in EventThread::Entry
+  qtss_printf("release: step 5\n");
 #if !MACOSXEVENTQUEUE
   ::select_stopevents();
 #endif
 
   // 6. kill TimeoutTaskThread but don't release memory
+  qtss_printf("release: step 6\n");
   TimeoutTask::StopTask();
 
   // 7. release TaskThreads in TaskThreadPool
+  qtss_printf("release: step 7\n");
   TaskThreadPool::RemoveThreads();
 
   // 8. release TimeoutTaskThread.
   //    must after step 7, because Task can hold TaskThreads as member
+  qtss_printf("release: step 8\n");
   TimeoutTask::Release();
 
   // 9. release IdleTaskThread.
   //    must after step 8, because TimeoutTaskThread is a IdleTask,
+  qtss_printf("release: step 9\n");
   IdleTask::Release();
 
   return 0;
