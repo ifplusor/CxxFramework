@@ -33,11 +33,26 @@
 
 #include "ev.h"
 #include "OSHeaders.h"
-#include "OSThread.h"
+#include <IdleTask.h>
 
 //
 // You have to create a window to get socket events? What's up with that?
 static HWND sMsgWindow = NULL;
+
+class MessageTimer : public IdleTask {
+ private:
+  SInt64 Run() override {
+    EventFlags events = GetEvents();
+    if (events & Task::kKillEvent) return -1;
+    if (sMsgWindow != NULL) {
+//      SendMessageTimeout(sMsgWindow, WM_TIMER, 0, 0, );
+      PostMessage(sMsgWindow, WM_TIMER, 0, 0);
+      SetIdleTimer(15000);
+    }
+    return 0;
+  }
+};
+static MessageTimer *timer = nullptr;
 
 //
 LRESULT CALLBACK select_wndproc(HWND inWIndow,
@@ -50,10 +65,11 @@ void select_startevents() {
   // This call occurs from the main thread. In Win32, apparently, you
   // have to create your WSA window from the same thread that calls GetMessage.
   // So, we have to create the window from select_waitevent
+  timer = new MessageTimer();
 }
 
 void select_stopevents() {
-
+  timer->Signal(Task::kKillEvent);
 }
 
 int select_removeevent(int /*which*/) {
@@ -145,9 +161,13 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
   //
   // Convienently, this function blocks until there is a message, so it works
   // much like waitevent would on Mac OS X.
+  timer->SetIdleTimer(15000);
   UInt32 theErr = ::GetMessage(&theMessage, sMsgWindow, 0, 0);
+  timer->CancelTimeout();
 
   if (theErr > 0) {
+    if (theMessage.message == WM_TIMER) return EINTR;
+
     UInt32 theSelectErr = WSAGETSELECTERROR(theMessage.lParam);
     UInt32 theEvent = WSAGETSELECTEVENT(theMessage.lParam);
 

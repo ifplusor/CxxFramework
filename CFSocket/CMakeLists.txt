@@ -29,7 +29,7 @@ elseif (${CND_PLATFORM} MATCHES "MinGW")
     set(SOURCE_FILES ${SOURCE_FILES} win32ev.cpp)
 else (${CND_PLATFORM} MATCHES "OSX")
     set(HEADER_FILES ${HEADER_FILES} include/tempcalls.h)
-    set(SOURCE_FILES ${SOURCE_FILES} ev.cpp)
+#    set(SOURCE_FILES ${SOURCE_FILES} ev.cpp)
 endif ()
 
 add_library(CFSocket STATIC

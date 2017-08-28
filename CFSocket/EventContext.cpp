@@ -29,12 +29,12 @@
 */
 
 #include "EventContext.h"
+#include <TCPListenerSocket.h>
 #include <CFState.h>
 
 #if !__WinSock__
 
 #include <fcntl.h>
-#include <TCPListenerSocket.h>
 
 #endif
 
@@ -105,7 +105,10 @@ void EventContext::Cleanup() {
       // triggered by calling removeevent.
       err = close(fFileDesc);
 #endif
-    } else
+
+      fUniqueID = 0;
+      fWatchEventCalled = false;
+    } else /* 未分配 id == 未注册 ref */
 #if __WinSock__
       err = ::closesocket(fFileDesc);
 #else
@@ -153,6 +156,8 @@ void EventContext::RequestEvent(int theMask) {
 #if DEBUG
   fModwatched = true;
 #endif
+
+  if (CFState::sState & CFState::kDisableEvent) return;
 
   //
   // The first time this function gets called, we're supposed to
@@ -239,13 +244,13 @@ void EventContext::RequestEvent(int theMask) {
 }
 
 void EventThread::Entry() {
+  int theErrno;
   struct eventreq theCurrentEvent;
   ::memset(&theCurrentEvent, '\0', sizeof(theCurrentEvent));
 
   while (true) {
-    int theErrno = EINTR;
-    while (theErrno == EINTR) {
-      if (IsStopRequested()) break;
+    do {
+      if (IsStopRequested()) return; // stop requested
 
       // wait for net event
 #if MACOSXEVENTQUEUE
@@ -254,14 +259,26 @@ void EventThread::Entry() {
       int theReturnValue = select_waitevent(&theCurrentEvent, NULL);
 #endif
 
+      if (CFState::sState & CFState::kCleanEvent) {
+        OSRefHashTableIter iter(fRefTable.GetHashTable());
+        while (!iter.IsDone()) {
+          OSRef *ref = iter.GetCurrent();
+          EventContext *theContext = (EventContext *) ref->GetObject();
+          iter.Next();
+          theContext->Cleanup();
+        }
+        CFState::sState ^= CFState::kCleanEvent;
+        /* kCleanEvent 必 kDisableEvent，此时 select 模型再也不会产生新事件 */
+        continue;
+      }
+
       // Sort of a hack. In the POSIX version of the server, waitevent can
       // return an actual POSIX error code.
       if (theReturnValue >= 0)
         theErrno = theReturnValue;
       else
         theErrno = OSThread::GetErrno();
-    }
-    if (theErrno == EINTR) break; // stop requested
+    } while (theErrno == EINTR);
 
     // kill listener socket
     if (CFState::sState & CFState::kKillListener) {

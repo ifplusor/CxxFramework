@@ -16,6 +16,9 @@
  *   注入 Session 关联的 Socket 对象
  */
 
+atomic<UInt32> CFState::sState(0); /* 框架内部状态标识 */
+OSQueue CFState::sListenerSocket;
+
 int CFMain(CFConfigure *config) {
 
   //
@@ -116,38 +119,35 @@ int CFMain(CFConfigure *config) {
   // 1. stop socket listen, refuse all new connect
   CFState::WaitProcessState(CFState::kKillListener);
 
-  // 2. stop all user task
+  // 2. disable request new event, but process already exists
+  CFState::sState |= CFState::kDisableEvent;
 
+  // 3. clean all event watch
+  CFState::WaitProcessState(CFState::kCleanEvent);
+  // in here, all event stop. EventThread is needless.
 
-
-
-
-  // 3. send kKillEvent for all task. they (except TimeoutTaskThread) will
-  //    be released in TaskThread scheduler
-  // Now, make sure that the server can't do any work
-
-
-  // 4. release TimeoutTaskThread
-  TimeoutTask::Release();
-
-  // 5. release IdleTaskThread
-  IdleTask::Release();
-
-  // 6. release TaskThread in TaskThreadPool
-  TaskThreadPool::RemoveThreads();
-
-  // 7. release EventThread
-  /*
-   * Socket 析构的时候，会触发 EventContext 的 AutoCleanup，解除 ContextThread
-   * 的引用表里的引用。而 Socket 将被 SessionTask 持有，所以对 EventThread 的
-   * 释放的时机需要在全部 Socket 执行完 Cleanup 以后。
-   */
+  // 4. release EventThread
   Socket::Release();
 
-  // 2. stop network event
+  // 5. stop events
+  //    must after step 4, because select_waitevent is called in EventThread::Entry
 #if !MACOSXEVENTQUEUE
   ::select_stopevents();
 #endif
+
+  // 6. kill TimeoutTaskThread but don't release memory
+  TimeoutTask::StopTask();
+
+  // 7. release TaskThreads in TaskThreadPool
+  TaskThreadPool::RemoveThreads();
+
+  // 8. release TimeoutTaskThread.
+  //    must after step 7, because Task can hold TaskThreads as member
+  TimeoutTask::Release();
+
+  // 9. release IdleTaskThread.
+  //    must after step 8, because TimeoutTaskThread is a IdleTask,
+  IdleTask::Release();
 
   return 0;
 }

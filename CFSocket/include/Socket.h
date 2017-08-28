@@ -68,8 +68,7 @@ class Socket : public EventContext {
       qtss_printf("Could not find a usable version of Winsock.dll\n");
       WSACleanup();
       exit(EXIT_FAILURE);
-    }
-    else
+    } else
       qtss_printf("The Winsock 2.2 dll was found okay\n");
 #endif
 
@@ -80,8 +79,7 @@ class Socket : public EventContext {
 
   static void Release() {
     if (sEventThread != nullptr) {
-      sEventThread->SendStopRequest();
-      sEventThread->Join();
+      sEventThread->StopAndWaitForThread();
       delete sEventThread;
       sEventThread = nullptr;
     }
@@ -160,13 +158,13 @@ class Socket : public EventContext {
     kMaxNumSockets = 4096   //UInt32
   };
 
- protected:
-
   enum {
     // Pass this in on socket constructors to specify whether the
     // socket should be non-blocking or blocking
     kNonBlockingSocketType = 1
   };
+
+ protected:
 
   Socket(Task *notifytask, UInt32 inSocketType);
 
@@ -185,8 +183,8 @@ class Socket : public EventContext {
   };
 
 #if SOCKET_DEBUG
-  StrPtrLen       fLocalAddrStr;
-  char            fLocalAddrBuffer[kMaxIPAddrSizeInBytes];
+  StrPtrLen fLocalAddrStr;
+  char fLocalAddrBuffer[kMaxIPAddrSizeInBytes];
 #endif
 
   // address information (available if bound)
@@ -211,4 +209,3 @@ class Socket : public EventContext {
 };
 
 #endif // __SOCKET_H__
-

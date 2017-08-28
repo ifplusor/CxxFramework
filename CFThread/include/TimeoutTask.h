@@ -88,11 +88,16 @@ class TimeoutTask {
    */
   static void Initialize();
 
-  static void Release() {
+  static void StopTask() {
     if (sThread != nullptr) {
       sThread->CancelTimeout();
-      /* 当响应 kKillEvent 事件，返回 TaskThread 后释放内存 */
       sThread->Signal(Task::kKillEvent);
+    }
+  }
+
+  static void Release() {
+    if (sThread != nullptr) {
+      delete sThread;
       sThread = nullptr;
     }
   }

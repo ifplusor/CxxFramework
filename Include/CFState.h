@@ -12,12 +12,12 @@
 class CFState {
  public:
 
-  static OSQueue sListenerSocket;
-
   enum {
-    kKillListener = 0x0001,
+    kKillListener = 0x01 << 0x00, /* Kill TCPListenerSocket */
+    kDisableEvent = 0x01 << 0x01, /* Disable RequestEvent */
+    kCleanEvent = 0x01 << 0x02,   /* Cleanup all EventContext in select */
   };
-  static atomic<UInt32> sState = 0;
+  static atomic<UInt32> sState;
 
   static void WaitProcessState(UInt32 state) {
     sState |= state;
@@ -25,6 +25,8 @@ class CFState {
       OSThread::Sleep(1000);
     }
   }
+
+  static OSQueue sListenerSocket;
 
  private:
   CFState() = default;
