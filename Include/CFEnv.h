@@ -6,6 +6,8 @@
 #define __CF_ENV_H__
 
 #include <StrPtrLen.h>
+#include <OSQueue.h>
+#include <EventContext.h>
 #include "CFDef.h"
 #include "CFConfigure.h"
 
@@ -29,7 +31,6 @@ class CFEnv {
   static void Exit(UInt32 exitCode) { sExitCode = exitCode; }
 
   // SERVER NAME & VERSION
-
   static StrPtrLen &GetServerName() { return sServerNameStr; }
   static StrPtrLen &GetServerVersion() { return sServerVersionStr; }
   static StrPtrLen &GetServerPlatform() { return sServerPlatformStr; }
@@ -39,7 +40,7 @@ class CFEnv {
   static StrPtrLen &GetServerComment() { return sServerCommentStr; }
 
  private:
-  CFEnv() = default;;
+  CFEnv() = default;
 
   static void makeServerHeader();
 
@@ -60,6 +61,8 @@ class CFEnv {
   static StrPtrLen sServerBuildDateStr;
   static char sServerHeader[kMaxServerHeaderLen];
   static StrPtrLen sServerHeaderStr;
+
+  friend EventThread;
 };
 
 #endif //__CF_ENV_H__

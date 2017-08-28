@@ -68,7 +68,7 @@ class TimeoutTaskThread : public IdleTask {
   virtual SInt64 Run() override;
 
   OSMutex fMutex;
-  OSQueue fQueue;
+  OSQueue fQueue; /* 列表 */
 
   friend class TimeoutTask;
 };

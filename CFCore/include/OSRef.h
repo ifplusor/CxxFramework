@@ -25,13 +25,14 @@
 /*
     File:       OSRef.h
 
-    Contains:   Class supports creating unique string IDs to object pointers. A grouping
-                of an object and its string ID may be stored in an OSRefTable, and the
-                associated object pointer can be looked up by string ID.
+    Contains:   Class supports creating unique string IDs to object pointers.
+                A grouping of an object and its string ID may be stored in an
+                OSRefTable, and the associated object pointer can be looked up
+                by string ID.
 
-                Refs can only be removed from the table when no one is using the ref,
-                therefore allowing clients to arbitrate access to objects in a preemptive,
-                multithreaded environment.
+                Refs can only be removed from the table when no one is using
+                the ref, therefore allowing clients to arbitrate access to
+                objects in a preemptive, multithreaded environment.
 
 */
 
@@ -54,6 +55,9 @@ class OSRefTableUtils {
   friend class OSRefKey;
 };
 
+/**
+ * @brief 引用记录，K-V 项，引用计数器
+ */
 class OSRef {
  public:
 
@@ -156,6 +160,10 @@ class OSRefKey {
 typedef OSHashTable<OSRef, OSRefKey> OSRefHashTable;
 typedef OSHashTableIter<OSRef, OSRefKey> OSRefHashTableIter;
 
+/**
+ * @brief 引用字典，使用哈希表存储
+ * @note 维护引用计数，但不管理对象内存
+ */
 class OSRefTable {
  public:
 

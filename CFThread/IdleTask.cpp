@@ -40,7 +40,6 @@
 std::shared_ptr<IdleTaskThread> IdleTask::sIdleThread = nullptr;
 
 IdleTaskThread::~IdleTaskThread() {
-  this->StopAndWaitForThread();
   Assert(fIdleHeap.CurrentHeapSize() == 0);
 }
 

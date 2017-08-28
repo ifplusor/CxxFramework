@@ -134,7 +134,7 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
     // test acceptError = EINTR;
     // test acceptError = ENOENT;
     if (acceptError == EMFILE || acceptError == ENFILE) {
-      // if these error gets returned, we're out of file desciptors, the server
+      // if these error gets returned, we're out of file descriptors, the server
       // is going to be failing on sockets, logs, qtgroups and qtuser auth file
       // accesses and movie files. The server is not functional.
       qtss_printf("Out of File Descriptors. Set max connections lower and check"
@@ -150,22 +150,23 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
                     strerror(acceptError));
       WarnV((acceptError == 0), errStr);
 
-      theTask = this->GetSessionTask(&theSocket);
-      if (theTask == nullptr) {
-        close(osSocket);
-      } else {
-        theTask->Signal(Task::kKillEvent); // just clean up the task
-      }
-
-      if (theSocket)
-        theSocket->fState &= ~kConnected; // turn off connected state
-
-      return;
+      // TODO(james): there have some questions.
+//      theTask = this->GetSessionTask(&theSocket);
+//      if (theTask == nullptr) {
+//        close(osSocket);
+//      } else {
+//        theTask->Signal(Task::kKillEvent); // just clean up the task
+//      }
+//
+//      if (theSocket)
+//        theSocket->fState &= ~kConnected; // turn off connected state
+//
+//      return;
     }
   }
 
   theTask = this->GetSessionTask(&theSocket);
-  if (theTask == nullptr) {    //this should be a disconnect. do an ioctl call?
+  if (theTask == nullptr) { //this should be a disconnect. do an ioctl call?
     close(osSocket);
     if (theSocket)
       theSocket->fState &= ~kConnected; // turn off connected state
@@ -204,7 +205,8 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
     theSocket->SetTask(theTask); // 实际上是调用 EventContext::SetTask
     theSocket->RequestEvent(EV_RE);
 
-    theTask->SetThreadPicker(Task::GetBlockingTaskThreadPicker()); //The Message Task processing threads
+    // The Message Task processing threads
+    theTask->SetThreadPicker(Task::GetBlockingTaskThreadPicker());
   }
 
   /*

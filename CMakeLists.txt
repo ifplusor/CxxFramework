@@ -54,7 +54,8 @@ set(HEADER_FILES
         Include/CFDef.h
         Include/CFEnv.h
         Include/CFConfigure.h
-        Include/CF.h)
+        Include/CF.h
+        Include/CFState.h)
 
 set(SOURCE_FILES
         CFEnv.cpp

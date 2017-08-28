@@ -5,11 +5,17 @@
 #include <HTTPSessionInterface.h>
 #include <HTTPListenerSocket.h>
 #include <CF.h>
+#include <CFState.h>
 
 /*
- * TaskThreadPool，EventThread，IdleTaskThread，TimeoutTaskThread 只会在主线程
- * 中创建和销毁
+ * 主线程是管理线程，不执行实际的任务；
+ * TaskThread 中执行 Task::Run，EventThread 中执行 EventContext::ProcessEvent
+ * TaskThreadPool，EventThread，IdleTaskThread，TimeoutTaskThread 会在主线程
+ *   中创建和销毁
+ * ListenerSocket::ProcessEvent 中执行 accept 和 Session 的创建，并将 osSocket
+ *   注入 Session 关联的 Socket 对象
  */
+
 int CFMain(CFConfigure *config) {
 
   //
@@ -90,6 +96,9 @@ int CFMain(CFConfigure *config) {
   HTTPSessionInterface::Initialize(config->GetHttpMapping());
 
   HTTPListenerSocket *httpSocket = new HTTPListenerSocket();
+
+  CFState::sListenerSocket.EnQueue(new OSQueueElem(httpSocket));
+
   httpSocket->Initialize(SocketUtils::ConvertStringToAddr("127.0.0.1"), 8080);
   httpSocket->RequestEvent(EV_RE);
 
@@ -104,32 +113,41 @@ int CFMain(CFConfigure *config) {
   //
   // exit, release resources
 
-  // 1. stop network event
-#if !MACOSXEVENTQUEUE
-  ::select_stopevents();
-#endif
+  // 1. stop socket listen, refuse all new connect
+  CFState::WaitProcessState(CFState::kKillListener);
 
-  // 2. send kKillEvent for all task. they (except TimeoutTaskThread) will
+  // 2. stop all user task
+
+
+
+
+
+  // 3. send kKillEvent for all task. they (except TimeoutTaskThread) will
   //    be released in TaskThread scheduler
   // Now, make sure that the server can't do any work
 
 
-  // 3. release TimeoutTaskThread
+  // 4. release TimeoutTaskThread
   TimeoutTask::Release();
 
-  // 4. release IdleTaskThread
+  // 5. release IdleTaskThread
   IdleTask::Release();
 
-  // 5. release TaskThread in TaskThreadPool
+  // 6. release TaskThread in TaskThreadPool
   TaskThreadPool::RemoveThreads();
 
-  // 6. release EventThread
+  // 7. release EventThread
   /*
    * Socket 析构的时候，会触发 EventContext 的 AutoCleanup，解除 ContextThread
    * 的引用表里的引用。而 Socket 将被 SessionTask 持有，所以对 EventThread 的
    * 释放的时机需要在全部 Socket 执行完 Cleanup 以后。
    */
   Socket::Release();
+
+  // 2. stop network event
+#if !MACOSXEVENTQUEUE
+  ::select_stopevents();
+#endif
 
   return 0;
 }

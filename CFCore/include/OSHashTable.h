@@ -29,19 +29,23 @@
 
 */
 
-#ifndef __OS_HASH_TABLE_H_
-#define __OS_HASH_TABLE_H_
+#ifndef __OS_HASH_TABLE_H__
+#define __OS_HASH_TABLE_H__
 
-#include <OSHashTable.h>
-#include "MyAssert.h"
+#include <OSHeaders.h>
 
 /*
-T must have a fNextHashEntry field, and key(T) must returns the key of type K.
-K must have a method GetHashKey() that returns an UInt32 bit hash value.
-Will the hash table can contain duplicate keys, the Map function will return only the first one.
+  T must have a fNextHashEntry field, and key(T) must returns the key of type K.
+  K must have a method GetHashKey() that returns an UInt32 bit hash value.
+  Will the hash table can contain duplicate keys, the Map function will return
+  only the first one.
 */
 
 template<class T, class K>
+/**
+ * @brief 哈希表
+ * @note 不管理对象内存
+ */
 class OSHashTable {
  public:
   OSHashTable(UInt32 size) {
@@ -163,4 +167,4 @@ class OSHashTableIter {
   UInt32 fIndex;
 };
 
-#endif // __OS_HASH_TABLE_H_
+#endif // __OS_HASH_TABLE_H__

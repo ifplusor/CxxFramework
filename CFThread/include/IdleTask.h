@@ -61,7 +61,7 @@ class IdleTaskThread : private OSThread {
 
   virtual void Entry();
 
-  OSHeap fIdleHeap;
+  OSHeap fIdleHeap; /* 时序-优先队列 */
   OSMutex fHeapMutex;
   OSCond fHeapCond;
 

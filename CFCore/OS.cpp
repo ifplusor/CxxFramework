@@ -100,7 +100,7 @@ OS_Error OS::MakeDir(char *inPath) {
   struct stat theStatBuffer;
   if (::stat(inPath, &theStatBuffer) == -1) {
     //this directory doesn't exist, so let's try to create it
-#if __WinSock__
+#if __Win32__ || __MinGW__
     if ((inPath[1] == ':') && (strlen(inPath) == 2))
         return OS_NoErr;
 
@@ -110,7 +110,7 @@ OS_Error OS::MakeDir(char *inPath) {
 #endif
       return (OS_Error) OSThread::GetErrno();
   }
-#if __WinSock__
+#if __Win32__ || __MinGW__
   else if (!(theStatBuffer.st_mode & _S_IFDIR)) // MSVC++ doesn't define the S_ISDIR macro
         return EEXIST; // there is a file at this point in the path!
 #else

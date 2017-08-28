@@ -65,13 +65,14 @@ class Task {
   // EVENTS
   // here are all the events that can be sent to a task
   enum {
-    kKillEvent = 0x1 << 0x0, //these are all of type "EventFlags"
+    // these are all of type "EventFlags"
+    kKillEvent = 0x1 << 0x0,
     kIdleEvent = 0x1 << 0x1,
     kStartEvent = 0x1 << 0x2,
     kTimeoutEvent = 0x1 << 0x3,
 
     /* socket events */
-    kReadEvent = 0x1 << 0x4, //All of type "EventFlags"
+    kReadEvent = 0x1 << 0x4,
     kWriteEvent = 0x1 << 0x5,
 
     /* update event */
@@ -205,7 +206,7 @@ class TaskThread : public OSThread {
 
   OSQueueElem fTaskThreadPoolElem;
 
-  OSHeap fHeap;                /* 延时-优先队列 */
+  OSHeap fHeap;                /* 时序-优先队列 */
   OSQueue_Blocking fTaskQueue; /* 事件-触发队列 */
 
   friend class Task;
@@ -214,7 +215,7 @@ class TaskThread : public OSThread {
 };
 
 /**
- * @brief 任务线程池类，该类负责生成、删除以及维护内部的任务线程列表。
+ * @brief 任务线程池静态类，该类负责生成、删除以及维护内部的任务线程列表。
  *
  * Because task threads share a global queue of tasks to execute,
  * there can only be one pool of task threads. That is why this object
@@ -246,6 +247,7 @@ class TaskThreadPool {
   }
 
  private:
+  TaskThreadPool() = default;
 
   static TaskThread **sTaskThreadArray;
   static UInt32 sNumTaskThreads;

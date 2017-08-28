@@ -29,10 +29,12 @@
 */
 
 #include "EventContext.h"
+#include <CFState.h>
 
 #if !__WinSock__
 
 #include <fcntl.h>
+#include <TCPListenerSocket.h>
 
 #endif
 
@@ -170,7 +172,7 @@ void EventContext::RequestEvent(int theMask) {
       AssertV(false, OSThread::GetErrno());
 #endif
   } else {
-    //allocate a Unique ID for this socket, and add it to the ref table
+    // allocate a Unique ID for this socket, and add it to the ref table
 
     //johnson find the bug
     bool bFindValid = false;
@@ -181,7 +183,7 @@ void EventContext::RequestEvent(int theMask) {
     // Messages must be >= WM_USER. Hence this code to restrict the numberspace
     // of our UniqueIDs.
     do {
-        unsigned int topVal = 8192;
+        static unsigned int topVal = 8192;
         if (!sUniqueID.compare_exchange_weak(topVal, WM_USER))  // Fix 2466667: message IDs above a
             fUniqueID = ++sUniqueID;         // level are ignored, so wrap at 8192
         else
@@ -192,25 +194,27 @@ void EventContext::RequestEvent(int theMask) {
         if (ref != NULL) {
             fEventThread->fRefTable.Release(ref);
         } else {
-            bFindValid = true;// ok, it's free
+            bFindValid = true; // ok, it's free
         }
-    } while (0);
+    } while (!bFindValid);
 #else
     do {
-      unsigned int topVal = 10000000;
+      static unsigned int topVal = 10000000;
       if (!sUniqueID.compare_exchange_weak(topVal, 1))  // Fix 2466667: message IDs above a
         fUniqueID = ++sUniqueID;         // level are ignored, so wrap at 8192
       else
         fUniqueID = 1;
 
-      //If the fUniqueID is used, find a new one until it's free
+      // If the fUniqueID is used, find a new one until it's free
       OSRef *ref = fEventThread->fRefTable.Resolve(&fUniqueIDStr);
       if (ref != NULL) {
         fEventThread->fRefTable.Release(ref);
       } else {
-        bFindValid = true;// ok, it's free
+        bFindValid = true; // ok, it's free
       }
-    } while (0);  // TODO(james): !bFindValid
+
+      // if id pool is empty, here will spin until some one release.
+    } while (!bFindValid);
 #endif
 
     fRef.Set(fUniqueIDStr, this);
@@ -230,7 +234,7 @@ void EventContext::RequestEvent(int theMask) {
     if (select_watchevent(&fEventReq, theMask) != 0)
 #endif
       //this should never fail, but if it does, cleanup.
-    AssertV(false, OSThread::GetErrno());
+      AssertV(false, OSThread::GetErrno());
   }
 }
 
@@ -258,6 +262,21 @@ void EventThread::Entry() {
         theErrno = OSThread::GetErrno();
     }
     if (theErrno == EINTR) break; // stop requested
+
+    // kill listener socket
+    if (CFState::sState & CFState::kKillListener) {
+      while (true) {
+        OSQueueElem *elem = CFState::sListenerSocket.DeQueue();
+        if (elem == nullptr) break;
+        TCPListenerSocket *listener = (TCPListenerSocket *)
+            elem->GetEnclosingObject();
+        listener->RequestEvent(EV_RM);
+        listener->Signal(Task::kKillEvent);
+        delete elem;
+      }
+      CFState::sState ^= CFState::kKillListener;
+      continue;
+    }
 
     AssertV(theErrno == 0, theErrno);
 

@@ -149,7 +149,7 @@ class EventContext {
  private:
   struct eventreq fEventReq;
 
-  OSRef fRef;
+  OSRef fRef; /* 引用记录，用于 event 调度 */
   PointerSizedInt fUniqueID;
   StrPtrLen fUniqueIDStr;
   EventThread *fEventThread;

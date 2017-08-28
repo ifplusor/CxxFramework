@@ -17,7 +17,13 @@
 class HTTPSessionInterface : public Task {
  public:
 
+  /**
+   * @brief 初始化 http server, 创建 HTTPDispatcher
+   * @param mapping - CGI 程序映射表
+   */
   static void Initialize(HTTPMapping *mapping);
+
+  static void Release() { delete sDispatcher; sDispatcher = nullptr; }
 
   HTTPSessionInterface();
   virtual ~HTTPSessionInterface();

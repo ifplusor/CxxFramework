@@ -63,8 +63,8 @@ OS_Error OSRefTable::Register(OSRef *inRef) {
   Assert(inRef->fString.Len != 0);
 
   OSMutexLocker locker(&fMutex);
-  if (inRef->fString.Ptr == nullptr || inRef->fString.Len
-      == 0) {   //printf("OSRefTable::Register inRef is invalid \n");
+  if (inRef->fString.Ptr == nullptr || inRef->fString.Len == 0) {
+    //printf("OSRefTable::Register inRef is invalid \n");
     return (OS_Error) EPERM;
   }
 

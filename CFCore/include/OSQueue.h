@@ -27,7 +27,6 @@
 
     Contains:   implements OSQueue class
 
-
 */
 
 #ifndef __OS_QUEUE_H__
@@ -77,6 +76,10 @@ class OSQueueElem {
   friend class OSQueue;
 };
 
+/**
+ * @brief 队列，使用带哨兵的链表实现
+ * @note 只保存 OSQueueElem 对象指针，不管理对象内存
+ */
 class OSQueue {
  public:
   OSQueue();
@@ -108,7 +111,7 @@ class OSQueue {
  protected:
   OSMutex fMutex;
 
-  OSQueueElem fSentinel;
+  OSQueueElem fSentinel; /* 哨兵节点 */
   UInt32 fLength;
 };
 

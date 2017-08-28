@@ -128,12 +128,15 @@ class OSThread {
   static  cthread_t   GetCurrentThreadID() { return cthread_self(); }
 #endif
 
+  /**
+   * @brief 返回持有当前线程的 OSThread 对象指针
+   */
   static OSThread *GetCurrent();
 
  private:
 
 #ifdef __Win32__
-  static DWORD    sThreadStorageIndex;
+  static DWORD sThreadStorageIndex;
 #elif __PTHREADS__
   static pthread_key_t gMainKey;
 #ifdef _POSIX_THREAD_PRIORITY_SCHEDULING
@@ -169,6 +172,10 @@ class OSThread {
 
 };
 
+/**
+ * @brief 设置线程数据，并在对象销毁后自动设置终值
+ * @note 当线程为非抢占调度模型时，可用于实现自动恢复
+ */
 class OSThreadDataSetter {
  public:
 

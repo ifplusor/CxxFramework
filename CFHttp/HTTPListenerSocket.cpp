@@ -9,7 +9,7 @@ Task *HTTPListenerSocket::GetSessionTask(TCPSocket **outSocket) {
   Assert(outSocket != nullptr);
 
   HTTPSession *theTask = new HTTPSession();
-  *outSocket = theTask->GetSocket();  // out socket is not attached to a unix socket yet.
+  *outSocket = theTask->GetSocket(); // out socket is not attached to a unix socket yet.
 
   if (this->OverMaxConnections(0))
     this->SlowDown();

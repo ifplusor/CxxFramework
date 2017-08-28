@@ -47,12 +47,6 @@
 class Socket : public EventContext {
  public:
 
-  enum {
-    // Pass this in on socket constructors to specify whether the
-    // socket should be non-blocking or blocking
-    kNonBlockingSocketType = 1
-  };
-
   /**
    * This class provides a global event thread, construct it.
    */
@@ -167,6 +161,12 @@ class Socket : public EventContext {
   };
 
  protected:
+
+  enum {
+    // Pass this in on socket constructors to specify whether the
+    // socket should be non-blocking or blocking
+    kNonBlockingSocketType = 1
+  };
 
   Socket(Task *notifytask, UInt32 inSocketType);
 

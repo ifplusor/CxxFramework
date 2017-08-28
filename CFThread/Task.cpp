@@ -398,10 +398,9 @@ void TaskThread::Entry() {
         // that if an event sneaks in right as the task is returning from Run()
         // (via Signal) that the Run function will be invoked again.
         /* check point!!! task 处理期间未激活新的 event，则撤销 alive 状态 */
-        unsigned int val = Task::kAlive;
+        static unsigned int val = Task::kAlive;
         doneProcessingEvent = theTask->fEvents.compare_exchange_weak(val, 0);
         /* 虽然该任务目前没有事件处理，但是并不表示要销毁，所以没有 delete。 */
-        if (doneProcessingEvent)
           theTask = nullptr;
       } else {
         /*

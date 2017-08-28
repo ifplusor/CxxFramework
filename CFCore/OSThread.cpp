@@ -229,8 +229,16 @@ void OSThread::Sleep(UInt32 inMsec) {
 }
 
 #ifdef __Win32__
+/**
+ * @brief 操作系统线程入口
+ * @param inTread - 持有该线程的 OSThread 对象指针
+ */
 unsigned int WINAPI OSThread::_Entry(LPVOID inThread) {
 #else
+/**
+ * @brief 操作系统线程入口
+ * @param inTread - 持有该线程的 OSThread 对象指针
+ */
 void *OSThread::_Entry(void *inThread) { //static
 #endif
 
@@ -249,8 +257,7 @@ void *OSThread::_Entry(void *inThread) { //static
 
   /*
      Run the thread
-     Entry 函数是 OSThread 的纯虚函数,所以这里实际上会调用派生类的 Entry
-     函数,也就是 TaskThread::Entry 函数。
+     Entry 函数是 OSThread 的纯虚函数，这里实际上会调用派生类的 Entry 函数。
    */
   theThread->Entry();
 

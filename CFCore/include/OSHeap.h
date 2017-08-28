@@ -40,7 +40,8 @@
 class OSHeapElem;
 
 /**
- * 小顶堆
+ * @brief 小顶堆，使用数组实现
+ * @note 只保存 OSHeapElem 对象指针，不管理对象内存
  */
 class OSHeap {
  public:
@@ -50,7 +51,7 @@ class OSHeap {
   };
 
   OSHeap(UInt32 inStartSize = kDefaultStartSize);
-  ~OSHeap() { if (fHeap != nullptr) delete fHeap; }
+  ~OSHeap() { if (fHeap != nullptr) delete[] fHeap; }
 
   //
   // ACCESSORS
@@ -117,4 +118,5 @@ class OSHeapElem {
 
   friend class OSHeap;
 };
+
 #endif // __OS_HEAP_H__

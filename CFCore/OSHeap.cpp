@@ -32,7 +32,6 @@
 #include <string.h>
 
 #include "OSHeap.h"
-#include "MyAssert.h"
 
 OSHeap::OSHeap(UInt32 inStartSize)
     : fFreeIndex(1) {
