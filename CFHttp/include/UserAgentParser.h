@@ -29,12 +29,10 @@
 
     Change History (most recent first):
 
-
-
-
 */
-#ifndef _USERAGENTPARSER_H_
-#define _USERAGENTPARSER_H_
+
+#ifndef __USER_AGENT_PARSER_H__
+#define __USER_AGENT_PARSER_H__
 
 #include "StringParser.h"
 #include "StringFormatter.h"
@@ -87,4 +85,4 @@ class UserAgentParser {
 
 };
 
-#endif // _USERAGENTPARSER_H_
+#endif // __USER_AGENT_PARSER_H__

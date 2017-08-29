@@ -33,11 +33,8 @@
 
 */
 
-#ifndef __query_param_list__
-#define __query_param_list__
-
-
-//#include "QueryParamList.h"
+#ifndef __QUERY_PARAM_LIST_H__
+#define __QUERY_PARAM_LIST_H__
 
 #include "PLDoubleLinkedList.h"
 #include "StrPtrLen.h"
@@ -87,4 +84,4 @@ class QueryParamList {
 
 };
 
-#endif
+#endif // __QUERY_PARAM_LIST_H__

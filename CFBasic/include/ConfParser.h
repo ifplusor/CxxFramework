@@ -23,20 +23,32 @@
  *
  */
 
-#ifndef __getword__
-#define __getword__
+#ifndef __CONF_PARSER_H__
+#define __CONF_PARSER_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define TEST_CONF_PARSER 0
 
 #include "OSHeaders.h"
 
-char *GetWord(char *toWordPtr, char *fromStrPtr, SInt32 limit);
-char *GetQuotedWord(char *toWordPtr, char *fromStrPtr, SInt32 limit);
+// the maximum size + 1 of a parameter
+#define kConfParserMaxParamSize 512
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+// the maximum size + 1 of single line in the file 
+#define kConfParserMaxLineSize 1024
+
+// the maximum number of values per config parameter
+#define kConfParserMaxParamValues 10
+
+void TestParseConfigFile();
+
+typedef bool(*CFConfigSetter)(const char *paramName,
+                            const char *paramValue[],
+                            void *userData);
+
+int ParseConfigFile(bool allowNullValues,
+                    const char *fname,
+                    CFConfigSetter setter,
+                    void *userData);
+
+#endif // __CONF_PARSER_H__

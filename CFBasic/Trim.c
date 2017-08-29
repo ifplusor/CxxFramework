@@ -1,6 +1,3 @@
-#ifndef __ConfParser__
-#define __ConfParser__
-
 /*
  *
  * @APPLE_LICENSE_HEADER_START@
@@ -26,25 +23,12 @@
  *
  */
 
+#include "Trim.h"
 
-
-#include "OSHeaders.h"
-
-// the maximum size + 1 of a parameter
-#define kConfParserMaxParamSize 512
-
-
-// the maximum size + 1 of single line in the file 
-#define kConfParserMaxLineSize 1024
-
-// the maximum number of values per config parameter
-#define kConfParserMaxParamValues 10
-
-void TestParseConfigFile();
-
-int ParseConfigFile(bool allowNullValues, const char *fname,
-                    bool(*ConfigSetter)(const char *paramName,
-                                        const char *paramValue[],
-                                        void *userData),
-                    void *userData);
-#endif
+char *TrimLeft(char *fromStrPtr) {
+  char *tmp = &fromStrPtr[0];
+  // trim any leading white space
+  while ((*tmp <= ' ') && (*tmp != 0))
+    tmp++;
+  return tmp;
+}

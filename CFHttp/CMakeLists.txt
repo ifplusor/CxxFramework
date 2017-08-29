@@ -9,7 +9,10 @@ set(HEADER_FILES
         include/HTTPListenerSocket.h
         include/HTTPClientRequestStream.h
         include/HTTPClientResponseStream.h
-        include/HTTPDispatcher.h)
+        include/HTTPDispatcher.h
+        include/UserAgentParser.h
+        include/PLDoubleLinkedList.h
+        include/QueryParamList.h)
 
 set(SOURCE_FILES
         HTTPClientRequestStream.cpp
@@ -21,7 +24,9 @@ set(SOURCE_FILES
         HTTPSessionInterface.cpp
         HTTPSession.cpp
         HTTPListenerSocket.cpp
-        HTTPDispatcher.cpp)
+        HTTPDispatcher.cpp
+        UserAgentParser.cpp
+        QueryParamList.cpp)
 
 add_library(CFHttp STATIC
         ${HEADER_FILES} ${SOURCE_FILES})

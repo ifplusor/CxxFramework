@@ -23,15 +23,13 @@
  *
  */
 
-#ifndef __pldoublelinkedlist__
-#define __pldoublelinkedlist__
+#ifndef __PL_DOUBLE_LINKED_LIST_H__
+#define __PL_DOUBLE_LINKED_LIST_H__
 
 #include <stdlib.h>
-#include "SafeStdLib.h"
 #include <string.h>
-
 #include "OSHeaders.h"
-#include "MyAssert.h"
+#include "SafeStdLib.h"
 
 #ifndef __PLDoubleLinkedListDEBUG__
 #define __PLDoubleLinkedListDEBUG__ 0
@@ -225,8 +223,9 @@ class PLDoubleLinkedList {
 
   }
 
-  PLDoubleLinkedListNode<T> *ForEachUntil(bool (*doFunc)(PLDoubleLinkedListNode<
-      T> *node, void *userData), void *userData) {
+  PLDoubleLinkedListNode<T> *ForEachUntil(
+      bool (*doFunc)(PLDoubleLinkedListNode<T> *node, void *userData),
+      void *userData) {
     PLDoubleLinkedListNode<T> *nextElement, *curElement;
     bool stopIteration = false;
 
@@ -270,9 +269,8 @@ class PLDoubleLinkedList {
   UInt32 GetNumNodes() { return fNumNodes; }
 
  protected:
-  static bool CompareIndexToZero(PLDoubleLinkedListNode<T> *,
-                                 void *nodeIndex) // (node, nodeIndex)
-  {
+  static bool CompareIndexToZero(PLDoubleLinkedListNode<T> *node,
+                                 void *nodeIndex) {
     int val = *(int *) nodeIndex;
 
     if (val == 0)
@@ -285,20 +283,14 @@ class PLDoubleLinkedList {
 
   static void DoClearList(PLDoubleLinkedListNode<T> *node, void *listPtr) {
     PLDoubleLinkedList<T> *list = (PLDoubleLinkedList<T> *) listPtr;
-
     list->RemoveNode(node);
-
     delete node;
-
   }
+
   PLDoubleLinkedListNode<T> *fHead;
   PLDoubleLinkedListNode<T> *fTail;
   UInt32 fNumNodes;
 
 };
 
-#endif
-
-
-
-
+#endif // __PL_DOUBLE_LINKED_LIST_H__

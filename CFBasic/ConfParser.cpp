@@ -23,28 +23,11 @@
  *
  */
 
-
 #include "ConfParser.h"
-
-#include "MyAssert.h"
-
 #include "GetWord.h"
 #include "Trim.h"
 
-#include <string.h>
-
-static bool SampleConfigSetter(const char *paramName,
-                               const char *paramValue[],
-                               void *userData);
-static void DisplayConfigErr(const char *fname,
-                             int lineCount,
-                             const char *lineBuff,
-                             const char *errMessage);
-
-void TestParseConfigFile() {
-  ParseConfigFile(false, "qtss.conf", SampleConfigSetter, nullptr);
-
-}
+#if TEST_CONF_PARSER
 
 static bool SampleConfigSetter(const char *paramName,
                                const char *paramValue[],
@@ -65,6 +48,13 @@ static bool SampleConfigSetter(const char *paramName,
   return false;
 }
 
+void TestParseConfigFile() {
+  ParseConfigFile(false, "qtss.conf", SampleConfigSetter, nullptr);
+
+}
+
+#endif
+
 static void DisplayConfigErr(const char *fname,
                              int lineCount,
                              const char *lineBuff,
@@ -84,20 +74,17 @@ static void DisplayConfigErr(const char *fname,
     qtss_printf("  reason: %s\n", errMessage); // lineBuff already includes a \n
 }
 
-int ParseConfigFile(
-    bool allowNullValues,
-    const char *fname,
-    bool(*ConfigSetter)(const char *paramName,
-                        const char *paramValue[],
-                        void *userData),
-    void *userData) {
+int ParseConfigFile(bool allowNullValues,
+                    const char *fname,
+                    CFConfigSetter setter,
+                    void *userData) {
   int error = -1;
 
   Assert(fname);
-  Assert(ConfigSetter);
+  Assert(setter);
 
   if (!fname) return error;
-  if (!ConfigSetter) return error;
+  if (!setter) return error;
 
   FILE *configFile = fopen(fname, "r");
 
@@ -112,17 +99,11 @@ int ParseConfigFile(
 
     char *next;
 
-    // debug assistance -- CW debugger won't display large char arrays as strings
-    //char* l = lineBuff;
-    //char* w = wordBuff;
-
-
     int lineCount = 0;
     do {
-      next = lineBuff;
+//      next = lineBuff;
 
       // get a line ( fgets adds \n+ 0x00 )
-
       if (fgets(lineBuff, lineBuffSize, configFile) == nullptr)
         break;
 
@@ -132,13 +113,13 @@ int ParseConfigFile(
       // trim the leading whitespace
       next = TrimLeft(lineBuff);
 
-      if (*next) {
+      if (*next) { // non-0
 
         if (*next == '#') {
           // it's a comment
-          // prabably do nothing in release version?
+          // probably do nothing in release version?
 
-          //  qtss_printf( "comment: %s" , &lineBuff[1] );
+          //qtss_printf( "comment: %s" , &lineBuff[1] );
 
           error = 0;
 
@@ -185,13 +166,11 @@ int ParseConfigFile(
                   values[maxValues++] = value;
                   values[maxValues] = 0;
                 }
-
               }
-
             }
 
             if ((maxValues > 0 || allowNullValues)
-                && !(*ConfigSetter)(param, values, userData))
+                && !(*setter)(param, values, userData))
               error = 0;
             else {
               error = -1;
@@ -212,8 +191,7 @@ int ParseConfigFile(
             maxValues = 0;
 
             while (values[maxValues]) {
-              char **tempValues =
-                  (char **) values; // Need to do this to delete a const
+              char **tempValues = (char **) values; // Need to do this to delete a const
               delete[] tempValues[maxValues];
               maxValues++;
             }
@@ -224,11 +202,9 @@ int ParseConfigFile(
 
     (void) fclose(configFile);
   }
-  //  else
-  //  {
+  //  else {
   //      qtss_printf("Couldn't open config file at: %s\n", fname);
   //  }
 
   return error;
-
 }

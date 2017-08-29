@@ -1,5 +1,3 @@
-#include "Trim.h"
-
 /*
  *
  * @APPLE_LICENSE_HEADER_START@
@@ -25,10 +23,20 @@
  *
  */
 
-char *TrimLeft(char *fromStrPtr) {
-  char *tmp = &fromStrPtr[0];
-  // trim any leading white space
-  while ((*tmp <= ' ') && (*tmp != 0))
-    tmp++;
-  return tmp;
+#ifndef __GET_WORD_H__
+#define __GET_WORD_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "OSHeaders.h"
+
+char *GetWord(char *toWordPtr, char *fromStrPtr, SInt32 limit);
+char *GetQuotedWord(char *toWordPtr, char *fromStrPtr, SInt32 limit);
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif // __GET_WORD_H__

@@ -25,7 +25,6 @@
  */
 
 #include "QueryParamList.h"
-
 #include "StringParser.h"
 
 QueryParamList::QueryParamList(const std::string &queryString) {
@@ -64,13 +63,13 @@ void QueryParamList::BulidList(StrPtrLen *querySPL) {
     StrPtrLen theCGIParamName;
     StrPtrLen theCGIParamValue;
 
-    queryParser.ConsumeUntil(&theCGIParamName,
-                             '=');        // leaves "=..." in cgiParser, puts item keywd in theCGIParamName
+    // leaves "=..." in cgiParser, puts item keywd in theCGIParamName
+    queryParser.ConsumeUntil(&theCGIParamName, '=');
 
     //if ( queryParser.GetDataRemaining() > 1  )
-    if (queryParser.GetDataRemaining()
-        >= 1)//change,邵帅，20160614,对于"xxxxx="这种会陷入死循环，阻塞任务线程。
-    {
+    if (queryParser.GetDataRemaining() >= 1) {
+      /* change,邵帅，20160614,对于"xxxxx="这种会陷入死循环，阻塞任务线程。*/
+
       queryParser.ConsumeLength(&theCGIParamValue, 1);   // the '='
 
       stopCharPtr = queryParser.GetCurrentPosition();

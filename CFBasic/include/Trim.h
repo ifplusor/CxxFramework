@@ -1,7 +1,3 @@
-
-#ifndef __trim__
-#define __trim__
-
 /*
  *
  * @APPLE_LICENSE_HEADER_START@
@@ -27,7 +23,8 @@
  *
  */
 
-
+#ifndef __TRIM_H__
+#define __TRIM_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,4 +36,4 @@ char *TrimLeft(char *fromStrPtr);
 }
 #endif
 
-#endif
+#endif // __TRIM_H__

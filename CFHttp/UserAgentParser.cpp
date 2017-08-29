@@ -30,7 +30,6 @@
 
 */
 
-#include "StringParser.h"
 #include "UserAgentParser.h"
 
 UserAgentParser::UserAgentFields UserAgentParser::sFieldIDs[] =
@@ -70,7 +69,7 @@ UInt8 UserAgentParser::sEOLWhitespaceEqualMask[] =
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //220-229
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //230-239
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //240-249
-        0, 0, 0, 0, 0, 0             //250-255
+        0, 0, 0, 0, 0, 0              //250-255
     };
 
 UInt8 UserAgentParser::sEOLSemicolonCloseParenMask[] =
@@ -100,7 +99,7 @@ UInt8 UserAgentParser::sEOLSemicolonCloseParenMask[] =
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //220-229
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //230-239
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //240-249
-        0, 0, 0, 0, 0, 0             //250-255
+        0, 0, 0, 0, 0, 0              //250-255
     };
 
 void UserAgentParser::Parse(StrPtrLen *inStream) {
@@ -131,7 +130,8 @@ void UserAgentParser::Parse(StrPtrLen *inStream) {
 
     StrPtrLen testID;
     UInt32 fieldID;
-    for (short testField = 0; testField < UserAgentParser::eNumAttributes;
+    for (short testField = 0;
+         testField < UserAgentParser::eNumAttributes;
          testField++) {
       testID.Set(sFieldIDs[testField].fFieldName, sFieldIDs[testField].fLen);
       fieldID = sFieldIDs[testField].fID;

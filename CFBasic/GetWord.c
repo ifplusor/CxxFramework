@@ -25,17 +25,17 @@
 
 #include "GetWord.h"
 
+/**
+ * @brief get a word from a string, copy result into toWordPtr
+ * @return one past end of the word, limit is max for toWordPtr
+ */
 char *GetWord(char *toWordPtr, char *fromStrPtr, SInt32 limit) {
-  // get a word from a string
-  // copy result into toWordPtr, return one past end of the
-  // word, limit is max for toWordPtr
-  // fromStrPtr
 
   // trim any leading white space
   while ((unsigned char) *fromStrPtr <= 0x20 && *fromStrPtr)
     fromStrPtr++;
 
-  // copy until we find more white space
+  // copy until we find more white space. 0x20 is space
   while (limit && (unsigned char) *fromStrPtr > 0x20 && *fromStrPtr) {
     *toWordPtr++ = *fromStrPtr++;
     limit--;
@@ -46,20 +46,20 @@ char *GetWord(char *toWordPtr, char *fromStrPtr, SInt32 limit) {
   return (char *) fromStrPtr;
 }
 
+/**
+ * @brief get a quote encoded word from a string, make include white space
+ */
 char *GetQuotedWord(char *toWordPtr, char *fromStrPtr, SInt32 limit) {
-  // get a quote encoded word from a string
-  // make include white space
+
   int lastWasQuote = 0;
 
   // trim any leading white space
   while (((unsigned char) *fromStrPtr <= 0x20) && *fromStrPtr)
     fromStrPtr++;
 
-  if ((unsigned char) *fromStrPtr
-      == '"') {   // must lead with quote sign after white space
+  // must lead with quote sign after white space
+  if ((unsigned char) *fromStrPtr == '"') {
     fromStrPtr++;
-
-
 
     // copy until we find the last single quote
     while (limit && *fromStrPtr) {
@@ -76,12 +76,10 @@ char *GetQuotedWord(char *toWordPtr, char *fromStrPtr, SInt32 limit) {
           limit--;
         } else // we're done, hit a quote by itself
           break;
-
       }
 
       // consume the char we read
       fromStrPtr++;
-
     }
   }
 
