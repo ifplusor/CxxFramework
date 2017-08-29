@@ -21,13 +21,13 @@ set(SOURCE_FILES
         UDPSocket.cpp
         UDPSocketPool.cpp)
 
-if (${CND_PLATFORM} MATCHES "Linux")
+if (${CONF_PLATFORM} STREQUAL "Linux")
     set(SOURCE_FILES ${SOURCE_FILES} epollev.cpp)
-elseif (${CND_PLATFORM} MATCHES "Win32")
+elseif (${CONF_PLATFORM} STREQUAL "Win32")
     set(SOURCE_FILES ${SOURCE_FILES} win32ev.cpp)
-elseif (${CND_PLATFORM} MATCHES "MinGW")
+elseif (${CONF_PLATFORM} STREQUAL "MinGW")
     set(SOURCE_FILES ${SOURCE_FILES} win32ev.cpp)
-else (${CND_PLATFORM} MATCHES "OSX")
+else (${CONF_PLATFORM} STREQUAL "OSX")
     set(HEADER_FILES ${HEADER_FILES} include/tempcalls.h)
 #    set(SOURCE_FILES ${SOURCE_FILES} ev.cpp)
 endif ()
@@ -42,10 +42,10 @@ target_link_libraries(CFSocket
 target_compile_options(CFSocket
         PRIVATE -fPIC)
 
-if (${CND_PLATFORM} MATCHES "Win32")
+if (${CONF_PLATFORM} STREQUAL "Win32")
     target_link_libraries(CFSocket
             PUBLIC WS2_32)
-elseif (${CND_PLATFORM} MATCHES "MinGW")
+elseif (${CONF_PLATFORM} STREQUAL "MinGW")
     target_link_libraries(CFSocket
             PUBLIC WS2_32)
     target_compile_options(CFSocket
