@@ -401,7 +401,7 @@ void TaskThread::Entry() {
         static unsigned int val = Task::kAlive;
         doneProcessingEvent = theTask->fEvents.compare_exchange_weak(val, 0);
         /* 虽然该任务目前没有事件处理，但是并不表示要销毁，所以没有 delete。 */
-          theTask = nullptr;
+        if (doneProcessingEvent) theTask = nullptr;
       } else {
         /*
            如果 theTimeout > 0,

@@ -90,8 +90,10 @@ void HTTPSessionInterface::DecrementObjectHolderCount() {
 
 }
 
-CF_Error HTTPSessionInterface::Write(void *inBuffer, UInt32 inLength,
-                                     UInt32 *outLenWritten, UInt32 inFlags) {
+CF_Error HTTPSessionInterface::Write(void *inBuffer,
+                                     UInt32 inLength,
+                                     UInt32 *outLenWritten,
+                                     CF_WriteFlags inFlags) {
   UInt32 sendType = HTTPResponseStream::kDontBuffer;
   if ((inFlags & qtssWriteFlagsBufferData) != 0)
     sendType = HTTPResponseStream::kAlwaysBuffer;
@@ -161,7 +163,7 @@ void HTTPSessionInterface::SnarfInputSocket(HTTPSessionInterface *fromRTSPSessio
   if (fInputSocketP == fOutputSocketP)
     fInputSocketP = new TCPSocket(this, Socket::kNonBlockingSocketType);
   else
-    fInputSocketP->Cleanup();   // if this is a socket replacing an old socket, we need
+    fInputSocketP->Cleanup(); // if this is a socket replacing an old socket, we need
   // to make sure the file descriptor gets closed
   fInputSocketP->SnarfSocket(fromRTSPSession->fSocket);
 

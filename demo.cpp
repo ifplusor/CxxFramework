@@ -8,30 +8,20 @@ class MyConfig : public CFConfigure {
  public:
   HTTPMapping *GetHttpMapping() override {
     static HTTPMapping defaultHttpMapping[] = {
-        {"/", (CF_CGIFunction) defaultCGI},
-        {"/exit", (CF_CGIFunction) exitCGI},
+        {"/exit", (CF_CGIFunction) DefaultExitCGI},
+        {"/", (CF_CGIFunction) DefaultCGI},
         {NULL, NULL}
     };
     return defaultHttpMapping;
   }
 
  private:
-  static CF_Error defaultCGI(HTTPPacket &request, HTTPPacket &response) {
+  static CF_Error DefaultCGI(HTTPPacket &request, HTTPPacket &response) {
     ResizeableStringFormatter formatter(nullptr, 0);
     formatter.Put("test content\n");
     StrPtrLen *content = new StrPtrLen(formatter.GetAsCString(),
                                        formatter.GetCurrentOffset());
     response.SetBody(content);
-    return CF_NoErr;
-  }
-
-  static CF_Error exitCGI(HTTPPacket &request, HTTPPacket &response) {
-    ResizeableStringFormatter formatter(nullptr, 0);
-    formatter.Put("server will exit\n");
-    StrPtrLen *content = new StrPtrLen(formatter.GetAsCString(),
-                                       formatter.GetCurrentOffset());
-    response.SetBody(content);
-    CFEnv::Exit(1);
     return CF_NoErr;
   }
 };

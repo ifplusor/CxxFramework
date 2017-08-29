@@ -8,7 +8,6 @@
 #include <OSHeaders.h>
 #include "revision.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -67,13 +66,12 @@ enum {
   CF_InstanceAttrsNotAllowed = -20,
   CF_UnknowAudioCoder = -21,
 #ifdef USE_ENUM
-} CF_Error;
+  } CF_Error;
 #else
 };
 
 typedef SInt32 CF_Error;
 #endif
-
 
 // Events
 typedef enum {
@@ -89,6 +87,12 @@ typedef enum {
   qtssWriteFlagsWriteBurstBegin = 0x00000004,
   qtssWriteFlagsBufferData = 0x00000008
 } CF_WriteFlags;
+
+struct CF_NetAddr {
+  char *ip;
+  UInt16 port;
+};
+typedef struct CF_NetAddr CF_NetAddr;
 
 #ifdef __cplusplus
 }

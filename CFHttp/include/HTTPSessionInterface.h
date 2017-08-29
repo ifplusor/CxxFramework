@@ -57,7 +57,7 @@ class HTTPSessionInterface : public Task {
   virtual CF_Error Write(void *inBuffer,
                          UInt32 inLength,
                          UInt32 *outLenWritten,
-                         UInt32 inFlags);
+                         CF_WriteFlags inFlags);
   virtual CF_Error Read(void *ioBuffer, UInt32 inLength, UInt32 *outLenRead);
   virtual CF_Error RequestEvent(CF_EventType inEventMask);
 

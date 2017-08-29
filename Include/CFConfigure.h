@@ -6,13 +6,14 @@
 #define __CF_CONFIGURE_H__
 
 #include "CFDef.h"
+#include "CFEnv.h"
 #include <HTTPDef.h>
 
 /**
  * @brief Interface for configure framework.
  *
- * CxxFramework only provide this declaration, and developer should give the
- * completed implement.
+ * CxxFramework only provide this declaration with default configure, but
+ * developer should give custom implement by inheritance.
  */
 class CFConfigure {
  public:
@@ -38,22 +39,33 @@ class CFConfigure {
   //
   // Http Server Settings
 
+  static CF_Error DefaultExitCGI(HTTPPacket &request, HTTPPacket &response) {
+    ResizeableStringFormatter formatter(nullptr, 0);
+    formatter.Put("server will exit\n");
+    StrPtrLen *content = new StrPtrLen(formatter.GetAsCString(),
+                                       formatter.GetCurrentOffset());
+    response.SetBody(content);
+    CFEnv::Exit(1);
+    return CF_NoErr;
+  }
+
   virtual HTTPMapping *GetHttpMapping() {
     static HTTPMapping defaultHttpMapping[] = {
-        {"/", (CF_CGIFunction) defaultCGI},
+        {"/exit", (CF_CGIFunction) DefaultExitCGI},
         {NULL, NULL}
     };
     return defaultHttpMapping;
   }
 
- private:
-  static CF_Error defaultCGI(HTTPPacket &request, HTTPPacket &response) {
-    ResizeableStringFormatter formatter(nullptr, 0);
-    formatter.Put("test content\n");
-    StrPtrLen *content = new StrPtrLen(formatter.GetAsCString(),
-                                       formatter.GetCurrentOffset());
-    response.SetBody(content);
-    return CF_NoErr;
+  virtual CF_NetAddr *GetHttpListenAddr(UInt32 *outNum) {
+    static CF_NetAddr defaultHttpAddrs[] = {
+        {
+            .ip = "0.0.0.0",
+            .port = 8080
+        }
+    };
+    *outNum = 1;
+    return defaultHttpAddrs;
   }
 };
 

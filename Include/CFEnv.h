@@ -9,7 +9,8 @@
 #include <OSQueue.h>
 #include <EventContext.h>
 #include "CFDef.h"
-#include "CFConfigure.h"
+
+class CFConfigure;
 
 class CFEnv {
  public:
@@ -64,5 +65,7 @@ class CFEnv {
 
   friend EventThread;
 };
+
+#include "CFConfigure.h"
 
 #endif //__CF_ENV_H__

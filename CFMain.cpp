@@ -20,6 +20,7 @@ atomic<UInt32> CFState::sState(0); /* 框架内部状态标识 */
 OSQueue CFState::sListenerSocket;
 
 int CFMain(CFConfigure *config) {
+  CF_Error theErr = CF_NoErr;
 
   //
   // Initialize utility classes
@@ -96,15 +97,26 @@ int CFMain(CFConfigure *config) {
 
   OSThread::Sleep(1000);
 
-  HTTPSessionInterface::Initialize(config->GetHttpMapping());
+  // Http server configure;
+  UInt32 numHttpListens;
+  CF_NetAddr *httpListenAddrs = config->GetHttpListenAddr(&numHttpListens);
+  if (numHttpListens > 0) {
+    HTTPSessionInterface::Initialize(config->GetHttpMapping());
+    for (UInt32 i = 0; i < numHttpListens; i++) {
+      HTTPListenerSocket *httpSocket = new HTTPListenerSocket();
+      theErr = httpSocket->Initialize(SocketUtils::ConvertStringToAddr(
+          httpListenAddrs[i].ip), httpListenAddrs[i].port);
+      if (theErr == CF_NoErr) {
+        CFState::sListenerSocket.EnQueue(new OSQueueElem(httpSocket));
+        httpSocket->RequestEvent(EV_RE);
+      } else {
+        delete httpSocket;
+      }
+    }
+  }
 
-  HTTPListenerSocket *httpSocket = new HTTPListenerSocket();
-
-  CFState::sListenerSocket.EnQueue(new OSQueueElem(httpSocket));
-
-  httpSocket->Initialize(SocketUtils::ConvertStringToAddr("127.0.0.1"), 8080);
-  httpSocket->RequestEvent(EV_RE);
-
+  //
+  // listen status loop
   while (!CFEnv::WillExit()) {
 #ifdef __sgi__
     OSThread::Sleep(999);
