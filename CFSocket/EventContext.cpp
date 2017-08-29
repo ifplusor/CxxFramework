@@ -259,17 +259,34 @@ void EventThread::Entry() {
       int theReturnValue = select_waitevent(&theCurrentEvent, NULL);
 #endif
 
-      if (CFState::sState & CFState::kCleanEvent) {
-        OSRefHashTableIter iter(fRefTable.GetHashTable());
-        while (!iter.IsDone()) {
-          OSRef *ref = iter.GetCurrent();
-          EventContext *theContext = (EventContext *) ref->GetObject();
-          iter.Next();
-          theContext->Cleanup();
+      if (CFState::sState & (CFState::kKillListener | CFState::kCleanEvent)) {
+        // kill listener socket
+        if (CFState::sState & CFState::kKillListener) {
+          while (true) {
+            OSQueueElem *elem = CFState::sListenerSocket.DeQueue();
+            if (elem == nullptr) break;
+            TCPListenerSocket *listener = (TCPListenerSocket *)
+                elem->GetEnclosingObject();
+            listener->RequestEvent(EV_RM);
+            listener->Signal(Task::kKillEvent);
+            delete elem;
+          }
+          CFState::sState ^= CFState::kKillListener;
+          continue;
         }
-        CFState::sState ^= CFState::kCleanEvent;
-        /* kCleanEvent 必 kDisableEvent，此时 select 模型再也不会产生新事件 */
-        continue;
+
+        if (CFState::sState & CFState::kCleanEvent) {
+          OSRefHashTableIter iter(fRefTable.GetHashTable());
+          while (!iter.IsDone()) {
+            OSRef *ref = iter.GetCurrent();
+            EventContext *theContext = (EventContext *) ref->GetObject();
+            iter.Next();
+            theContext->Cleanup();
+          }
+          CFState::sState ^= CFState::kCleanEvent;
+          /* kCleanEvent 必 kDisableEvent，此时 select 模型再也不会产生新事件 */
+          continue;
+        }
       }
 
       // Sort of a hack. In the POSIX version of the server, waitevent can
@@ -279,22 +296,6 @@ void EventThread::Entry() {
       else
         theErrno = OSThread::GetErrno();
     } while (theErrno == EINTR);
-
-    // kill listener socket
-    if (CFState::sState & CFState::kKillListener) {
-      while (true) {
-        OSQueueElem *elem = CFState::sListenerSocket.DeQueue();
-        if (elem == nullptr) break;
-        TCPListenerSocket *listener = (TCPListenerSocket *)
-            elem->GetEnclosingObject();
-        listener->RequestEvent(EV_RM);
-        listener->Signal(Task::kKillEvent);
-        delete elem;
-      }
-      CFState::sState ^= CFState::kKillListener;
-      continue;
-    }
-
     AssertV(theErrno == 0, theErrno);
 
     // ok, there's data waiting on this socket. Send a wakeup.
