@@ -59,10 +59,7 @@ class CFConfigure {
 
   virtual CF_NetAddr *GetHttpListenAddr(UInt32 *outNum) {
     static CF_NetAddr defaultHttpAddrs[] = {
-        {
-            .ip = "0.0.0.0",
-            .port = 8080
-        }
+        { "0.0.0.0", 8080 }
     };
     *outNum = 1;
     return defaultHttpAddrs;

@@ -181,7 +181,7 @@ void OSThread::ThreadYield() {
 
 void OSThread::Sleep(UInt32 inMsec) {
 
-#ifdef __Win32__
+#if __Win32__ || __MinGW__
   ::Sleep(inMsec);
 #elif __linux__ || __MacOSX__
 
