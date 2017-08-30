@@ -29,7 +29,9 @@
 
 */
 
-#include "ResizeableStringFormatter.h"
+#include <CF/ResizeableStringFormatter.h>
+
+using namespace CF;
 
 bool ResizeableStringFormatter::BufferIsFull(char *inBuffer,
                                              UInt32 inBufferLen) {

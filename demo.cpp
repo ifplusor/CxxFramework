@@ -2,7 +2,9 @@
 // Created by james on 8/27/17.
 //
 
-#include <CF.h>
+#include <CF/CF.h>
+
+using namespace CF;
 
 class MyConfig : public CFConfigure {
  public:
@@ -16,7 +18,8 @@ class MyConfig : public CFConfigure {
   }
 
  private:
-  static CF_Error DefaultCGI(HTTPPacket &request, HTTPPacket &response) {
+  static CF_Error DefaultCGI(CF::Net::HTTPPacket &request,
+                             CF::Net::HTTPPacket &response) {
     ResizeableStringFormatter formatter(nullptr, 0);
     formatter.Put("test content\n");
     StrPtrLen *content = new StrPtrLen(formatter.GetAsCString(),

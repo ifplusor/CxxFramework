@@ -2,14 +2,17 @@
 // Created by james on 8/22/17.
 //
 
-#include "HTTPListenerSocket.h"
-#include "HTTPSession.h"
+#include <CF/Net/Http/HTTPListenerSocket.h>
+#include <CF/Net/Http/HTTPSession.h>
 
-Task *HTTPListenerSocket::GetSessionTask(TCPSocket **outSocket) {
+namespace CF::Net {
+
+Thread::Task *HTTPListenerSocket::GetSessionTask(TCPSocket **outSocket) {
   Assert(outSocket != nullptr);
 
   HTTPSession *theTask = new HTTPSession();
-  *outSocket = theTask->GetSocket(); // out socket is not attached to a unix socket yet.
+  *outSocket =
+      theTask->GetSocket(); // out Socket is not attached to a unix Socket yet.
 
   if (this->OverMaxConnections(0))
     this->SlowDown();
@@ -21,4 +24,6 @@ Task *HTTPListenerSocket::GetSessionTask(TCPSocket **outSocket) {
 
 bool HTTPListenerSocket::OverMaxConnections(UInt32 buffer) {
   return false;
+}
+
 }

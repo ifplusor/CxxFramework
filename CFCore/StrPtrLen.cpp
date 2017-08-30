@@ -30,8 +30,9 @@
 */
 
 
-#include "StrPtrLen.h"
-#include "MyAssert.h"
+#include <CF/StrPtrLen.h>
+
+using namespace CF;
 
 UInt8 StrPtrLen::sCaseInsensitiveMask[] =
     {
@@ -41,7 +42,8 @@ UInt8 StrPtrLen::sCaseInsensitiveMask[] =
         30, 31, 32, 33, 34, 35, 36, 37, 38, 39,           //30-39
         40, 41, 42, 43, 44, 45, 46, 47, 48, 49,           //40-49
         50, 51, 52, 53, 54, 55, 56, 57, 58, 59,           //50-59
-        60, 61, 62, 63, 64, 97, 98, 99, 100, 101,         //60-69   stop on every character except a letter
+        60, 61, 62, 63, 64, 97, 98, 99, 100,
+        101,         //60-69   stop on every character except a letter
         102, 103, 104, 105, 106, 107, 108, 109, 110, 111, //70-79
         112, 113, 114, 115, 116, 117, 118, 119, 120, 121, //80-89
         122, 91, 92, 93, 94, 95, 96, 97, 98, 99,          //90-99
@@ -53,7 +55,8 @@ UInt8 StrPtrLen::sCaseInsensitiveMask[] =
 UInt8 StrPtrLen::sNonPrintChars[] =
     {
         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, //0-9     stop
-        0, 1, 1, 0, 1, 1, 1, 1, 1, 1, //10-19   '\r' & '\n' are not stop conditions
+        0, 1, 1, 0, 1, 1, 1, 1, 1,
+        1, //10-19   '\r' & '\n' are not stop conditions
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //20-29
         1, 1, 0, 0, 0, 0, 0, 0, 0, 0, //30-39
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //40-49
@@ -100,7 +103,7 @@ bool StrPtrLen::Equal(const StrPtrLen &compare) const {
   if ((nullptr == compare.Ptr) || (nullptr == Ptr))
     return false;
 
-  if ((compare.Len == Len) && (memcmp(compare.Ptr, Ptr, Len) == 0))
+  if ((compare.Len == Len) && (::memcmp(compare.Ptr, Ptr, Len) == 0))
     return true;
   else
     return false;
@@ -113,7 +116,7 @@ bool StrPtrLen::Equal(const char *compare) const {
   if ((nullptr == compare) || (nullptr == Ptr))
     return false;
 
-  if ((::strlen(compare) == Len) && (memcmp(compare, Ptr, Len) == 0))
+  if ((::strlen(compare) == Len) && (::memcmp(compare, Ptr, Len) == 0))
     return true;
   else
     return false;
@@ -210,7 +213,7 @@ char *StrPtrLen::FindStringCase(char *queryCharStr,
   if (resultStr != nullptr && resultChar != nullptr)
     resultStr->Set(resultChar, queryStr.Len);
 
-#if STRPTRLENTESTING
+#if STRPTRLEN_TESTING
   qtss_printf("StrPtrLen::FindStringCase found string=%s\n", resultChar);
 #endif
 
@@ -313,11 +316,10 @@ void StrPtrLen::PrintStr() {
       thestr[i] = 0;
       break;
     }
-
   }
 
   if (thestr != nullptr) {
-    qtss_printf(thestr);
+    s_printf(thestr);
     delete[]thestr;
   }
 }
@@ -325,17 +327,17 @@ void StrPtrLen::PrintStr() {
 void StrPtrLen::PrintStr(char *appendStr) {
   StrPtrLen::PrintStr();
   if (appendStr != nullptr)
-    qtss_printf(appendStr);
+    s_printf(appendStr);
 }
 
 void StrPtrLen::PrintStr(char *prependStr, char *appendStr) {
   if (prependStr != nullptr)
-    qtss_printf(prependStr);
+    s_printf(prependStr);
 
   StrPtrLen::PrintStr();
 
   if (appendStr != nullptr)
-    qtss_printf(appendStr);
+    s_printf(appendStr);
 }
 
 void StrPtrLen::PrintStrEOL(char *stopStr, char *appendStr) {
@@ -387,8 +389,8 @@ void StrPtrLen::PrintStrEOL(char *stopStr, char *appendStr) {
     }
 
     if (nextLine != nullptr) {
-      qtss_printf(theStrLine);
-      qtss_printf(theChar);
+      s_printf(theStrLine);
+      s_printf(theChar);
 
       theStrLine = nextLine;
       nextLine = nullptr;
@@ -396,160 +398,159 @@ void StrPtrLen::PrintStrEOL(char *stopStr, char *appendStr) {
       i = -1;
     }
   }
-  qtss_printf(theStrLine);
+  s_printf(theStrLine);
   delete[]thestr;
 
   if (appendStr != nullptr)
-    qtss_printf(appendStr);
+    s_printf(appendStr);
 
 }
 
 #if STRPTRLEN_TESTING
-bool  StrPtrLen::Test()
-{
-    static char* test1 = "2347.;.][';[;]abcdefghijklmnopqrstuvwxyz#%#$$#";
-    static char* test2 = "2347.;.][';[;]ABCDEFGHIJKLMNOPQRSTUVWXYZ#%#$$#";
-    static char* test3 = "Content-Type:";
-    static char* test4 = "cONTent-TYPe:";
-    static char* test5 = "cONTnnt-TYPe:";
-    static char* test6 = "cONTent-TY";
+bool StrPtrLen::Test() {
+  static char *test1 = "2347.;.][';[;]abcdefghijklmnopqrstuvwxyz#%#$$#";
+  static char *test2 = "2347.;.][';[;]ABCDEFGHIJKLMNOPQRSTUVWXYZ#%#$$#";
+  static char *test3 = "Content-Type:";
+  static char *test4 = "cONTent-TYPe:";
+  static char *test5 = "cONTnnt-TYPe:";
+  static char *test6 = "cONTent-TY";
 
-    static char* test7 = "ontent-Type:";
-    static char* test8 = "ONTent-TYPe:";
-    static char* test9 = "-TYPe:";
-    static char* test10 = ":";
+  static char *test7 = "ontent-Type:";
+  static char *test8 = "ONTent-TYPe:";
+  static char *test9 = "-TYPe:";
+  static char *test10 = ":";
 
-    StrPtrLen theVictim1(test1, strlen(test1));
-    if (!theVictim1.EqualIgnoreCase(test2, strlen(test2)))
-        return false;
+  StrPtrLen theVictim1(test1, strlen(test1));
+  if (!theVictim1.EqualIgnoreCase(test2, strlen(test2)))
+    return false;
 
-    if (theVictim1.EqualIgnoreCase(test3, strlen(test3)))
-        return false;
-    if (!theVictim1.EqualIgnoreCase(test1, strlen(test1)))
-        return false;
+  if (theVictim1.EqualIgnoreCase(test3, strlen(test3)))
+    return false;
+  if (!theVictim1.EqualIgnoreCase(test1, strlen(test1)))
+    return false;
 
-    StrPtrLen theVictim2(test3, strlen(test3));
-    if (!theVictim2.EqualIgnoreCase(test4, strlen(test4)))
-        return false;
-    if (theVictim2.EqualIgnoreCase(test5, strlen(test5)))
-        return false;
-    if (theVictim2.EqualIgnoreCase(test6, strlen(test6)))
-        return false;
+  StrPtrLen theVictim2(test3, strlen(test3));
+  if (!theVictim2.EqualIgnoreCase(test4, strlen(test4)))
+    return false;
+  if (theVictim2.EqualIgnoreCase(test5, strlen(test5)))
+    return false;
+  if (theVictim2.EqualIgnoreCase(test6, strlen(test6)))
+    return false;
 
-    StrPtrLen outResultStr;
-    if (!theVictim1.FindStringIgnoreCase(test2, &outResultStr))
-        return false;
-    if (theVictim1.FindStringIgnoreCase(test3, &outResultStr))
-        return false;
-    if (!theVictim1.FindStringIgnoreCase(test1, &outResultStr))
-        return false;
-    if (!theVictim2.FindStringIgnoreCase(test4))
-        return false;
-    if (theVictim2.FindStringIgnoreCase(test5))
-        return false;
-    if (!theVictim2.FindStringIgnoreCase(test6))
-        return false;
-    if (!theVictim2.FindStringIgnoreCase(test7))
-        return false;
-    if (!theVictim2.FindStringIgnoreCase(test8))
-        return false;
-    if (!theVictim2.FindStringIgnoreCase(test9))
-        return false;
-    if (!theVictim2.FindStringIgnoreCase(test10))
-        return false;
+  StrPtrLen outResultStr;
+  if (!theVictim1.FindStringIgnoreCase(test2, &outResultStr))
+    return false;
+  if (theVictim1.FindStringIgnoreCase(test3, &outResultStr))
+    return false;
+  if (!theVictim1.FindStringIgnoreCase(test1, &outResultStr))
+    return false;
+  if (!theVictim2.FindStringIgnoreCase(test4))
+    return false;
+  if (theVictim2.FindStringIgnoreCase(test5))
+    return false;
+  if (!theVictim2.FindStringIgnoreCase(test6))
+    return false;
+  if (!theVictim2.FindStringIgnoreCase(test7))
+    return false;
+  if (!theVictim2.FindStringIgnoreCase(test8))
+    return false;
+  if (!theVictim2.FindStringIgnoreCase(test9))
+    return false;
+  if (!theVictim2.FindStringIgnoreCase(test10))
+    return false;
 
-    if (theVictim1.FindString(test2, &outResultStr))
-        return false;
-    if (theVictim1.FindString(test3, &outResultStr))
-        return false;
-    if (!theVictim1.FindString(test1, &outResultStr))
-        return false;
-    if (theVictim2.FindString(test4))
-        return false;
-    if (theVictim2.FindString(test5))
-        return false;
-    if (theVictim2.FindString(test6))
-        return false;
-    if (!theVictim2.FindString(test7))
-        return false;
-    if (theVictim2.FindString(test8))
-        return false;
-    if (theVictim2.FindString(test9))
-        return false;
-    if (!theVictim2.FindString(test10))
-        return false;
+  if (theVictim1.FindString(test2, &outResultStr))
+    return false;
+  if (theVictim1.FindString(test3, &outResultStr))
+    return false;
+  if (!theVictim1.FindString(test1, &outResultStr))
+    return false;
+  if (theVictim2.FindString(test4))
+    return false;
+  if (theVictim2.FindString(test5))
+    return false;
+  if (theVictim2.FindString(test6))
+    return false;
+  if (!theVictim2.FindString(test7))
+    return false;
+  if (theVictim2.FindString(test8))
+    return false;
+  if (theVictim2.FindString(test9))
+    return false;
+  if (!theVictim2.FindString(test10))
+    return false;
 
-    StrPtrLen query;
-    query.Set(test2);
-    if (theVictim1.FindString(query, &outResultStr))
-        return false;
-    if (outResultStr.Len > 0)
-        return false;
-    if (outResultStr.Ptr != nullptr)
-        return false;
+  StrPtrLen query;
+  query.Set(test2);
+  if (theVictim1.FindString(query, &outResultStr))
+    return false;
+  if (outResultStr.Len > 0)
+    return false;
+  if (outResultStr.Ptr != nullptr)
+    return false;
 
-    query.Set(test3);
-    if (theVictim1.FindString(query, &outResultStr))
-        return false;
-    if (outResultStr.Len > 0)
-        return false;
-    if (outResultStr.Ptr != nullptr)
-        return false;
+  query.Set(test3);
+  if (theVictim1.FindString(query, &outResultStr))
+    return false;
+  if (outResultStr.Len > 0)
+    return false;
+  if (outResultStr.Ptr != nullptr)
+    return false;
 
-    query.Set(test1);
-    if (!theVictim1.FindString(query, &outResultStr))
-        return false;
-    if (!outResultStr.Equal(query))
-        return false;
+  query.Set(test1);
+  if (!theVictim1.FindString(query, &outResultStr))
+    return false;
+  if (!outResultStr.Equal(query))
+    return false;
 
-    query.Set(test4);
-    if (query.Equal(theVictim2.FindString(query)))
-        return false;
+  query.Set(test4);
+  if (query.Equal(theVictim2.FindString(query)))
+    return false;
 
-    query.Set(test5);
-    if (query.Equal(theVictim2.FindString(query)))
-        return false;
+  query.Set(test5);
+  if (query.Equal(theVictim2.FindString(query)))
+    return false;
 
-    query.Set(test6);
-    if (query.Equal(theVictim2.FindString(query)))
-        return false;
+  query.Set(test6);
+  if (query.Equal(theVictim2.FindString(query)))
+    return false;
 
-    query.Set(test7);
-    if (!query.Equal(theVictim2.FindString(query)))
-        return false;
+  query.Set(test7);
+  if (!query.Equal(theVictim2.FindString(query)))
+    return false;
 
-    query.Set(test8);
-    if (query.Equal(theVictim2.FindString(query)))
-        return false;
+  query.Set(test8);
+  if (query.Equal(theVictim2.FindString(query)))
+    return false;
 
-    query.Set(test9);
-    if (query.Equal(theVictim2.FindString(query)))
-        return false;
+  query.Set(test9);
+  if (query.Equal(theVictim2.FindString(query)))
+    return false;
 
-    query.Set(test10);
-    if (!query.Equal(theVictim2.FindString(query)))
-        return false;
+  query.Set(test10);
+  if (!query.Equal(theVictim2.FindString(query)))
+    return false;
 
-    query.Set(test10);
-    if (!query.Equal(theVictim2.FindString(query)))
-        return false;
+  query.Set(test10);
+  if (!query.Equal(theVictim2.FindString(query)))
+    return false;
 
-    StrPtrLen partialStaticSource(test1, 5);
-    query.Set("abcd");
-    if (query.Equal(partialStaticSource.FindString(query)))
-        return false;
+  StrPtrLen partialStaticSource(test1, 5);
+  query.Set("abcd");
+  if (query.Equal(partialStaticSource.FindString(query)))
+    return false;
 
-    query.Set("47");
-    if (query.Equal(partialStaticSource.FindString(query))) // success = !equal because the char str is longer than len
-        return false;
+  query.Set("47");
+  if (query.Equal(partialStaticSource.FindString(query))) // success = !equal because the char str is longer than len
+    return false;
 
-    if (query.FindString(partialStaticSource.FindString(query))) // success = !found because the 0 term src is not in query
-        return false;
+  if (query.FindString(partialStaticSource.FindString(query))) // success = !found because the 0 term src is not in query
+    return false;
 
-    partialStaticSource.FindString(query, &outResultStr);
-    if (!outResultStr.Equal(query)) // success =found the result Ptr and Len is the same as the query
-        return false;
+  partialStaticSource.FindString(query, &outResultStr);
+  if (!outResultStr.Equal(query)) // success =found the result Ptr and Len is the same as the query
+    return false;
 
-    return true;
+  return true;
 }
 #endif

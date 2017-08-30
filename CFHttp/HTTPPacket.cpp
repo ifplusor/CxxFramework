@@ -22,12 +22,14 @@
  * @APPLE_LICENSE_HEADER_END@
  *
  */
-#include "HTTPPacket.h"
-#include "StringTranslator.h"
-#include "DateTranslator.h"
-#include <OSThread.h>
-#include <HTTPSessionInterface.h>
-#include <CFEnv.h>
+
+#include <CF/Net/Http/HTTPPacket.h>
+#include <CF/StringTranslator.h>
+#include <CF/Core/DateTranslator.h>
+#include <CF/Core/Thread.h>
+#include <CF/CFEnv.h>
+
+namespace CF::Net {
 
 StrPtrLen HTTPPacket::sColonSpace(": ", 2);
 static bool sFalse = false;
@@ -464,7 +466,7 @@ void HTTPPacket::AppendResponseHeader(HTTPHeader inHeader,
 void HTTPPacket::AppendContentLengthHeader(UInt64 length_64bit) const {
   //char* contentLength = new char[256];
   char contentLength[256] = {0};
-  qtss_sprintf(contentLength, "%" _U64BITARG_ "", length_64bit);
+  s_sprintf(contentLength, "%" _U64BITARG_ "", length_64bit);
   StrPtrLen contentLengthPtr(contentLength);
   AppendResponseHeader(httpContentLengthHeader, &contentLengthPtr);
 }
@@ -472,7 +474,7 @@ void HTTPPacket::AppendContentLengthHeader(UInt64 length_64bit) const {
 void HTTPPacket::AppendContentLengthHeader(UInt32 length_32bit) const {
   //char* contentLength = new char[256];
   char contentLength[256] = {0};
-  qtss_sprintf(contentLength, "%"   _U32BITARG_   "", length_32bit);
+  s_sprintf(contentLength, "%"   _U32BITARG_   "", length_32bit);
   StrPtrLen contentLengthPtr(contentLength);
   AppendResponseHeader(httpContentLengthHeader, &contentLengthPtr);
 }
@@ -486,10 +488,12 @@ void HTTPPacket::AppendConnectionKeepAliveHeader() const {
 }
 
 void HTTPPacket::AppendDateAndExpiresFields() const {
-  Assert(OSThread::GetCurrent() != NULL);
-  DateBuffer *theDateBuffer = OSThread::GetCurrent()->GetDateBuffer();
-  theDateBuffer->InexactUpdate(); // Update the date buffer to the current date & time
-  StrPtrLen theDate(theDateBuffer->GetDateBuffer(), DateBuffer::kDateBufferLen);
+  Assert(Core::Thread::GetCurrent() != NULL);
+  Core::DateBuffer *theDateBuffer = Core::Thread::GetCurrent()->GetDateBuffer();
+  theDateBuffer
+      ->InexactUpdate(); // Update the date buffer to the current date & Time
+  StrPtrLen theDate(theDateBuffer->GetDateBuffer(),
+                    Core::DateBuffer::kDateBufferLen);
 
   // Append dates, and have this response expire immediately
   this->AppendResponseHeader(httpDateHeader, &theDate);
@@ -497,10 +501,12 @@ void HTTPPacket::AppendDateAndExpiresFields() const {
 }
 
 void HTTPPacket::AppendDateField() const {
-  Assert(OSThread::GetCurrent() != NULL);
-  DateBuffer *theDateBuffer = OSThread::GetCurrent()->GetDateBuffer();
-  theDateBuffer->InexactUpdate(); // Update the date buffer to the current date & time
-  StrPtrLen theDate(theDateBuffer->GetDateBuffer(), DateBuffer::kDateBufferLen);
+  Assert(Core::Thread::GetCurrent() != NULL);
+  Core::DateBuffer *theDateBuffer = Core::Thread::GetCurrent()->GetDateBuffer();
+  theDateBuffer
+      ->InexactUpdate(); // Update the date buffer to the current date & Time
+  StrPtrLen theDate(theDateBuffer->GetDateBuffer(),
+                    Core::DateBuffer::kDateBufferLen);
 
   // Append date
   this->AppendResponseHeader(httpDateHeader, &theDate);
@@ -508,6 +514,8 @@ void HTTPPacket::AppendDateField() const {
 
 time_t HTTPPacket::ParseIfModSinceHeader() {
   time_t theIfModSinceDate = static_cast<time_t>(
-      DateTranslator::ParseDate(&fFieldValues[httpIfModifiedSinceHeader]));
+      Core::DateTranslator::ParseDate(&fFieldValues[httpIfModifiedSinceHeader]));
   return theIfModSinceDate;
+}
+
 }

@@ -27,9 +27,6 @@
 
     Contains:   simple file abstraction
 
-
-
-
 */
 
 #include <stdio.h>
@@ -42,7 +39,7 @@
 #include <unistd.h>
 #endif
 
-#include "OSFileSource.h"
+#include "../include/os/OSFileSource.h"
 
 #define FILE_SOURCE_DEBUG 0
 #define FILE_SOURCE_BUFFTEST 0

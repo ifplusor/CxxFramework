@@ -1,18 +1,17 @@
 set(HEADER_FILES
-        include/HTTPProtocol.h
-        include/HTTPPacket.h
-        include/HTTPDef.h
-        include/HTTPRequestStream.h
-        include/HTTPResponseStream.h
-        include/HTTPSessionInterface.h
-        include/HTTPSession.h
-        include/HTTPListenerSocket.h
-        include/HTTPClientRequestStream.h
-        include/HTTPClientResponseStream.h
-        include/HTTPDispatcher.h
-        include/UserAgentParser.h
-        include/PLDoubleLinkedList.h
-        include/QueryParamList.h)
+        include/CF/Net/Http/HTTPProtocol.h
+        include/CF/Net/Http/HTTPPacket.h
+        include/CF/Net/Http/HTTPDef.h
+        include/CF/Net/Http/HTTPRequestStream.h
+        include/CF/Net/Http/HTTPResponseStream.h
+        include/CF/Net/Http/HTTPSessionInterface.h
+        include/CF/Net/Http/HTTPSession.h
+        include/CF/Net/Http/HTTPListenerSocket.h
+        include/CF/Net/Http/HTTPClientRequestStream.h
+        include/CF/Net/Http/HTTPClientResponseStream.h
+        include/CF/Net/Http/HTTPDispatcher.h
+        include/CF/Net/Http/UserAgentParser.h
+        include/CF/Net/Http/QueryParamList.h)
 
 set(SOURCE_FILES
         HTTPClientRequestStream.cpp

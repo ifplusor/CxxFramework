@@ -23,7 +23,7 @@
  *
  */
 
-#include "GetWord.h"
+#include <CF/GetWord.h>
 
 /**
  * @brief get a word from a string, copy result into toWordPtr

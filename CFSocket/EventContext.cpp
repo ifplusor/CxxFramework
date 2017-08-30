@@ -28,9 +28,9 @@
     Contains:   Impelments object in .h file
 */
 
-#include "EventContext.h"
-#include <TCPListenerSocket.h>
-#include <CFState.h>
+#include <CF/Net/Socket/EventContext.h>
+#include <CF/Net/Socket/TCPListenerSocket.h>
+#include <CF/CFState.h>
 
 #if !__WinSock__
 
@@ -39,20 +39,21 @@
 #endif
 
 #if MACOSXEVENTQUEUE
-#include "tempcalls.h" //includes MacOS X prototypes of event queue functions
+#include "tempcalls.h" //includes MacOS X prototypes of event Queue functions
 #endif
 
-#define EVENT_CONTEXT_DEBUG 0
-
-#if EVENT_CONTEXT_DEBUG
-#include "OS.h"
+#if DEBUG_EVENT_CONTEXT
+#include <CF/Core/Utils.h>
+#include <CF/Core/Time.h>
 #endif
+
+using namespace CF::Net;
 
 #ifdef __WinSock__
 // See commentary in RequestEvent
-atomic<unsigned int> EventContext::sUniqueID(WM_USER);
+std::atomic<unsigned int> EventContext::sUniqueID(WM_USER);
 #else
-atomic<unsigned int> EventContext::sUniqueID(1);
+std::atomic<unsigned int> EventContext::sUniqueID(1);
 #endif
 
 EventContext::EventContext(int inFileDesc, EventThread *inThread)
@@ -75,7 +76,7 @@ void EventContext::InitNonBlocking(int inFileDesc) {
   int flag = ::fcntl(fFileDesc, F_GETFL, 0);
   int err = ::fcntl(fFileDesc, F_SETFL, flag | O_NONBLOCK);
 #endif
-  AssertV(err == 0, OSThread::GetErrno());
+  AssertV(err == 0, Core::Thread::GetErrno());
 }
 
 void EventContext::Cleanup() {
@@ -98,17 +99,17 @@ void EventContext::Cleanup() {
       // On Linux (possibly other UNIX implementations) you MUST NOT close the
       // fd before removing the fd from the select mask, and having the select
       // function wake up to register this fact. If you close the fd first,
-      // bad things may happen, like the socket not getting unbound from the
+      // bad things may happen, like the Socket not getting unbound from the
       // port & IP addr.
       //
-      // So, what we do is have the select thread itself call close. This is
+      // So, what we do is have the select Thread itself call close. This is
       // triggered by calling removeevent.
       err = close(fFileDesc);
 #endif
 
       fUniqueID = 0;
       fWatchEventCalled = false;
-    } else /* 未分配 id == 未注册 ref */
+    } else /* 未分配 id == 未注册 Ref */
 #if __WinSock__
       err = ::closesocket(fFileDesc);
 #else
@@ -123,7 +124,7 @@ void EventContext::Cleanup() {
 #if __WinSock__
   AssertV(err == 0, ::WSAGetLastError());
 #else
-  AssertV(err == 0, OSThread::GetErrno());
+  AssertV(err == 0, Core::Thread::GetErrno());
 #endif
 }
 
@@ -153,16 +154,16 @@ void EventContext::SnarfEventContext(EventContext &fromContext) {
 }
 
 void EventContext::RequestEvent(int theMask) {
-#if DEBUG
+#if DEBUG_EVENT_CONTEXT
   fModwatched = true;
 #endif
 
   if (CFState::sState & CFState::kDisableEvent) return;
 
   //
-  // The first time this function gets called, we're supposed to
-  // call watchevent. Each subsequent time, call modwatch. That's
-  // the way the MacOS X event queue works.
+  // The first Time this function gets called, we're supposed to
+  // call watchevent. Each subsequent Time, call modwatch. That's
+  // the way the MacOS X event Queue works.
 
   if (fWatchEventCalled) {
     fEventReq.er_eventbits = theMask;
@@ -174,10 +175,10 @@ void EventContext::RequestEvent(int theMask) {
 #if __WinSock__
       AssertV(false, ::WSAGetLastError());
 #else
-      AssertV(false, OSThread::GetErrno());
+      AssertV(false, Core::Thread::GetErrno());
 #endif
   } else {
-    // allocate a Unique ID for this socket, and add it to the ref table
+    // allocate a Unique ID for this Socket, and add it to the Ref table
 
     //johnson find the bug
     bool bFindValid = false;
@@ -195,7 +196,7 @@ void EventContext::RequestEvent(int theMask) {
             fUniqueID = (PointerSizedInt) WM_USER;
 
         //If the fUniqueID is used, find a new one until it's free
-        OSRef * ref = fEventThread->fRefTable.Resolve(&fUniqueIDStr);
+        Core::Ref * ref = fEventThread->fRefTable.Resolve(&fUniqueIDStr);
         if (ref != NULL) {
             fEventThread->fRefTable.Release(ref);
         } else {
@@ -211,9 +212,9 @@ void EventContext::RequestEvent(int theMask) {
         fUniqueID = 1;
 
       // If the fUniqueID is used, find a new one until it's free
-      OSRef *ref = fEventThread->fRefTable.Resolve(&fUniqueIDStr);
-      if (ref != NULL) {
-        fEventThread->fRefTable.Release(ref);
+      Ref *Ref = fEventThread->fRefTable.Resolve(&fUniqueIDStr);
+      if (Ref != NULL) {
+        fEventThread->fRefTable.Release(Ref);
       } else {
         bFindValid = true; // ok, it's free
       }
@@ -239,7 +240,7 @@ void EventContext::RequestEvent(int theMask) {
     if (select_watchevent(&fEventReq, theMask) != 0)
 #endif
       //this should never fail, but if it does, cleanup.
-      AssertV(false, OSThread::GetErrno());
+      AssertV(false, Core::Thread::GetErrno());
   }
 }
 
@@ -252,7 +253,7 @@ void EventThread::Entry() {
     do {
       if (IsStopRequested()) return; // stop requested
 
-      // wait for net event
+      // wait for Net event
 #if MACOSXEVENTQUEUE
       int theReturnValue = waitevent(&theCurrentEvent, NULL);
 #else
@@ -260,15 +261,15 @@ void EventThread::Entry() {
 #endif
 
       if (CFState::sState & (CFState::kKillListener | CFState::kCleanEvent)) {
-        // kill listener socket
+        // kill listener Socket
         if (CFState::sState & CFState::kKillListener) {
           while (true) {
-            OSQueueElem *elem = CFState::sListenerSocket.DeQueue();
+            QueueElem *elem = CFState::sListenerSocket.DeQueue();
             if (elem == nullptr) break;
             TCPListenerSocket *listener = (TCPListenerSocket *)
                 elem->GetEnclosingObject();
             listener->RequestEvent(EV_RM);
-            listener->Signal(Task::kKillEvent);
+            listener->Signal(CF::Thread::Task::kKillEvent);
             delete elem;
           }
           CFState::sState ^= CFState::kKillListener;
@@ -276,9 +277,9 @@ void EventThread::Entry() {
         }
 
         if (CFState::sState & CFState::kCleanEvent) {
-          OSRefHashTableIter iter(fRefTable.GetHashTable());
+          RefHashTableIter iter(fRefTable.GetHashTable());
           while (!iter.IsDone()) {
-            OSRef *ref = iter.GetCurrent();
+            Ref *ref = iter.GetCurrent();
             EventContext *theContext = (EventContext *) ref->GetObject();
             iter.Next();
             theContext->Cleanup();
@@ -294,19 +295,19 @@ void EventThread::Entry() {
       if (theReturnValue >= 0)
         theErrno = theReturnValue;
       else
-        theErrno = OSThread::GetErrno();
+        theErrno = Core::Thread::GetErrno();
     } while (theErrno == EINTR);
     AssertV(theErrno == 0, theErrno);
 
-    // ok, there's data waiting on this socket. Send a wakeup.
+    // ok, there's data waiting on this Socket. Send a wakeup.
     if (theCurrentEvent.er_data != NULL) {
       // The cookie in this event is an ObjectID. Resolve that objectID into
       // a pointer.
       StrPtrLen idStr((char *) &theCurrentEvent.er_data, sizeof(PointerSizedInt));
-      OSRef *ref = fRefTable.Resolve(&idStr);
+      Ref *ref = fRefTable.Resolve(&idStr);
       if (ref != NULL) {
         EventContext *theContext = (EventContext *) ref->GetObject();
-#if DEBUG
+#if DEBUG_EVENT_CONTEXT
         theContext->fModwatched = false;
 #endif
         theContext->ProcessEvent(theCurrentEvent.er_eventbits);
@@ -314,8 +315,8 @@ void EventThread::Entry() {
       }
     }
 
-#if EVENT_CONTEXT_DEBUG
-    SInt64  yieldStart = OS::Milliseconds();
+#if DEBUG_EVENT_CONTEXT
+    SInt64  yieldStart = Core::Time::Milliseconds();
 #endif
 
 #if 0//defined(__linux__) && !defined(EASY_DEVICE)
@@ -324,12 +325,14 @@ void EventThread::Entry() {
     this->ThreadYield();
 #endif
 
-#if EVENT_CONTEXT_DEBUG
-    SInt64  yieldDur = OS::Milliseconds() - yieldStart;
+#if DEBUG_EVENT_CONTEXT
+    SInt64  yieldDur = Core::Time::Milliseconds() - yieldStart;
     static SInt64   numZeroYields;
 
     if (yieldDur > 1) {
-        qtss_printf("EventThread time in OSTHread::Yield %i, numZeroYields %i\n", (SInt32)yieldDur, (SInt32)numZeroYields);
+      s_printf("EventThread Time in OSTHread::Yield %i, numZeroYields %i\n",
+               (SInt32) yieldDur,
+               (SInt32) numZeroYields);
         numZeroYields = 0;
     } else
         numZeroYields++;

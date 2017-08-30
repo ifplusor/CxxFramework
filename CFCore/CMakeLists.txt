@@ -1,22 +1,25 @@
 set(HEADER_FILES
-        include/SafeStdLib.h
-        include/MyAssert.h
-        include/StrPtrLen.h
-        include/StringParser.h
-        include/StringFormatter.h
-        include/ResizeableStringFormatter.h
-        include/StringTranslator.h
-        include/DateTranslator.h
-        include/OSMutex.h
-        include/OSCond.h
-        include/OSTime.h
-        include/OSThread.h
-        include/OSMutexRW.h
-        include/OSQueue.h
-        include/OSHeap.h
-        include/OSHashTable.h
-        include/OSRef.h
-        include/OS.h)
+        include/CF/sstdlib.h
+        include/CF/MyAssert.h
+        include/CF/StrPtrLen.h
+        include/CF/StringParser.h
+        include/CF/StringFormatter.h
+        include/CF/ResizeableStringFormatter.h
+        include/CF/StringTranslator.h
+        include/CF/Core/DateTranslator.h
+        include/CF/Core/Mutex.h
+        include/CF/Core/Cond.h
+        include/CF/Core/Time.h
+        include/CF/Core/Thread.h
+        include/CF/Core/RWMutex.h
+        include/CF/Queue.h
+        include/CF/Heap.h
+        include/CF/HashTable.h
+        include/CF/Ref.h
+        include/CF/Core/Utils.h
+        include/CF/ConcurrentQueue.h
+        include/CF/PLDoubleLinkedList.h
+        include/CF/Core.h)
 
 set(SOURCE_FILES
         InternalStdLib.cpp
@@ -27,15 +30,16 @@ set(SOURCE_FILES
         ResizeableStringFormatter.cpp
         StringTranslator.cpp
         DateTranslator.cpp
-        OSMutex.cpp
-        OSCond.cpp
-        OSTime.cpp
-        OSThread.cpp
-        OSMutexRW.cpp
-        OSQueue.cpp
-        OSHeap.cpp
-        OSRef.cpp
-        OS.cpp)
+        Mutex.cpp
+        Cond.cpp
+        Time.cpp
+        Thread.cpp
+        RWMutex.cpp
+        Queue.cpp
+        Heap.cpp
+        Ref.cpp
+        Utils.cpp
+        ConcurrentQueue.cpp)
 
 add_library(CFCore STATIC
         ${HEADER_FILES} ${SOURCE_FILES})

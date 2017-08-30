@@ -53,8 +53,8 @@
 #include <unistd.h>
 #include <sys/errno.h>
 
-#include "ev.h"
-#include "OS.h"
+#include "cf/net/socket/ev.h"
+#include "../include/os/OS.h"
 
 #define MAX_CONNECTS    20000
 
@@ -93,8 +93,8 @@ void select_startevents() {
   sCookieArray = new void *[sizeof(fd_set) * 8];
   ::memset(sCookieArray, 0, sizeof(void *) * sizeof(fd_set) * 8);
 
-  //We need to close all fds from the select thread. Once an fd is passed into
-  //removeevent, its added to this array so it may be deleted from the select thread
+  //We need to close all fds from the select Thread. Once an fd is passed into
+  //removeevent, its added to this array so it may be deleted from the select Thread
   sFDsToCloseArray = new int[sizeof(fd_set) * 8];
   for (int i = 0; i < (int) (sizeof(fd_set) * 8); i++)
     sFDsToCloseArray[i] = -1;
@@ -293,7 +293,7 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
         FD_CLR(sCurrentFDPos, &sReturnedWriteSet);
         return constructeventreq(req, sCurrentFDPos, EV_WR);
       } else {
-        // This can happen if another thread calls select_removeevent at just the right
+        // This can happen if another Thread calls select_removeevent at just the right
         // time, setting sMaxFDPos lower than it was when select() was last called.
         // Becase sMaxFDPos is used as the place to stop iterating over the read & write
         // masks, setting it lower can cause file descriptors in the mask to get skipped.

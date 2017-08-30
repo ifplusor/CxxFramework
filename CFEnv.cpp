@@ -2,10 +2,9 @@
 // Created by james on 8/25/17.
 //
 
-#include "CFEnv.h"
-#include <StringFormatter.h>
-#include <MyAssert.h>
+#include <CF/CFEnv.h>
 
+using namespace CF;
 
 // STATIC DATA
 

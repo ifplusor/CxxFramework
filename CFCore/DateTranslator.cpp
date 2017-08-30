@@ -31,9 +31,11 @@
 
 */
 
-#include "DateTranslator.h"
-#include "StringParser.h"
-#include "OSTime.h"
+#include <CF/StringParser.h>
+#include <CF/Core/DateTranslator.h>
+#include <CF/Core/Time.h>
+
+using namespace CF::Core;
 
 // If you assign values of 0 - 25 for all the letters, and sum up the values
 // of the letters in each month, you get a table that looks like this. For
@@ -99,7 +101,7 @@ SInt64 DateTranslator::ParseDate(StrPtrLen *inDateString) {
 
   // Now just grab hour, minute, second
   theDateStruct.tm_hour = theDateParser.ConsumeInteger(NULL);
-  theDateStruct.tm_hour += OSTime::GetGMTOffset();
+  theDateStruct.tm_hour += Time::GetGMTOffset();
 
   theDateParser.ConsumeLength(NULL, 1); //skip over ':'
 
@@ -110,7 +112,7 @@ SInt64 DateTranslator::ParseDate(StrPtrLen *inDateString) {
 
   // Ok, we've filled out the tm struct completely, now convert it to a time_t
   time_t theTime = ::mktime(&theDateStruct);
-  return (SInt64) theTime * 1000; // convert to a time value in our timebase.
+  return (SInt64) theTime * 1000; // convert to a Time value in our timebase.
 }
 
 void DateTranslator::UpdateDateBuffer(DateBuffer *inDateBuffer,
@@ -124,26 +126,26 @@ void DateTranslator::UpdateDateBuffer(DateBuffer *inDateBuffer,
 
   if (inDate == 0) {
     time_t calendarTime = ::time(NULL) + gmtoffset;
-    gmt = ::qtss_gmtime(&calendarTime, &timeResult);
+    gmt = ::s_gmtime(&calendarTime, &timeResult);
   } else {
     time_t convertedTime = (time_t) (inDate / (SInt64) 1000)
         + gmtoffset; // Convert from msec to sec
-    gmt = ::qtss_gmtime(&convertedTime, &timeResult);
+    gmt = ::s_gmtime(&convertedTime, &timeResult);
   }
 
   Assert(gmt != NULL); //is it safe to assert this?
   size_t size = 0;
   if (0 == gmtoffset)
-    size = qtss_strftime(inDateBuffer->fDateBuffer,
-                         sizeof(inDateBuffer->fDateBuffer),
-                         "%a, %d %b %Y %H:%M:%S GMT",
-                         gmt);
+    size = s_strftime(inDateBuffer->fDateBuffer,
+                      sizeof(inDateBuffer->fDateBuffer),
+                      "%a, %d %b %Y %H:%M:%S GMT",
+                      gmt);
 
   Assert(size == DateBuffer::kDateBufferLen);
 }
 
 void DateBuffer::InexactUpdate() {
-  SInt64 theCurTime = OSTime::Milliseconds();
+  SInt64 theCurTime = Time::Milliseconds();
   if ((fLastDateUpdate == 0)
       || ((fLastDateUpdate + kUpdateInterval) < theCurTime)) {
     fLastDateUpdate = theCurTime;

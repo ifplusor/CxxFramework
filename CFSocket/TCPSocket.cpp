@@ -29,8 +29,8 @@
 
 */
 
-#include "TCPSocket.h"
-#include "SocketUtils.h"
+#include <CF/Net/Socket/TCPSocket.h>
+#include <CF/Net/Socket/SocketUtils.h>
 
 #if !__WinSock__
 #include <sys/types.h>
@@ -42,13 +42,15 @@
 #include <netlog.h>
 #endif
 
+using namespace CF::Net;
+
 void TCPSocket::SnarfSocket(TCPSocket &fromSocket) {
-  // take the connection away from the other socket
+  // take the connection away from the other Socket
   // and use it as our own.
   Assert(fFileDesc == EventContext::kInvalidFileDesc);
   this->Set(fromSocket.fFileDesc, &fromSocket.fRemoteAddr);
 
-  // clear the old socket so he doesn't close and the like
+  // clear the old Socket so he doesn't close and the like
   struct sockaddr_in remoteaddr;
 
   ::memset(&remoteaddr, 0, sizeof(remoteaddr));
@@ -79,14 +81,14 @@ void TCPSocket::Set(int inSocket, struct sockaddr_in *remoteaddr) {
     socklen_t len = sizeof(fLocalAddr);
 #endif
     int err = ::getsockname(fFileDesc, (struct sockaddr *) &fLocalAddr, &len);
-    AssertV(err == 0, OSThread::GetErrno());
+    AssertV(err == 0, Core::Thread::GetErrno());
     fState |= kBound;
     fState |= kConnected;
   } else
     fState = 0;
 }
 
-StrPtrLen *TCPSocket::GetRemoteAddrStr() {
+CF::StrPtrLen *TCPSocket::GetRemoteAddrStr() {
   if (fRemoteStr.Len == kIPAddrBufSize)
     SocketUtils::ConvertAddrToString(fRemoteAddr.sin_addr, &fRemoteStr);
   return &fRemoteStr;
@@ -106,7 +108,7 @@ OS_Error TCPSocket::Connect(UInt32 inRemoteAddr, UInt16 inRemotePort) {
   if (err == -1) {
     fRemoteAddr.sin_port = 0;
     fRemoteAddr.sin_addr.s_addr = 0;
-    return (OS_Error) OSThread::GetErrno();
+    return (OS_Error) Core::Thread::GetErrno();
   }
 
   return OS_NoErr;

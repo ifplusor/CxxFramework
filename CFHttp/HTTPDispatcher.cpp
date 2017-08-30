@@ -2,7 +2,9 @@
 // Created by james on 8/26/17.
 //
 
-#include "HTTPDispatcher.h"
+#include <CF/Net/Http/HTTPDispatcher.h>
+
+namespace CF::Net {
 
 StrPtrLen HTTPPathMapper::sAllSuffix("/*", 2);
 StrPtrLen HTTPPathMapper::sTypePrefix("*.", 2);
@@ -28,8 +30,8 @@ HTTPDispatcher::HTTPDispatcher(HTTPMapping *mapping) {
     if (mapper != nullptr)
       fMappers[index++] = mapper;
     else
-      qtss_printf("error: construct path matcher failed, path: %s",
-                  mapping->path);
+      s_printf("error: construct path matcher failed, path: %s",
+               mapping->path);
   }
   fMapperNum = index;
 
@@ -75,4 +77,6 @@ HTTPPathMapper *HTTPPathMapper::BuildPathMatcher(HTTPMapping &mapping) {
 int HTTPPathMapper::ComparePriority(HTTPPathMapper *aMapper,
                                     HTTPPathMapper *bMapper) {
   return aMapper->ItsType() - bMapper->ItsType();
+}
+
 }

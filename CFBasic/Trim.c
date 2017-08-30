@@ -23,7 +23,7 @@
  *
  */
 
-#include "Trim.h"
+#include <CF/Trim.h>
 
 char *TrimLeft(char *fromStrPtr) {
   char *tmp = &fromStrPtr[0];

@@ -1,11 +1,11 @@
-#include <OS.h>
-#include <Socket.h>
-#include <SocketUtils.h>
-#include <TimeoutTask.h>
-#include <HTTPSessionInterface.h>
-#include <HTTPListenerSocket.h>
-#include <CF.h>
-#include <CFState.h>
+#include <CF/CF.h>
+#include <CF/CFState.h>
+#include <CF/Net/Socket/Socket.h>
+#include <CF/Net/Socket/SocketUtils.h>
+#include <CF/Net/Http/HTTPListenerSocket.h>
+#include <CF/Net/Http/HTTPSessionInterface.h>
+
+using namespace CF;
 
 /*
  * 主线程是管理线程，不执行实际的任务；
@@ -16,41 +16,40 @@
  *   注入 Session 关联的 Socket 对象
  */
 
-atomic<UInt32> CFState::sState(0); /* 框架内部状态标识 */
-OSQueue CFState::sListenerSocket;
+std::atomic<UInt32> CFState::sState(0); /* 框架内部状态标识 */
+Queue CFState::sListenerSocket;
 
 int CFMain(CFConfigure *config) {
   CF_Error theErr = CF_NoErr;
 
   //
   // Initialize utility classes
-  OS::Initialize();
-  OSThread::Initialize();
+  Core::Initialize();
 
-  Socket::Initialize();
-  SocketUtils::Initialize(false);
+  Net::Socket::Initialize();
+  Net::SocketUtils::Initialize(false);
 
 #if !MACOSXEVENTQUEUE
-  // initialize the select() implementation of the event queue
+  // initialize the select() implementation of the event Queue
   ::select_startevents();
 #endif
 
-  OS::SetPersonality(config->GetPersonalityUser(),
+  Core::Utils::SetPersonality(config->GetPersonalityUser(),
                      config->GetPersonalityGroup());
 
   /*
      切换用户和组，LinuxThread库实现的线程模型，setuid() 和 setgid() 可能会
      出现不同线程中，uid 和 gid 不一致的问题
    */
-  OS::SwitchPersonality();
+  Core::Utils::SwitchPersonality();
 
   UInt32 numShortTaskThreads = config->GetShortTaskThreads();
   UInt32 numBlockingThreads = config->GetBlockingThreads();
 
-  if (OS::ThreadSafe()) {
+  if (Core::Utils::ThreadSafe()) {
     if (numShortTaskThreads == 0) {
-      UInt32 numProcessors = OS::GetNumProcessors();
-      // 1 worker thread per processor, up to 2 threads.
+      UInt32 numProcessors = Core::Utils::GetNumProcessors();
+      // 1 worker Thread per processor, up to 2 threads.
       // Note: Limiting the number of worker threads to 2 on a MacOS X system
       //     with > 2 cores results in better performance on those systems, as
       //     of MacOS X 10.5.  Future improvements should make this limit
@@ -72,42 +71,42 @@ int CFMain(CFConfigure *config) {
     numBlockingThreads = 1;
 
   UInt32 numThreads = numShortTaskThreads + numBlockingThreads;
-  qtss_printf("Add threads short_task=%" _U32BITARG_ " "
-                  "blocking=%" _U32BITARG_ "\n",
-              numShortTaskThreads, numBlockingThreads);
+  s_printf("Add threads short_task=%" _U32BITARG_ " "
+               "blocking=%" _U32BITARG_ "\n",
+           numShortTaskThreads, numBlockingThreads);
 
-  TaskThreadPool::SetNumShortTaskThreads(numShortTaskThreads);
-  TaskThreadPool::SetNumBlockingTaskThreads(numBlockingThreads);
-  TaskThreadPool::AddThreads(numThreads);
+  Thread::TaskThreadPool::SetNumShortTaskThreads(numShortTaskThreads);
+  Thread::TaskThreadPool::SetNumBlockingTaskThreads(numBlockingThreads);
+  Thread::TaskThreadPool::AddThreads(numThreads);
 
   //
   // Start up the server's global tasks, and start listening
 
-  IdleTask::Initialize();
+  Thread::IdleTask::Initialize();
 
   // The TimeoutTask mechanism is task based,
   // we therefore must do this after adding task threads.
   // this be done before starting the sockets and server tasks
-  TimeoutTask::Initialize();
+  Thread::TimeoutTask::Initialize();
 
   // Make sure to do this stuff last. Because these are all the threads that
   // do work in the server, this ensures that no work can go on while the
   // server is in the process of staring up
-  Socket::StartThread();
+  Net::Socket::StartThread();
 
-  OSThread::Sleep(1000);
+  Core::Thread::Sleep(1000);
 
   // Http server configure;
   UInt32 numHttpListens;
   CF_NetAddr *httpListenAddrs = config->GetHttpListenAddr(&numHttpListens);
   if (numHttpListens > 0) {
-    HTTPSessionInterface::Initialize(config->GetHttpMapping());
+    Net::HTTPSessionInterface::Initialize(config->GetHttpMapping());
     for (UInt32 i = 0; i < numHttpListens; i++) {
-      HTTPListenerSocket *httpSocket = new HTTPListenerSocket();
-      theErr = httpSocket->Initialize(SocketUtils::ConvertStringToAddr(
+      auto *httpSocket = new Net::HTTPListenerSocket();
+      theErr = httpSocket->Initialize(Net::SocketUtils::ConvertStringToAddr(
           httpListenAddrs[i].ip), httpListenAddrs[i].port);
       if (theErr == CF_NoErr) {
-        CFState::sListenerSocket.EnQueue(new OSQueueElem(httpSocket));
+        CFState::sListenerSocket.EnQueue(new QueueElem(httpSocket));
         httpSocket->RequestEvent(EV_RE);
       } else {
         delete httpSocket;
@@ -119,56 +118,56 @@ int CFMain(CFConfigure *config) {
   // listen status loop
   while (!CFEnv::WillExit()) {
 #ifdef __sgi__
-    OSThread::Sleep(999);
+    Core::Thread::Sleep(999);
 #else
-    OSThread::Sleep(1000);
+    Core::Thread::Sleep(1000);
 #endif
   }
 
   //
   // exit, release resources
 
-  // 1. stop socket listen, refuse all new connect
-  qtss_printf("release: step 1\n");
+  // 1. stop Socket listen, refuse all new connect
+  s_printf("release: step 1\n");
   CFState::WaitProcessState(CFState::kKillListener);
 
   // 2. disable request new event, but process already exists
-  qtss_printf("release: step 2\n");
+  s_printf("release: step 2\n");
   CFState::sState |= CFState::kDisableEvent;
 
   // 3. clean all event watch
-  qtss_printf("release: step 3\n");
+  s_printf("release: step 3\n");
   CFState::WaitProcessState(CFState::kCleanEvent);
   // in here, all event stop. EventThread is needless.
 
   // 4. release EventThread
-  qtss_printf("release: step 4\n");
-  Socket::Release();
+  s_printf("release: step 4\n");
+  Net::Socket::Release();
 
   // 5. stop events
   //    must after step 4, because select_waitevent is called in EventThread::Entry
-  qtss_printf("release: step 5\n");
+  s_printf("release: step 5\n");
 #if !MACOSXEVENTQUEUE
   ::select_stopevents();
 #endif
 
   // 6. kill TimeoutTaskThread but don't release memory
-  qtss_printf("release: step 6\n");
-  TimeoutTask::StopTask();
+  s_printf("release: step 6\n");
+  Thread::TimeoutTask::StopTask();
 
   // 7. release TaskThreads in TaskThreadPool
-  qtss_printf("release: step 7\n");
-  TaskThreadPool::RemoveThreads();
+  s_printf("release: step 7\n");
+  Thread::TaskThreadPool::RemoveThreads();
 
   // 8. release TimeoutTaskThread.
   //    must after step 7, because Task can hold TaskThreads as member
-  qtss_printf("release: step 8\n");
-  TimeoutTask::Release();
+  s_printf("release: step 8\n");
+  Thread::TimeoutTask::Release();
 
   // 9. release IdleTaskThread.
   //    must after step 8, because TimeoutTaskThread is a IdleTask,
-  qtss_printf("release: step 9\n");
-  IdleTask::Release();
+  s_printf("release: step 9\n");
+  Thread::IdleTask::Release();
 
   return 0;
 }

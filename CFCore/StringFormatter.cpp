@@ -29,17 +29,17 @@
 
 */
 
-#include <string.h>
 #include <stdarg.h>
-#include "StringFormatter.h"
-#include <MyAssert.h>
+#include <CF/StringFormatter.h>
+
+using namespace CF;
 
 char *StringFormatter::sEOL = "\r\n";
 UInt32  StringFormatter::sEOLLen = 2;
 
 void StringFormatter::Put(const SInt32 num) {
   char buff[32];
-  qtss_sprintf(buff, "%" _S32BITARG_ "", num);
+  s_sprintf(buff, "%" _S32BITARG_ "", num);
   Put(buff);
 }
 

@@ -27,14 +27,16 @@
     Contains:   Implementation of HTTPSessionInterface object.
 */
 
-#include <HTTPProtocol.h>
-#include "HTTPSessionInterface.h"
+#include <CF/Net/Http/HTTPProtocol.h>
+#include <CF/Net/Http/HTTPSessionInterface.h>
 
 #if DEBUG
 #define HTTP_SESSION_INTERFACE_DEBUGGING 1
 #else
 #define HTTP_SESSION_INTERFACE_DEBUGGING 0
 #endif
+
+namespace CF::Net {
 
 std::atomic_uint
     HTTPSessionInterface::sSessionIndexCounter{kFirstHTTPSessionID};
@@ -71,7 +73,7 @@ HTTPSessionInterface::HTTPSessionInterface()
 }
 
 HTTPSessionInterface::~HTTPSessionInterface() {
-  // If the input socket is != output socket, the input socket was created dynamically
+  // If the input Socket is != output Socket, the input Socket was created dynamically
   if (fInputSocketP != fOutputSocketP)
     delete fInputSocketP;
 }
@@ -150,7 +152,7 @@ CF_Error HTTPSessionInterface::RequestEvent(CF_EventType inEventMask) {
 }
 
 /*
-	take the TCP socket away from a RTSP session that's
+	take the TCP Socket away from a RTSP session that's
 	waiting to be snarfed.
 */
 
@@ -163,11 +165,12 @@ void HTTPSessionInterface::SnarfInputSocket(HTTPSessionInterface *fromRTSPSessio
   if (fInputSocketP == fOutputSocketP)
     fInputSocketP = new TCPSocket(this, Socket::kNonBlockingSocketType);
   else
-    fInputSocketP->Cleanup(); // if this is a socket replacing an old socket, we need
+    fInputSocketP
+        ->Cleanup(); // if this is a Socket replacing an old Socket, we need
   // to make sure the file descriptor gets closed
   fInputSocketP->SnarfSocket(fromRTSPSession->fSocket);
 
-  // fInputStream, meet your new input socket
+  // fInputStream, meet your new input Socket
   fInputStream.AttachToSocket(fInputSocketP);
 }
 
@@ -186,7 +189,7 @@ void *HTTPSessionInterface::SetupParams(HTTPSessionInterface *inSession,
   StrPtrLen *theRemoteAddrStr = theSession->fSocket.GetRemoteAddrStr();
   if (theLocalAddrStr == NULL || theLocalDNSStr == NULL
       || theRemoteAddrStr == NULL) {
-    //the socket is bad most likely values are all 0. If the socket had an error we shouldn't even be here.
+    //the Socket is bad most likely values are all 0. If the Socket had an error we shouldn't even be here.
     //theLocalDNSStr is set to localAddr if it is unavailable, so it should be present at this point as well.
     Assert(0);   //for debugging
     return NULL; //nothing to set
@@ -198,4 +201,6 @@ CF_Error HTTPSessionInterface::SendHTTPPacket(StrPtrLen *contentXML,
                                               bool connectionClose,
                                               bool decrement) {
   return CF_NoErr;
+}
+
 }

@@ -25,18 +25,19 @@
 /*
     File:       win32ev.cpp
 
-    Contains:   WSA implementation of socket event queue functions.
+    Contains:   WSA implementation of Socket event Queue functions.
 
     Written By: Denis Serenyi
 
 */
 
-#include "ev.h"
-#include "OSHeaders.h"
-#include <IdleTask.h>
+#include <CF/Types.h>
+#include <CF/Net/ev.h>
+#include <CF/Thread/IdleTask.h>
 
+using namespace CF::Thread;
 //
-// You have to create a window to get socket events? What's up with that?
+// You have to create a window to get Socket events? What's up with that?
 static HWND sMsgWindow = NULL;
 
 class MessageTimer : public IdleTask {
@@ -61,8 +62,8 @@ LRESULT CALLBACK select_wndproc(HWND inWIndow,
 
 void select_startevents() {
   //
-  // This call occurs from the main thread. In Win32, apparently, you
-  // have to create your WSA window from the same thread that calls GetMessage.
+  // This call occurs from the main Thread. In Win32, apparently, you
+  // have to create your WSA window from the same Thread that calls GetMessage.
   // So, we have to create the window from select_waitevent
   timer = new MessageTimer();
 }
@@ -90,7 +91,7 @@ int select_modwatch(struct eventreq *req, int which) {
   // is done starting up, so this should only happen when select_modwatch
   // is being called as the server is starting up.
   while (sMsgWindow == NULL)
-    OSThread::Sleep(10);
+    CF::Core::Thread::Sleep(10);
 
   // Convert EV_RE and EV_WR to the proper WSA event codes.
   // WSA event codes are more specific than what POSIX provides, so
@@ -115,7 +116,7 @@ int select_modwatch(struct eventreq *req, int which) {
 int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
   if (sMsgWindow == NULL) {
     //
-    // This is the first time we've called this function. Do our
+    // This is the first Time we've called this function. Do our
     // window initialization now.
 
     // We basically just want the simplest window possible.
@@ -177,7 +178,7 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
     UInt32 theEvent = WSAGETSELECTEVENT(theMessage.lParam);
 
     req->er_handle = theMessage.wParam; // the wParam is the FD
-    req->er_eventbits = EV_RE;          // WSA events & socket events don't map...
+    req->er_eventbits = EV_RE;          // WSA events & Socket events don't map...
     // but the server state machines never care
     // what the event is anyway.
 
@@ -185,7 +186,7 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
     req->er_data = (void *) (theMessage.message);
 
     //
-    // We should prevent this socket from getting events until modwatch is called.
+    // We should prevent this Socket from getting events until modwatch is called.
     (void) ::WSAAsyncSelect(req->er_handle, sMsgWindow, 0, 0);
 
     return 0;

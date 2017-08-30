@@ -25,7 +25,7 @@
 
 #ifndef QTSS_H
 #define QTSS_H
-#include "OSHeaders.h"
+#include "CF/Types.h"
 #include <string>
 
 #ifdef __cplusplus
@@ -906,9 +906,9 @@ enum {
   23,   // "window_size_threshold"  // UInt32    //bitrate at which we switch to larger window size
 
   qtssPrefsMinTCPBufferSizeInBytes =
-  24,   // "min_tcp_buffer_size" //UInt32    // When streaming over TCP, this is the minimum size the TCP socket send buffer can be set to
+  24,   // "min_tcp_buffer_size" //UInt32    // When streaming over TCP, this is the minimum size the TCP Socket send buffer can be set to
   qtssPrefsMaxTCPBufferSizeInBytes =
-  25,   // "max_tcp_buffer_size" //UInt32    // When streaming over TCP, this is the maximum size the TCP socket send buffer can be set to
+  25,   // "max_tcp_buffer_size" //UInt32    // When streaming over TCP, this is the maximum size the TCP Socket send buffer can be set to
   qtssPrefsTCPSecondsToBuffer =
   26,   // "tcp_seconds_to_buffer" //Float32 // When streaming over TCP, the size of the TCP send buffer is scaled based on the bitrate of the movie. It will fit all the data that gets sent in this amount of time.
 
@@ -936,7 +936,7 @@ enum {
   qtssPrefsRTCPPollIntervalInMsec =
   36,   // "rtcp_poll_interval"      // UInt32   //interval (in Msec) between poll for RTCP packets
   qtssPrefsRTCPSockRcvBufSizeInK =
-  37,   // "rtcp_rcv_buf_size"   // UInt32   //Size of the receive socket buffer for udp sockets used to receive rtcp packets
+  37,   // "rtcp_rcv_buf_size"   // UInt32   //Size of the receive Socket buffer for udp sockets used to receive rtcp packets
   qtssPrefsSendInterval = 38,   // "send_interval"  // UInt32    //
   qtssPrefsThickAllTheWayDelayInMsec =
   39,   // "thick_all_the_way_delay"     // UInt32   //
@@ -992,7 +992,7 @@ enum {
   qtssPrefsEnableRTSPServerInfo =
   65,   // "RTSP_server_info" //Boo1l6 // Adds server info to the RTSP responses.
   qtssPrefsRunNumThreads =
-  66,   // "run_num_threads" //UInt32 // if value is non-zero, will  create that many task threads; otherwise a thread will be created for each processor
+  66,   // "run_num_threads" //UInt32 // if value is non-zero, will  create that many task threads; otherwise a Thread will be created for each processor
   qtssPrefsPidFile = 67,   // "pid_file" //Char Array //path to pid file
   qtssPrefsCloseLogsOnWrite =
   68,   // "force_logs_close_on_write" //bool // force log files to close after each write.
@@ -1023,7 +1023,7 @@ enum {
   qtssPrefsEnableAllowGuestDefault =
   80,   // "enable_allow_guest_authorize_default" //Boo1l6 // server hint to access modules to allow guest access as the default (can be overriden in a qtaccess file or other means)
   qtssPrefsNumRTSPThreads =
-  81,   // "run_num_rtsp_threads" //UInt32 // if value is non-zero, the server will  create that many task threads; otherwise a single thread will be created.
+  81,   // "run_num_rtsp_threads" //UInt32 // if value is non-zero, the server will  create that many task threads; otherwise a single Thread will be created.
 
   easyPrefsHTTPServiceLanPort = 82,    // "service_lan_port"	//UInt16
   easyPrefsHTTPServiceWanPort = 83,    // "service_wan_port"	//UInt16

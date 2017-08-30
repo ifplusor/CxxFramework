@@ -53,8 +53,8 @@ documentation and/or software.
  It is a hack to work around the problem.
  */
 
-#include "md5.h"
 #include <string.h>
+#include <CF/md5.h>
 
 /* Constants for MD5Transform routine.
  */

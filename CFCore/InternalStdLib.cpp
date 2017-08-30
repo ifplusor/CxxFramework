@@ -29,36 +29,37 @@
 
 */
 
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include "SafeStdLib.h"
-#include "OSMutex.h"
+#include <CF/sstdlib.h>
+#include <CF/Core/Mutex.h>
+
+using namespace CF::Core;
 
 static UInt64 sTotalChars = 0;
 static UInt32 sMaxTotalCharsInK = 100 * 1000;//100MB default
 static int sMaxFileSizeReached = 0;
 
-static OSMutex sStdLibOSMutex;
+static Mutex sStdLibOSMutex;
 
 
-UInt32 qtss_getmaxprintfcharsinK() {
-  OSMutexLocker locker(&sStdLibOSMutex);
+UInt32 s_getmaxprintfcharsinK() {
+  MutexLocker locker(&sStdLibOSMutex);
   return sMaxTotalCharsInK;
 }
 
-void qtss_setmaxprintfcharsinK(UInt32 newMaxCharsInK) {
-  OSMutexLocker locker(&sStdLibOSMutex);
+void s_setmaxprintfcharsinK(UInt32 newMaxCharsInK) {
+  MutexLocker locker(&sStdLibOSMutex);
   sMaxTotalCharsInK = newMaxCharsInK;
 }
 
-int qtss_maxprintf(const char *fmt, ...) {
+int s_maxprintf(const char *fmt, ...) {
   if (fmt == NULL)
     return -1;
 
-  OSMutexLocker locker(&sStdLibOSMutex);
+  MutexLocker locker(&sStdLibOSMutex);
 
   if (sTotalChars > ((UInt64) sMaxTotalCharsInK * 1024)) {
     if (sMaxFileSizeReached == 0)
@@ -92,11 +93,11 @@ int qtss_maxprintf(const char *fmt, ...) {
 
 #endif
 
-int qtss_printf(const char *fmt, ...) {
+int s_printf(const char *fmt, ...) {
   if (fmt == NULL)
     return -1;
 
-  OSMutexLocker locker(&sStdLibOSMutex);
+  MutexLocker locker(&sStdLibOSMutex);
   va_list args;
   va_start(args, fmt);
   int result = ::vprintf(fmt, args);
@@ -105,11 +106,11 @@ int qtss_printf(const char *fmt, ...) {
   return result;
 }
 
-int qtss_sprintf(char *buffer, const char *fmt, ...) {
+int s_sprintf(char *buffer, const char *fmt, ...) {
   if (buffer == NULL)
     return -1;
 
-  OSMutexLocker locker(&sStdLibOSMutex);
+  MutexLocker locker(&sStdLibOSMutex);
   va_list args;
   va_start(args, fmt);
   int result = ::vsprintf(buffer, fmt, args);
@@ -118,11 +119,11 @@ int qtss_sprintf(char *buffer, const char *fmt, ...) {
   return result;
 }
 
-int qtss_fprintf(FILE *file, const char *fmt, ...) {
+int s_fprintf(FILE *file, const char *fmt, ...) {
   if (file == NULL)
     return -1;
 
-  OSMutexLocker locker(&sStdLibOSMutex);
+  MutexLocker locker(&sStdLibOSMutex);
   va_list args;
   va_start(args, fmt);
   int result = ::vfprintf(file, fmt, args);
@@ -131,11 +132,11 @@ int qtss_fprintf(FILE *file, const char *fmt, ...) {
   return result;
 }
 
-int qtss_snprintf(char *str, size_t size, const char *fmt, ...) {
+int s_snprintf(char *str, size_t size, const char *fmt, ...) {
   if (str == NULL)
     return -1;
 
-  OSMutexLocker locker(&sStdLibOSMutex);
+  MutexLocker locker(&sStdLibOSMutex);
   va_list args;
   va_start(args, fmt);
   int result = ::VSNprintf(str, size, fmt, args);
@@ -144,34 +145,34 @@ int qtss_snprintf(char *str, size_t size, const char *fmt, ...) {
   return result;
 }
 
-size_t qtss_strftime(char *buf,
-                     size_t maxsize,
-                     const char *format,
-                     const struct tm *timeptr) {
+size_t s_strftime(char *buf,
+                  size_t maxsize,
+                  const char *format,
+                  const struct tm *timeptr) {
   if (buf == NULL)
     return 0;
 
-  OSMutexLocker locker(&sStdLibOSMutex);
+  MutexLocker locker(&sStdLibOSMutex);
   return ::strftime(buf, maxsize, format, timeptr);
 
 }
 
 #endif //USE_DEFAULT_STD_LIB
 
-char *qtss_strerror(int errnum, char *buffer, int buffLen) {
-  OSMutexLocker locker(&sStdLibOSMutex);
+char *s_strerror(int errnum, char *buffer, int buffLen) {
+  MutexLocker locker(&sStdLibOSMutex);
   (void) ::strncpy(buffer, ::strerror(errnum), buffLen);
   buffer[buffLen - 1] = 0;  //make sure it is null terminated even if truncated.
 
   return buffer;
 }
 
-char *qtss_ctime(const time_t *timep, char *buffer, int buffLen) {
+char *s_ctime(const time_t *timep, char *buffer, int buffLen) {
 #if __MacOSX__
   Assert(buffLen >= 26);
   return ::ctime_r(timep, buffer);
 #else
-  OSMutexLocker locker(&sStdLibOSMutex);
+  MutexLocker locker(&sStdLibOSMutex);
   ::strncpy(buffer, ::ctime(timep), buffLen);//don't use terminator
   buffer[buffLen - 1] = 0;  //make sure it is null terminated even if truncated.
 
@@ -179,12 +180,12 @@ char *qtss_ctime(const time_t *timep, char *buffer, int buffLen) {
 #endif
 }
 
-char *qtss_asctime(const struct tm *timeptr, char *buffer, int buffLen) {
+char *s_asctime(const struct tm *timeptr, char *buffer, int buffLen) {
 #if __MacOSX__
   Assert(buffLen >= 26);
   return ::asctime_r(timeptr, buffer);
 #else
-  OSMutexLocker locker(&sStdLibOSMutex);
+  MutexLocker locker(&sStdLibOSMutex);
   ::strncpy(buffer, ::asctime(timeptr), buffLen);
   buffer[buffLen - 1] = 0;  //make sure it is null terminated even if truncated.
 
@@ -192,11 +193,11 @@ char *qtss_asctime(const struct tm *timeptr, char *buffer, int buffLen) {
 #endif
 }
 
-struct tm *qtss_gmtime(const time_t *timep, struct tm *result) {
+struct tm *s_gmtime(const time_t *timep, struct tm *result) {
 #if __MacOSX__
   return ::gmtime_r(timep, result);
 #else
-  OSMutexLocker locker(&sStdLibOSMutex);
+  MutexLocker locker(&sStdLibOSMutex);
   struct tm *time_result = ::gmtime(timep);
   *result = *time_result;
 
@@ -204,11 +205,11 @@ struct tm *qtss_gmtime(const time_t *timep, struct tm *result) {
 #endif
 }
 
-struct tm *qtss_localtime(const time_t *timep, struct tm *result) {
+struct tm *s_localtime(const time_t *timep, struct tm *result) {
 #if __MacOSX__
   return ::localtime_r(timep, result);
 #else
-  OSMutexLocker locker(&sStdLibOSMutex);
+  MutexLocker locker(&sStdLibOSMutex);
   struct tm *time_result = ::localtime(timep);
   *result = *time_result;
 

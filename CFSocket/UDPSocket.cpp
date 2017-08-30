@@ -29,14 +29,14 @@
 
 */
 
-#include "UDPSocket.h"
+#include <CF/Net/Socket/UDPSocket.h>
 
 #if !__WinSock__
 #include <sys/types.h>
 #include <sys/socket.h>
 
 #if __solaris__
-#include "SocketUtils.h"
+#include <CF/Net/Socket/SocketUtils.h>
 #endif
 
 #if NEED_SOCKETBITS
@@ -52,7 +52,9 @@
 #include <netlog.h>
 #endif
 
-UDPSocket::UDPSocket(Task *inTask, UInt32 inSocketType)
+using namespace CF::Net;
+
+UDPSocket::UDPSocket(Thread::Task *inTask, UInt32 inSocketType)
     : Socket(inTask, inSocketType), fDemuxer(nullptr) {
   if (inSocketType & kWantsDemuxer)
     fDemuxer = new UDPDemuxer();
@@ -86,7 +88,7 @@ UDPSocket::SendTo(UInt32 inRemoteAddr,
 #endif
 
   if (theErr == -1)
-    return (OS_Error) OSThread::GetErrno();
+    return (OS_Error) Core::Thread::GetErrno();
   return OS_NoErr;
 }
 
@@ -118,7 +120,7 @@ OS_Error UDPSocket::RecvFrom(UInt32 *outRemoteAddr,
 #endif
 
   if (theRecvLen == -1)
-    return (OS_Error) OSThread::GetErrno();
+    return (OS_Error) Core::Thread::GetErrno();
 
   *outRemoteAddr = ntohl(fMsgAddr.sin_addr.s_addr);
   *outRemotePort = ntohs(fMsgAddr.sin_port);
@@ -145,7 +147,7 @@ OS_Error UDPSocket::JoinMulticast(UInt32 inRemoteAddr) {
                        sizeof(theMulti));
   //AssertV(err == 0, OSThread::GetErrno());
   if (err == -1)
-    return (OS_Error) OSThread::GetErrno();
+    return (OS_Error) Core::Thread::GetErrno();
   else
     return OS_NoErr;
 }
@@ -161,13 +163,13 @@ OS_Error UDPSocket::SetTtl(UInt16 timeToLive) {
                        (char *) &nOptVal,
                        sizeof(nOptVal));
   if (err == -1)
-    return (OS_Error) OSThread::GetErrno();
+    return (OS_Error) Core::Thread::GetErrno();
   else
     return OS_NoErr;
 }
 
 OS_Error UDPSocket::SetMulticastInterface(UInt32 inLocalAddr) {
-  // set the outgoing interface for multicast datagrams on this socket
+  // set the outgoing interface for multicast datagrams on this Socket
   in_addr theLocalAddr;
   theLocalAddr.s_addr = inLocalAddr;
   int err = setsockopt(fFileDesc,
@@ -175,9 +177,9 @@ OS_Error UDPSocket::SetMulticastInterface(UInt32 inLocalAddr) {
                        IP_MULTICAST_IF,
                        (char *) &theLocalAddr,
                        sizeof(theLocalAddr));
-  AssertV(err == 0, OSThread::GetErrno());
+  AssertV(err == 0, Core::Thread::GetErrno());
   if (err == -1)
-    return (OS_Error) OSThread::GetErrno();
+    return (OS_Error) Core::Thread::GetErrno();
   else
     return OS_NoErr;
 }
@@ -192,7 +194,7 @@ OS_Error UDPSocket::LeaveMulticast(UInt32 inRemoteAddr) {
                        (char *) &theMulti,
                        sizeof(theMulti));
   if (err == -1)
-    return (OS_Error) OSThread::GetErrno();
+    return (OS_Error) Core::Thread::GetErrno();
   else
     return OS_NoErr;
 }

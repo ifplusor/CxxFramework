@@ -30,11 +30,10 @@
 */
 
 #include <string.h>
-
 #include <errno.h>
 
-#include "Socket.h"
-#include "SocketUtils.h"
+#include <CF/Net/Socket/Socket.h>
+#include <CF/Net/Socket/SocketUtils.h>
 
 #if !__WinSock__
 
@@ -55,9 +54,11 @@ typedef int socklen_t; // missing from some platform includes
 
 #endif
 
+using namespace CF::Net;
+
 EventThread *Socket::sEventThread = nullptr;
 
-Socket::Socket(Task *notifytask, UInt32 inSocketType)
+Socket::Socket(Thread::Task *notifytask, UInt32 inSocketType)
     : EventContext(EventContext::kInvalidFileDesc, sEventThread),
       fState(inSocketType),
       fLocalAddrStrPtr(nullptr),
@@ -72,7 +73,7 @@ Socket::Socket(Task *notifytask, UInt32 inSocketType)
   /* SetTask 是 EventContext 的成员函数,执行”fTask = notifytask”操作。 */
   this->SetTask(notifytask);
 
-#if SOCKET_DEBUG
+#if DEBUG_SOCKET
   fLocalAddrStr.Set(fLocalAddrBuffer, sizeof(fLocalAddrBuffer));
 #endif
 
@@ -82,10 +83,10 @@ OS_Error Socket::Open(int theType) {
   Assert(fFileDesc == EventContext::kInvalidFileDesc);
   fFileDesc = ::socket(PF_INET, theType, 0);
   if (fFileDesc == EventContext::kInvalidFileDesc)
-    return (OS_Error) OSThread::GetErrno();
+    return (OS_Error) Core::Thread::GetErrno();
 
   //
-  // Setup this socket's event context
+  // Setup this Socket's event context
   if (fState & kNonBlockingSocketType)
     this->InitNonBlocking(fFileDesc);
 
@@ -124,10 +125,14 @@ void Socket::KeepAlive() {
 
 void Socket::SetSocketBufSize(UInt32 inNewSize) {
 
-#if SOCKET_DEBUG
+#if DEBUG_SOCKET
   int value;
   int buffSize = sizeof(value);
-  int error = ::getsockopt(fFileDesc, SOL_SOCKET, SO_SNDBUF, (char*)&value, (socklen_t*)&buffSize);
+  int error = ::getsockopt(fFileDesc,
+                           SOL_SOCKET,
+                           SO_SNDBUF,
+                           (char *) &value,
+                           (socklen_t *) &buffSize);
 #endif
 
   int bufSize = inNewSize;
@@ -136,30 +141,41 @@ void Socket::SetSocketBufSize(UInt32 inNewSize) {
                          SO_SNDBUF,
                          (char *) &bufSize,
                          sizeof(int));
-  AssertV(err == 0, OSThread::GetErrno());
+  AssertV(err == 0, Core::Thread::GetErrno());
 
-#if SOCKET_DEBUG
+#if DEBUG_SOCKET
   int setValue;
-  error = ::getsockopt(fFileDesc, SOL_SOCKET, SO_SNDBUF, (char*)&setValue, (socklen_t*)&buffSize);
+  error = ::getsockopt(fFileDesc,
+                       SOL_SOCKET,
+                       SO_SNDBUF,
+                       (char *) &setValue,
+                       (socklen_t *) &buffSize);
   qtss_printf("Socket::SetSocketBufSize ");
   if (fState & kBound) {
-      if (nullptr != this->GetLocalAddrStr())
-          this->GetLocalAddrStr()->PrintStr(":");
-      if (nullptr != this->GetLocalPortStr())
-          this->GetLocalPortStr()->PrintStr(" ");
-  }
-  else
-      qtss_printf("unbound ");
-  qtss_printf("socket=%d old SO_SNDBUF =%d inNewSize=%d setValue=%d\n", (int)fFileDesc, value, bufSize, setValue);
+    if (nullptr != this->GetLocalAddrStr())
+      this->GetLocalAddrStr()->PrintStr(":");
+    if (nullptr != this->GetLocalPortStr())
+      this->GetLocalPortStr()->PrintStr(" ");
+  } else
+    qtss_printf("unbound ");
+  qtss_printf("Socket=%d old SO_SNDBUF =%d inNewSize=%d setValue=%d\n",
+              (int) fFileDesc,
+              value,
+              bufSize,
+              setValue);
 #endif
 
 }
 
 OS_Error Socket::SetSocketRcvBufSize(UInt32 inNewSize) {
-#if SOCKET_DEBUG
+#if DEBUG_SOCKET
   int value;
   int buffSize = sizeof(value);
-  int error = ::getsockopt(fFileDesc, SOL_SOCKET, SO_RCVBUF, (char*)&value, (socklen_t*)&buffSize);
+  int error = ::getsockopt(fFileDesc,
+                           SOL_SOCKET,
+                           SO_RCVBUF,
+                           (char *) &value,
+                           (socklen_t *) &buffSize);
 #endif
 
   int bufSize = inNewSize;
@@ -169,24 +185,30 @@ OS_Error Socket::SetSocketRcvBufSize(UInt32 inNewSize) {
                          (char *) &bufSize,
                          sizeof(int));
 
-#if SOCKET_DEBUG
+#if DEBUG_SOCKET
   int setValue;
-  error = ::getsockopt(fFileDesc, SOL_SOCKET, SO_RCVBUF, (char*)&setValue, (socklen_t*)&buffSize);
+  error = ::getsockopt(fFileDesc,
+                       SOL_SOCKET,
+                       SO_RCVBUF,
+                       (char *) &setValue,
+                       (socklen_t *) &buffSize);
   qtss_printf("Socket::SetSocketRcvBufSize ");
-  if (fState & kBound)
-  {
-      if (nullptr != this->GetLocalAddrStr())
-          this->GetLocalAddrStr()->PrintStr(":");
-      if (nullptr != this->GetLocalPortStr())
-          this->GetLocalPortStr()->PrintStr(" ");
-  }
-  else
-      qtss_printf("unbound ");
-  qtss_printf("socket=%d old SO_RCVBUF =%d inNewSize=%d setValue=%d\n", (int)fFileDesc, value, bufSize, setValue);
+  if (fState & kBound) {
+    if (nullptr != this->GetLocalAddrStr())
+      this->GetLocalAddrStr()->PrintStr(":");
+    if (nullptr != this->GetLocalPortStr())
+      this->GetLocalPortStr()->PrintStr(" ");
+  } else
+    qtss_printf("unbound ");
+  qtss_printf("Socket=%d old SO_RCVBUF =%d inNewSize=%d setValue=%d\n",
+              (int) fFileDesc,
+              value,
+              bufSize,
+              setValue);
 #endif
 
   if (err == -1)
-    return (OS_Error) OSThread::GetErrno();
+    return (OS_Error) Core::Thread::GetErrno();
 
   return OS_NoErr;
 }
@@ -217,7 +239,7 @@ OS_Error Socket::Bind(UInt32 addr, UInt16 port, bool test) {
   if (err == -1) {
     fLocalAddr.sin_port = 0;
     fLocalAddr.sin_addr.s_addr = 0;
-    return (OS_Error) OSThread::GetErrno();
+    return (OS_Error) Core::Thread::GetErrno();
   } else
     // get the kernel to fill in unspecified values
     ::getsockname(fFileDesc, (sockaddr *) &fLocalAddr, &len);
@@ -225,7 +247,7 @@ OS_Error Socket::Bind(UInt32 addr, UInt16 port, bool test) {
   return OS_NoErr;
 }
 
-StrPtrLen *Socket::GetLocalAddrStr() {
+CF::StrPtrLen *Socket::GetLocalAddrStr() {
   //Use the array of IP addr strings to locate the string formatted version
   //of this IP address.
   if (fLocalAddrStrPtr == nullptr) {
@@ -237,33 +259,36 @@ StrPtrLen *Socket::GetLocalAddrStr() {
     }
   }
 
-#if SOCKET_DEBUG
-    if (fLocalAddrStrPtr == nullptr)
-    {   // shouldn't happen but no match so it was probably a failed socket connection or accept. addr is probably 0.
+#if DEBUG_SOCKET
+  if (fLocalAddrStrPtr == nullptr) {
+    // shouldn't happen but no match so it was probably a failed socket
+    // connection or accept. addr is probably 0.
 
-        fLocalAddrBuffer[0] = 0;
-        fLocalAddrStrPtr = &fLocalAddrStr;
-        struct in_addr theAddr;
-        theAddr.s_addr = ntohl(fLocalAddr.sin_addr.s_addr);
-        SocketUtils::ConvertAddrToString(theAddr, &fLocalAddrStr);
+    fLocalAddrBuffer[0] = 0;
+    fLocalAddrStrPtr = &fLocalAddrStr;
+    struct in_addr theAddr;
+    theAddr.s_addr = ntohl(fLocalAddr.sin_addr.s_addr);
+    SocketUtils::ConvertAddrToString(theAddr, &fLocalAddrStr);
 
-        printf("Socket::GetLocalAddrStr Search IPs failed, numIPs=%d\n", SocketUtils::GetNumIPAddrs());
-        for (UInt32 x = 0; x < SocketUtils::GetNumIPAddrs(); x++)
-        {
-            printf("ip[%"   _U32BITARG_   "]=", x); SocketUtils::GetIPAddrStr(x)->PrintStr("\n");
-        }
-        printf("this ip = %d = ", theAddr.s_addr); fLocalAddrStrPtr->PrintStr("\n");
-
-        if (theAddr.s_addr == 0 || fLocalAddrBuffer[0] == 0)
-            fLocalAddrStrPtr = nullptr; // so the caller can test for failure
+    printf("Socket::GetLocalAddrStr Search IPs failed, numIPs=%d\n",
+           SocketUtils::GetNumIPAddrs());
+    for (UInt32 x = 0; x < SocketUtils::GetNumIPAddrs(); x++) {
+      printf("ip[%"   _U32BITARG_   "]=", x);
+      SocketUtils::GetIPAddrStr(x)->PrintStr("\n");
     }
+    printf("this ip = %d = ", theAddr.s_addr);
+    fLocalAddrStrPtr->PrintStr("\n");
+
+    if (theAddr.s_addr == 0 || fLocalAddrBuffer[0] == 0)
+      fLocalAddrStrPtr = nullptr; // so the caller can test for failure
+  }
 #endif
 
   Assert(fLocalAddrStrPtr != nullptr);
   return fLocalAddrStrPtr;
 }
 
-StrPtrLen *Socket::GetLocalDNSStr() {
+CF::StrPtrLen *Socket::GetLocalDNSStr() {
   //Do the same thing as the above function, but for DNS names
   Assert(fLocalAddr.sin_addr.s_addr != INADDR_ANY);
   if (fLocalDNSStrPtr == nullptr) {
@@ -283,10 +308,10 @@ StrPtrLen *Socket::GetLocalDNSStr() {
   return fLocalDNSStrPtr;
 }
 
-StrPtrLen *Socket::GetLocalPortStr() {
+CF::StrPtrLen *Socket::GetLocalPortStr() {
   if (fPortStr.Len == kPortBufSizeInBytes) {
     int temp = ntohs(fLocalAddr.sin_port);
-    qtss_sprintf(fPortBuffer, "%d", temp);
+    s_sprintf(fPortBuffer, "%d", temp);
     fPortStr.Len = ::strlen(fPortBuffer);
   }
   return &fPortStr;
@@ -303,11 +328,11 @@ OS_Error Socket::Send(const char *inData,
   int err;
   do {
     err = ::send(fFileDesc, inData, inLength, 0);//flags??
-  } while ((err == -1) && (OSThread::GetErrno() == EINTR));
+  } while ((err == -1) && (Core::Thread::GetErrno() == EINTR));
   if (err == -1) {
     // Are there any errors that can happen if the client is connected?
-    // Yes... EAGAIN. Means the socket is now flow-controleld
-    int theErr = OSThread::GetErrno();
+    // Yes... EAGAIN. Means the Socket is now flow-controleld
+    int theErr = Core::Thread::GetErrno();
     if ((theErr != EAGAIN) && (this->IsConnected()))
       fState ^= kConnected;//turn off connected state flag
     return (OS_Error) theErr;
@@ -335,11 +360,11 @@ OS_Error Socket::WriteV(const struct iovec *iov,
 #else
     err = ::writev(fFileDesc, iov, numIOvecs);//flags??
 #endif
-  } while ((err == -1) && (OSThread::GetErrno() == EINTR));
+  } while ((err == -1) && (Core::Thread::GetErrno() == EINTR));
   if (err == -1) {
     // Are there any errors that can happen if the client is connected?
-    // Yes... EAGAIN. Means the socket is now flow-controleld
-    int theErr = OSThread::GetErrno();
+    // Yes... EAGAIN. Means the Socket is now flow-controleld
+    int theErr = Core::Thread::GetErrno();
     if ((theErr != EAGAIN) && (this->IsConnected()))
       fState ^= kConnected;//turn off connected state flag
     return (OS_Error) theErr;
@@ -362,18 +387,18 @@ OS_Error Socket::Read(void *buffer, const UInt32 length, UInt32 *outRecvLenP) {
   do {
     theRecvLen = ::recv(fFileDesc, (char *) buffer, length, 0); //flags??
 #if __WinSock__
-  } while ((theRecvLen == SOCKET_ERROR) && (::WSAGetLastError() == WSAEINTR));
+    } while ((theRecvLen == SOCKET_ERROR) && (::WSAGetLastError() == WSAEINTR));
 
-  if (theRecvLen == SOCKET_ERROR) {
-    int theErr = ::WSAGetLastError();
-    if ((theErr != WSAEWOULDBLOCK) && (this->IsConnected()))
+    if (theRecvLen == SOCKET_ERROR) {
+      int theErr = ::WSAGetLastError();
+      if ((theErr != WSAEWOULDBLOCK) && (this->IsConnected()))
 #else
-  } while ((theRecvLen == -1) && (OSThread::GetErrno() == EINTR));
+  } while ((theRecvLen == -1) && (Core::Thread::GetErrno() == EINTR));
 
   if (theRecvLen == -1) {
     // Are there any errors that can happen if the client is connected?
-    // Yes... EAGAIN. Means the socket is now flow-controled
-    int theErr = OSThread::GetErrno();
+    // Yes... EAGAIN. Means the Socket is now flow-controled
+    int theErr = Core::Thread::GetErrno();
     if ((theErr != EAGAIN) && (this->IsConnected()))
 #endif
       fState ^= kConnected; // turn off connected state flag

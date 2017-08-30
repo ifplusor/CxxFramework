@@ -3,9 +3,8 @@
 	Contains:
 */
 
-#include <CFEnv.h>
-#include "HTTPSession.h"
-
+#include <CF/CFEnv.h>
+#include <CF/Net/Http/HTTPSession.h>
 
 #if __FreeBSD__ || __hpux__
 #include <unistd.h>
@@ -13,6 +12,8 @@
 
 #if __solaris__ || __linux__ || __sgi__ || __hpux__
 #endif
+
+using namespace CF::Net;
 
 HTTPSession::HTTPSession()
     : HTTPSessionInterface(),
@@ -25,10 +26,10 @@ HTTPSession::HTTPSession()
 
 HTTPSession::~HTTPSession() {
   char msgStr[2048] = {0};
-  qtss_snprintf(msgStr,
-                sizeof(msgStr),
-                "HTTPSession offline from ip[%s]",
-                fSocket.GetRemoteAddrStr()->Ptr);
+  s_snprintf(msgStr,
+             sizeof(msgStr),
+             "HTTPSession offline from ip[%s]",
+             fSocket.GetRemoteAddrStr()->Ptr);
 
   fLiveSession = false; //used in Clean up request to remove the RTP session.
   this->CleanupRequestAndResponse();// Make sure that all our objects are deleted
@@ -38,13 +39,13 @@ SInt64 HTTPSession::Run() {
   EventFlags events = this->GetEvents();
   CF_Error err = CF_NoErr;
 
-  // Some callbacks look for this struct in the thread object
-  OSThreadDataSetter theSetter(nullptr, nullptr);
+  // Some callbacks look for this struct in the Thread object
+  Core::ThreadDataSetter theSetter(nullptr, nullptr);
 
-  if (events & Task::kKillEvent)
+  if (events & Thread::Task::kKillEvent)
     fLiveSession = false;
 
-  if (events & Task::kTimeoutEvent) {
+  if (events & Thread::Task::kTimeoutEvent) {
     /* Session超时,释放Session */
     return -1;
   }
@@ -81,7 +82,7 @@ SInt64 HTTPSession::Run() {
       case kReadingRequest: {
         /* 读取请求报文 */
 
-        OSMutexLocker readMutexLocker(&fReadMutex);
+        Core::MutexLocker readMutexLocker(&fReadMutex);
 
         if ((err = fInputStream.ReadRequest()) == CF_NoErr) {
           fInputSocketP->RequestEvent(EV_RE);
@@ -97,7 +98,7 @@ SInt64 HTTPSession::Run() {
           if (fOutputSocketP->IsConnected()) {
             // If we've gotten here, this must be an HTTP session with
             // a dead input connection. If that's the case, we should
-            // clean up immediately so as to not have an open socket
+            // clean up immediately so as to not have an open Socket
             // needlessly lingering around, taking up space.
             Assert(fOutputSocketP != fInputSocketP);
             Assert(!fInputSocketP->IsConnected());
@@ -163,7 +164,7 @@ SInt64 HTTPSession::Run() {
           this->ForceSameThread();
           fInputSocketP->RequestEvent(EV_RE);
           // We are holding mutexes, so we need to force
-          // the same thread to be used for next Run()
+          // the same Thread to be used for next Run()
           // when next run, the fState also is kFilteringRequest, so we will
           // call SetupRequest for continue read body.
           return 0;
@@ -216,12 +217,12 @@ SInt64 HTTPSession::Run() {
 
         if (err == EAGAIN) {
           // If we get this error, we are currently flow-controlled and should
-          // wait for the socket to become writeable again
+          // wait for the Socket to become writeable again
           /* 如果收到Socket EAGAIN错误，那么我们需要等Socket再次可写的时候再调用发送 */
           fSocket.RequestEvent(EV_WR);
           this->ForceSameThread();
           // We are holding mutexes, so we need to force
-          // the same thread to be used for next Run()
+          // the same Thread to be used for next Run()
           return 0;
         } else if (err != CF_NoErr) {
           // Any other error means that the client has disconnected, right?
@@ -234,14 +235,14 @@ SInt64 HTTPSession::Run() {
 
       case kCleaningUp: {
         // Cleaning up consists of making sure we've read all the incoming Request Body
-        // data off of the socket
+        // data off of the Socket
         if (this->GetRemainingReqBodyLen() > 0) {
           err = this->dumpRequestData();
 
           if (err == EAGAIN) {
             fInputSocketP->RequestEvent(EV_RE);
             this->ForceSameThread();    // We are holding mutexes, so we need to force
-            // the same thread to be used for next Run()
+            // the same Thread to be used for next Run()
             return 0;
           }
         }
@@ -297,7 +298,7 @@ CF_Error HTTPSession::SendHTTPPacket(StrPtrLen *contentXML,
     DecrementObjectHolderCount();
 
   if (connectionClose)
-    this->Signal(Task::kKillEvent);
+    this->Signal(Thread::Task::kKillEvent);
 
   return CF_NoErr;
 }
@@ -322,7 +323,7 @@ CF_Error HTTPSession::SetupRequest() {
   UInt32 content_length = theContentLenParser.ConsumeInteger(nullptr);
 
   if (content_length) {
-    qtss_printf("HTTPSession read content-length:%d \n", content_length);
+    s_printf("HTTPSession read content-length:%d \n", content_length);
     // Check for the existence of 2 attributes in the request: a pointer to our buffer for
     // the request body, and the current offset in that buffer. If these attributes exist,
     // then we've already been here for this request. If they don't exist, add them.
@@ -355,7 +356,7 @@ CF_Error HTTPSession::SetupRequest() {
     // Update our offset in the buffer
     requestBody->Len = theBufferOffset + theLen;
 
-    qtss_printf("Add Len:%d \n", theLen);
+    s_printf("Add Len:%d \n", theLen);
     if ((theErr == CF_WouldBlock) ||
         (theLen < (content_length - theBufferOffset))) {
 
@@ -368,9 +369,9 @@ CF_Error HTTPSession::SetupRequest() {
     Assert(theErr == CF_NoErr);
   }
 
-  qtss_printf("get complete http msg:%s QueryString:%s \n",
-              fRequest->GetRequestPath(),
-              fRequest->GetQueryString());
+  s_printf("get complete http msg:%s QueryString:%s \n",
+           fRequest->GetRequestPath(),
+           fRequest->GetQueryString());
 
   return CF_NoErr;
 }
@@ -412,7 +413,7 @@ void HTTPSession::CleanupRequestAndResponse() {
 
   if (fRequest != nullptr) {
     if (!fRequest->IsRequestKeepAlive())
-      this->Signal(Task::kKillEvent);
+      this->Signal(Thread::Task::kKillEvent);
 
     // nullptr out any references to the current request
     delete fRequest;

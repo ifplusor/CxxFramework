@@ -29,13 +29,15 @@
 
 */
 
-#include "Task.h"
-#include <OSTime.h>
+#include <CF/Thread/Task.h>
+#include <CF/Core/Time.h>
+
+using namespace CF::Thread;
 
 unsigned int Task::sShortTaskThreadPicker = 0;
 unsigned int Task::sBlockingTaskThreadPicker = 0;
 
-OSMutexRW TaskThreadPool::sMutexRW;
+CF::Core::RWMutex TaskThreadPool::sRWMutex;
 static char *sTaskStateStr = "live_"; // Alive
 
 Task::Task()
@@ -46,7 +48,7 @@ Task::Task()
       fTimerHeapElem(),
       fTaskQueueElem(),
       pickerToUse(&Task::sShortTaskThreadPicker) {
-#if DEBUG
+#if DEBUG_TASK
   fInRunCount = 0;
 #endif
   this->SetTaskName("unknown");
@@ -62,15 +64,16 @@ void Task::SetTaskName(char *name) {
 
   ::strncpy(fTaskName, sTaskStateStr, sizeof(fTaskName) - 1);
   ::strncat(fTaskName, name, sizeof(fTaskName) - strlen(fTaskName) - 1);
-  fTaskName[sizeof(fTaskName) - 1] = 0; //terminate in case it is longer than fTaskName.
+  fTaskName[sizeof(fTaskName) - 1] =
+      0; //terminate in case it is longer than fTaskName.
 }
 
 bool Task::Valid() {
   if ((this->fTaskName == nullptr)
       || (0 != ::strncmp(sTaskStateStr, this->fTaskName, 5))) {
-    if (TASK_DEBUG)
-      qtss_printf("Task::Valid Found invalid task = %p\n",
-                  (void *) this);
+    if (DEBUG_TASK)
+      s_printf("Task::Valid Found invalid task = %p\n",
+               (void *) this);
 
     return false;
   }
@@ -89,7 +92,7 @@ void Task::Signal(EventFlags events) {
   if (!this->Valid())
     return;
 
-  // Fancy no mutex implementation. We atomically mask the new events into
+  // Fancy no Mutex implementation. We atomically mask the new events into
   // the event mask. Because atomic_or returns the old state of the mask,
   // we only schedule this task once.
   /* check point!!! 激活新的 event */
@@ -103,10 +106,11 @@ void Task::Signal(EventFlags events) {
     if (fDefaultThread != nullptr && fUseThisThread == nullptr)
       fUseThisThread = fDefaultThread;
 
-    if (fUseThisThread != nullptr) { // Task needs to be placed on a particular thread.
-      if (TASK_DEBUG) {
+    if (fUseThisThread
+        != nullptr) { // Task needs to be placed on a particular Thread.
+      if (DEBUG_TASK) {
         if (fTaskName[0] == 0) ::strcpy(fTaskName, " _Corrupt_Task");
-        qtss_printf(
+        s_printf(
             "Task::Signal EnQueue TaskName=%s "
                 "fUseThisThread=%p "
                 "q_elem=%p "
@@ -116,31 +120,31 @@ void Task::Signal(EventFlags events) {
             (void *) &fTaskQueueElem,
             (void *) this);
         if (TaskThreadPool::sTaskThreadArray[0] == fUseThisThread)
-          qtss_printf("Task::Signal  RTSP Thread running  TaskName=%s \n",
-                      fTaskName);
+          s_printf("Task::Signal  RTSP Thread running  TaskName=%s \n",
+                   fTaskName);
       }
 
       fUseThisThread->fTaskQueue.EnQueue(&fTaskQueueElem);
     } else {
-      // find a thread to put this task on
+      // find a Thread to put this task on
       // unsigned int theThreadIndex = atomic_add((unsigned int *)pickerToUse, 1);
 
       unsigned int theThreadIndex = 0;
       {
-        OSMutexLocker locker(&fAtomicMutex);
+        Core::MutexLocker locker(&fAtomicMutex);
         theThreadIndex = ++(*pickerToUse);
       }
 
       if (&Task::sShortTaskThreadPicker == pickerToUse) {
         theThreadIndex %= TaskThreadPool::sNumShortTaskThreads;
 
-        if (TASK_DEBUG)
-          qtss_printf(
+        if (DEBUG_TASK)
+          s_printf(
               "Task::Signal EnQueue TaskName=%s "
                   "using Task::sShortTaskThreadPicker=%u "
                   "numShortTaskThreads=%" _U32BITARG_ " "
                   "short task range=[0-%" _U32BITARG_ "] "
-                  "thread index =%u \n",
+                  "Thread index =%u \n",
               fTaskName,
               Task::sShortTaskThreadPicker,
               TaskThreadPool::sNumShortTaskThreads,
@@ -151,13 +155,13 @@ void Task::Signal(EventFlags events) {
         theThreadIndex += TaskThreadPool::sNumShortTaskThreads;
         //don't pick from lower non-blocking (short task) threads.
 
-        if (TASK_DEBUG)
-          qtss_printf(
+        if (DEBUG_TASK)
+          s_printf(
               "Task::Signal EnQueue TaskName=%s "
                   "using Task::sBlockingTaskThreadPicker=%u "
                   "numBlockingThreads=%" _U32BITARG_ " "
-                  "blocking thread range=[%" _U32BITARG_ "-%" _U32BITARG_ "] "
-                  "thread index =%u \n",
+                  "blocking Thread range=[%" _U32BITARG_ "-%" _U32BITARG_ "] "
+                  "Thread index =%u \n",
               fTaskName,
               Task::sBlockingTaskThreadPicker,
               TaskThreadPool::sNumBlockingTaskThreads,
@@ -166,50 +170,52 @@ void Task::Signal(EventFlags events) {
                   + TaskThreadPool::sNumShortTaskThreads - 1,
               theThreadIndex);
       } else {
-        if (TASK_DEBUG)
+        if (DEBUG_TASK)
           if (fTaskName[0] == 0)
             ::strcpy(fTaskName, " _Corrupt_Task");
 
         return;
       }
 
-      if (TASK_DEBUG)
+      if (DEBUG_TASK)
         if (fTaskName[0] == 0)
           ::strcpy(fTaskName, " _Corrupt_Task");
 
-      if (TASK_DEBUG)
-        qtss_printf(
+      if (DEBUG_TASK)
+        s_printf(
             "Task::Signal EnQueue B TaskName=%s "
                 "theThreadIndex=%u "
-                "thread=%p "
+                "Thread=%p "
                 "fTaskQueue.GetLength(%" _U32BITARG_ ") "
                 "q_elem=%p "
                 "enclosing=%p\n",
             fTaskName,
             theThreadIndex,
             (void *) TaskThreadPool::sTaskThreadArray[theThreadIndex],
-            TaskThreadPool::sTaskThreadArray[theThreadIndex]->fTaskQueue.GetQueue()->GetLength(),
+            TaskThreadPool::sTaskThreadArray[theThreadIndex]->fTaskQueue
+                .GetQueue()->GetLength(),
             (void *) &fTaskQueueElem,
             (void *) this);
       TaskThreadPool::sTaskThreadArray[theThreadIndex]->fTaskQueue.EnQueue(&fTaskQueueElem);
-      if (TASK_DEBUG)
-        qtss_printf(
+      if (DEBUG_TASK)
+        s_printf(
             "Task::Signal EnQueue A TaskName=%s "
                 "theThreadIndex=%u "
-                "thread=%p "
+                "Thread=%p "
                 "fTaskQueue.GetLength(%" _U32BITARG_ ") "
                 "q_elem=%p "
                 "enclosing=%p\n",
             fTaskName,
             theThreadIndex,
             (void *) TaskThreadPool::sTaskThreadArray[theThreadIndex],
-            TaskThreadPool::sTaskThreadArray[theThreadIndex]->fTaskQueue.GetQueue()->GetLength(),
+            TaskThreadPool::sTaskThreadArray[theThreadIndex]->fTaskQueue
+                .GetQueue()->GetLength(),
             (void *) &fTaskQueueElem,
             (void *) this);
 
     }
-  } else if (TASK_DEBUG)
-    qtss_printf(
+  } else if (DEBUG_TASK)
+    s_printf(
         "Task::Signal Sent to dead TaskName=%s "
             "q_elem=%p "
             "enclosing=%p\n",
@@ -221,36 +227,36 @@ void Task::Signal(EventFlags events) {
 void Task::GlobalUnlock() {
   if (this->fWriteLock) {
     this->fWriteLock = false;
-    TaskThreadPool::sMutexRW.Unlock();
+    TaskThreadPool::sRWMutex.Unlock();
   }
 }
 
 void Task::SetThreadPicker(unsigned int *picker) {
   pickerToUse = picker;
   Assert(pickerToUse != nullptr);
-  if (TASK_DEBUG) {
+  if (DEBUG_TASK) {
     if (fTaskName[0] == 0) ::strcpy(fTaskName, " _Corrupt_Task");
 
     if (&Task::sShortTaskThreadPicker == pickerToUse) {
-      qtss_printf("Task::SetThreadPicker sShortTaskThreadPicker for task=%s\n",
-                  fTaskName);
+      s_printf("Task::SetThreadPicker sShortTaskThreadPicker for task=%s\n",
+               fTaskName);
     } else if (&Task::sBlockingTaskThreadPicker == pickerToUse) {
-      qtss_printf(
+      s_printf(
           "Task::SetThreadPicker sBlockingTaskThreadPicker for task=%s\n",
           fTaskName);
     } else {
-      qtss_printf("Task::SetThreadPicker ERROR unknown picker for task=%s\n",
-                  fTaskName);
+      s_printf("Task::SetThreadPicker ERROR unknown picker for task=%s\n",
+               fTaskName);
     }
   }
 }
 
 void Task::ForceSameThread() {
-  fUseThisThread = (TaskThread *) OSThread::GetCurrent();
+  fUseThisThread = (TaskThread *) Core::Thread::GetCurrent();
   Assert(fUseThisThread != nullptr);
-  if (TASK_DEBUG) if (fTaskName[0] == 0) ::strcpy(fTaskName, " corrupt task");
-  if (TASK_DEBUG)
-    qtss_printf(
+  if (DEBUG_TASK) if (fTaskName[0] == 0) ::strcpy(fTaskName, " corrupt task");
+  if (DEBUG_TASK)
+    s_printf(
         "Task::ForceSameThread fUseThisThread %p "
             "task %s "
             "enque elem=%p "
@@ -283,7 +289,7 @@ void TaskThread::Entry() {
     theTask = this->WaitForTask();
 
     //
-    // WaitForTask returns nullptr when it is time to quit
+    // WaitForTask returns nullptr when it is Time to quit
     if (theTask == nullptr || !theTask->Valid())
       return;
 
@@ -299,40 +305,41 @@ void TaskThread::Entry() {
     while (!doneProcessingEvent) {
       // If a task holds locks when it returns from its Run function,
       // that would be catastrophic and certainly lead to a deadlock
-#if DEBUG
+#if DEBUG_TASK
       Assert(this->GetNumLocksHeld() == 0);
       Assert(theTask->fInRunCount == 0);
       theTask->fInRunCount++;
 #endif
-      theTask->fUseThisThread = nullptr; // Each invocation of Run must independently
-      // request a specific thread.
+      theTask->fUseThisThread =
+          nullptr; // Each invocation of Run must independently
+      // request a specific Thread.
       SInt64 theTimeout = 0;
 
       if (theTask->fWriteLock) {
-        OSMutexWriteLocker mutexLocker(&TaskThreadPool::sMutexRW);
-        if (TASK_DEBUG)
-          qtss_printf(
+        Core::MutexWriteLocker mutexLocker(&TaskThreadPool::sRWMutex);
+        if (DEBUG_TASK)
+          s_printf(
               "TaskThread::Entry run global locked TaskName=%s "
                   "CurMSec=%.3f "
-                  "thread=%p "
+                  "Thread=%p "
                   "task=%p\n",
               theTask->fTaskName,
-              OSTime::StartTimeMilli_Float(),
+              Core::Time::StartTimeMilli_Float(),
               (void *) this,
               (void *) theTask);
 
         theTimeout = theTask->Run();
         theTask->fWriteLock = false;
       } else {
-        OSMutexReadLocker mutexLocker(&TaskThreadPool::sMutexRW);
-        if (TASK_DEBUG)
-          qtss_printf(
+        Core::MutexReadLocker mutexLocker(&TaskThreadPool::sRWMutex);
+        if (DEBUG_TASK)
+          s_printf(
               "TaskThread::Entry run TaskName=%s "
                   "CurMSec=%.3f "
-                  "thread=%p "
+                  "Thread=%p "
                   "task=%p\n",
               theTask->fTaskName,
-              OSTime::StartTimeMilli_Float(),
+              Core::Time::StartTimeMilli_Float(),
               (void *) this,
               (void *) theTask);
 
@@ -351,29 +358,29 @@ void TaskThread::Entry() {
             等待下个处理。
          */
 
-        if (TASK_DEBUG) {
-          qtss_printf(
+        if (DEBUG_TASK) {
+          s_printf(
               "TaskThread::Entry delete TaskName=%s "
                   "CurMSec=%.3f "
-                  "thread=%p "
+                  "Thread=%p "
                   "task=%p\n",
               theTask->fTaskName,
-              OSTime::StartTimeMilli_Float(),
+              Core::Time::StartTimeMilli_Float(),
               (void *) this,
               (void *) theTask);
 
           theTask->fUseThisThread = nullptr;
 
           if (nullptr != fHeap.Remove(&theTask->fTimerHeapElem))
-            qtss_printf("TaskThread::Entry task still in heap before delete\n");
+            s_printf("TaskThread::Entry task still in Heap before delete\n");
 
           if (nullptr != theTask->fTaskQueueElem.InQueue())
-            qtss_printf("TaskThread::Entry task still in queue before delete\n");
+            s_printf("TaskThread::Entry task still in Queue before delete\n");
 
           theTask->fTaskQueueElem.Remove();
 
           if (theTask->fEvents & ~Task::kAlive)
-            qtss_printf("TaskThread::Entry flags still set  before delete\n");
+            s_printf("TaskThread::Entry flags still set  before delete\n");
 
           //(void)atomic_sub(&theTask->fEvents, 0);
           theTask->fEvents.fetch_sub(0);
@@ -394,7 +401,7 @@ void TaskThread::Entry() {
          */
 
         // We want to make sure that 100% definitely the task's Run function WILL
-        // be invoked when another thread calls Signal. We also want to make sure
+        // be invoked when another Thread calls Signal. We also want to make sure
         // that if an event sneaks in right as the task is returning from Run()
         // (via Signal) that the Run function will be invoked again.
         /* check point!!! task 处理期间未激活新的 event，则撤销 alive 状态 */
@@ -413,10 +420,10 @@ void TaskThread::Entry() {
 
         // note that if we get here, we don't reset theTask, so it will get
         // passed into WaitForTask
-        if (TASK_DEBUG)
-          qtss_printf(
+        if (DEBUG_TASK)
+          s_printf(
               "TaskThread::Entry insert TaskName=%s "
-                  "in timer heap thread=%p "
+                  "in timer Heap Thread=%p "
                   "elem=%p "
                   "task=%p "
                   "timeout=%.2f\n",
@@ -425,30 +432,34 @@ void TaskThread::Entry() {
               (void *) &theTask->fTimerHeapElem,
               (void *) theTask,
               (float) theTimeout / (float) 1000);
-        theTask->fTimerHeapElem.SetValue(OSTime::Milliseconds() + theTimeout);
+        theTask->fTimerHeapElem.SetValue(
+            Core::Time::Milliseconds() + theTimeout);
         fHeap.Insert(&theTask->fTimerHeapElem);
         /* check point!!! 激活 kIdleEvent，保持 alive 状态 */
         theTask->fEvents.fetch_or(Task::kIdleEvent);
         doneProcessingEvent = true;
       }
 
-#if TASK_DEBUG
-      SInt64 yieldStart = OSTime::Milliseconds();
+#if DEBUG_TASK
+      SInt64 yieldStart = Core::Time::Milliseconds();
 #endif
 
       /* 对于 linux 系统来说，ThreadYield 实际上没有做什么工作 */
       this->ThreadYield();
 
-#if TASK_DEBUG
-      SInt64 yieldDur = OSTime::Milliseconds() - yieldStart;
-      static SInt64  numZeroYields;
+#if DEBUG_TASK
+      SInt64 yieldDur = Core::Time::Milliseconds() - yieldStart;
+      static SInt64 numZeroYields;
 
       if (yieldDur > 1) {
-          if (TASK_DEBUG) qtss_printf("TaskThread::Entry time in Yield %qd, numZeroYields %qd \n", yieldDur, numZeroYields);
-          numZeroYields = 0;
-      }
-      else
-          numZeroYields++;
+        if (DEBUG_TASK)
+          qtss_printf(
+              "TaskThread::Entry Time in Yield %qd, numZeroYields %qd \n",
+              yieldDur,
+              numZeroYields);
+        numZeroYields = 0;
+      } else
+        numZeroYields++;
 #endif
     }
   }
@@ -458,7 +469,7 @@ Task *TaskThread::WaitForTask() {
   /* 该函数同样由一个大循环构成。等待任务的通知到达,或者因 stop 的请求而返回。 */
 
   while (true) {
-    SInt64 theCurrentTime = OSTime::Milliseconds();
+    SInt64 theCurrentTime = Core::Time::Milliseconds();
 
     /*
        如果堆里有时间记录，并且这个时间<=系统当前时间（说明任务的运行时间已
@@ -468,10 +479,10 @@ Task *TaskThread::WaitForTask() {
     /* PeekMin 获得堆中的第一个元素（但并不取出） */
     if ((fHeap.PeekMin() != nullptr)
         && (fHeap.PeekMin()->GetValue() <= theCurrentTime)) {
-      if (TASK_DEBUG)
-        qtss_printf(
+      if (DEBUG_TASK)
+        s_printf(
             "TaskThread::WaitForTask found timer-task=%s "
-                "thread %p "
+                "Thread %p "
                 "fHeap.CurrentHeapSize(%" _U32BITARG_ ") "
                 "taskElem=%p "
                 "enclose=%p\n",
@@ -491,7 +502,7 @@ Task *TaskThread::WaitForTask() {
     Assert(theTimeout >= 0);
 
     //
-    // Make sure we can't go to sleep for some ridiculously short period of time
+    // Make sure we can't go to sleep for some ridiculously short period of Time
     // Do not allow a timeout below 10 ms without first verifying reliable udp
     // 1-2mbit live streams.
     // Test with easydarwin.xml pref reliablUDP printfs enabled and look for
@@ -505,13 +516,13 @@ Task *TaskThread::WaitForTask() {
        等待队列里有任务插入并将其取出返回。
        如果返回非空,则返回该队列项所对应的任务对象。
      */
-    OSQueueElem
+    QueueElem
         *theElem = fTaskQueue.DeQueueBlocking(this, (SInt32) theTimeout);
     if (theElem != nullptr) {
-      if (TASK_DEBUG)
-        qtss_printf(
+      if (DEBUG_TASK)
+        s_printf(
             "TaskThread::WaitForTask found signal-task=%s "
-                "thread=%p "
+                "Thread=%p "
                 "fTaskQueue.GetLength(%" _U32BITARG_ ") "
                 "taskElem=%p "
                 "enclose=%p\n",
@@ -524,7 +535,7 @@ Task *TaskThread::WaitForTask() {
     }
 
     // If we are supposed to stop, return nullptr, which signals the caller to stop
-    if (OSThread::GetCurrent()->IsStopRequested())
+    if (Core::Thread::GetCurrent()->IsStopRequested())
       return nullptr;
   }
 }
@@ -546,11 +557,11 @@ bool TaskThreadPool::AddThreads(UInt32 numToAdd) {
   for (UInt32 x = 0; x < numToAdd; x++) {
     sTaskThreadArray[x] = new TaskThread();
     sTaskThreadArray[x]->Start();
-    if (TASK_DEBUG)
-      qtss_printf("TaskThreadPool::AddThreads "
-                      "sTaskThreadArray[%" _U32BITARG_ "]=%p\n",
-                  x,
-                  sTaskThreadArray[x]);
+    if (DEBUG_TASK)
+      s_printf("TaskThreadPool::AddThreads "
+                   "sTaskThreadArray[%" _U32BITARG_ "]=%p\n",
+               x,
+               sTaskThreadArray[x]);
   }
   sNumTaskThreads = numToAdd;
 
@@ -574,13 +585,13 @@ void TaskThreadPool::RemoveThreads() {
   for (UInt32 x = 0; x < sNumTaskThreads; x++)
     sTaskThreadArray[x]->SendStopRequest();
 
-  // Because any (or all) threads may be blocked on the queue, cycle through
+  // Because any (or all) threads may be blocked on the Queue, cycle through
   // all the threads, signalling each one
   for (UInt32 y = 0; y < sNumTaskThreads; y++)
     sTaskThreadArray[y]->fTaskQueue.GetCond()->Signal();
 
   // Ok, now wait for the selected threads to terminate, deleting them and
-  // removing them from the queue.
+  // removing them from the Queue.
   for (UInt32 z = 0; z < sNumTaskThreads; z++)
     delete sTaskThreadArray[z];
 

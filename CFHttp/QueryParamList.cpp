@@ -24,8 +24,10 @@
  *
  */
 
-#include "QueryParamList.h"
-#include "StringParser.h"
+#include <CF/Net/Http/QueryParamList.h>
+#include <CF/StringParser.h>
+
+namespace CF::Net {
 
 QueryParamList::QueryParamList(const std::string &queryString) {
   StrPtrLen
@@ -99,10 +101,10 @@ static void PrintNameAndValue(PLDoubleLinkedListNode<QueryParamListElement> *nod
   // used by QueryParamList::PrintAll
   QueryParamListElement *nvPair = node->fElement;
 
-  qtss_printf("qpl: %s, name %s, val %s\n",
-              (char *) userData,
-              nvPair->mName,
-              nvPair->mValue);
+  s_printf("qpl: %s, name %s, val %s\n",
+           (char *) userData,
+           nvPair->mName,
+           nvPair->mValue);
 }
 
 void QueryParamList::PrintAll(char *idString) {
@@ -250,4 +252,6 @@ bool QueryParamList::IsHex(char c) {
     return true;
 
   return false;
+}
+
 }

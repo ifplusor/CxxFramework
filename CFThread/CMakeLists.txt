@@ -1,7 +1,7 @@
 set(HEADER_FILES
-        include/Task.h
-        include/IdleTask.h
-        include/TimeoutTask.h)
+        include/CF/Thread/Task.h
+        include/CF/Thread/IdleTask.h
+        include/CF/Thread/TimeoutTask.h include/CF/Thread.h)
 
 set(SOURCE_FILES
         Task.cpp

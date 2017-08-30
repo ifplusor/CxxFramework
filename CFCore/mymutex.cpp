@@ -47,9 +47,9 @@
     To Do:
 */
 
-#include "mymutex.h"
+#include "../include/os/mymutex.h"
 #include <stdlib.h>
-#include "SafeStdLib.h"
+#include "cf/sstdlib.h"
 #if __MacOSX__
 
 #ifndef __CORESERVICES__
@@ -58,7 +58,7 @@
 
 #endif
 
-#include "MyAssert.h"
+#include "cf/MyAssert.h"
 
 struct MyMutex {
   SInt32 fCount;

@@ -1,10 +1,10 @@
 set(HEADER_FILES
-        include/base64.h
-        include/md5.h
-        include/md5digest.h
-        include/GetWord.h
-        include/Trim.h
-        include/ConfParser.h)
+        include/CF/base64.h
+        include/CF/md5.h
+        include/CF/md5digest.h
+        include/CF/GetWord.h
+        include/CF/Trim.h
+        include/CF/ConfParser.h)
 
 set(SOURCE_FILES
         base64.c

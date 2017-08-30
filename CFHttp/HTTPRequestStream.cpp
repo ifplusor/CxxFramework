@@ -28,13 +28,14 @@
     Contains:   Implementation of HTTPRequestStream class.
 */
 
-
-#include "HTTPRequestStream.h"
-#include "StringParser.h"
-#include "base64.h"
-#include "OSTime.h"
+#include <CF/Net/Http/HTTPRequestStream.h>
+#include <CF/StringParser.h>
+#include <CF/Core/Time.h>
+#include <CF/base64.h>
 
 #define READ_DEBUGGING 0
+
+using namespace CF::Net;
 
 HTTPRequestStream::HTTPRequestStream(TCPSocket *sock)
     : fSocket(sock),
@@ -118,8 +119,8 @@ CF_Error HTTPRequestStream::ReadRequest() {
         fRetreatBytes = 0;
         Assert(fEncodedBytesRemaining == 0);
       } else {
-        // We don't have any new data, get some from the socket...
-        // 注意我们的 socket 端口是 non blocking
+        // We don't have any new data, get some from the Socket...
+        // 注意我们的 Socket 端口是 non blocking
         CF_Error sockErr = fSocket->Read(
             &fRequestBuffer[fCurOffset],
             (kRequestBufferSizeInBytes - fCurOffset) - 1,
@@ -175,12 +176,12 @@ CF_Error HTTPRequestStream::ReadRequest() {
     fIsDataPacket = false;
 
     if (fPrintRTSP) {
-      DateBuffer theDate;
-      DateTranslator::UpdateDateBuffer(&theDate,
-                                       0); // get the current GMT date and time
-      qtss_printf("\n\n#C->S:\n#time: ms=%"   _U32BITARG_   " date=%s\n",
-                  (UInt32) OSTime::StartTimeMilli_Int(),
-                  theDate.GetDateBuffer());
+      Core::DateBuffer theDate;
+      Core::DateTranslator::UpdateDateBuffer(&theDate,
+                                       0); // get the current GMT date and Time
+      s_printf("\n\n#C->S:\n#Time: ms=%"   _U32BITARG_   " date=%s\n",
+               (UInt32) Core::Time::StartTimeMilli_Int(),
+               theDate.GetDateBuffer());
 
       if (fSocket != NULL) {
         UInt16 serverPort = fSocket->GetLocalPort();
@@ -188,19 +189,19 @@ CF_Error HTTPRequestStream::ReadRequest() {
         StrPtrLen *theLocalAddrStr = fSocket->GetLocalAddrStr();
         StrPtrLen *theRemoteAddrStr = fSocket->GetRemoteAddrStr();
         if (theLocalAddrStr != NULL) {
-          qtss_printf("#server: ip=");
+          s_printf("#server: ip=");
           theLocalAddrStr->PrintStr();
-          qtss_printf(" port=%u\n", serverPort);
+          s_printf(" port=%u\n", serverPort);
         } else {
-          qtss_printf("#server: ip=NULL port=%u\n", serverPort);
+          s_printf("#server: ip=NULL port=%u\n", serverPort);
         }
 
         if (theRemoteAddrStr != NULL) {
-          qtss_printf("#client: ip=");
+          s_printf("#client: ip=");
           theRemoteAddrStr->PrintStr();
-          qtss_printf(" port=%u\n", clientPort);
+          s_printf(" port=%u\n", clientPort);
         } else {
-          qtss_printf("#client: ip=NULL port=%u\n", clientPort);
+          s_printf("#client: ip=NULL port=%u\n", clientPort);
         }
 
       }
@@ -301,7 +302,7 @@ CF_Error HTTPRequestStream::Read(void *ioBuffer,
   }
 
   //
-  // Read data directly from the socket and place it in our buffer
+  // Read data directly from the Socket and place it in our buffer
   UInt32 theNewOffset = 0;
   CF_Error theErr = fSocket->Read(&theIoBuffer[theLengthRead],
                                   inBufLen - theLengthRead,

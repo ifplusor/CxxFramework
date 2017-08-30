@@ -30,14 +30,16 @@
 
 */
 
-#include "UserAgentParser.h"
+#include <CF/Net/Http/UserAgentParser.h>
+
+using namespace CF::Net;
 
 UserAgentParser::UserAgentFields UserAgentParser::sFieldIDs[] =
     {   /* fAttrName, len, id */
         {"qtid", strlen("qtid"), eQtid},
         {"qtver", strlen("qtver"), eQtver},
         {"lang", strlen("lang"), eLang},
-        {"os", strlen("os"), eOs},
+        {"Core", strlen("Core"), eOs},
         {"osver", strlen("osver"), eOsver},
         {"cpu", strlen("cpu"), eCpu}
     };
@@ -144,7 +146,7 @@ void UserAgentParser::Parse(StrPtrLen *inStream) {
   }
   // If we parsed the OS field but not the OSVer field then check and see if
   // the OS field contains the OS version. If it does copy it from there.
-  // (e.g. 'os=Mac%209.2.2' or 'os=Windows%20NT%204.0'.)
+  // (e.g. 'Core=Mac%209.2.2' or 'Core=Windows%20NT%204.0'.)
   if (fFieldData[eOs].fFound && !fFieldData[eOsver].fFound) {
     UInt16 len = (UInt16) fFieldData[eOs].fData.Len;
     char *cp = (char *) fFieldData[eOs].fData.Ptr;

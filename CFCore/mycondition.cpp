@@ -43,9 +43,9 @@
     To Do:
 */
 
-#include "mycondition.h"
+#include "../include/os/mycondition.h"
 #include <stdlib.h>
-#include "SafeStdLib.h"
+#include "cf/sstdlib.h"
 #if __MacOSX__
 
 #ifndef __CORESERVICES__
@@ -55,7 +55,7 @@
 #endif
 
 #include <mach/mach_error.h>
-#include "MyAssert.h"
+#include "cf/MyAssert.h"
 
 struct MyCondition {
   mach_port_t fWaitPort;

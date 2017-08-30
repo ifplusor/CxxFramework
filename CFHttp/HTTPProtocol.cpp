@@ -22,9 +22,12 @@
  * @APPLE_LICENSE_HEADER_END@
  *
  */
-#include "HTTPProtocol.h"
 
-StrPtrLen HTTPProtocol::sMethods[] =
+#include <CF/Net/Http/HTTPProtocol.h>
+
+namespace CF::Net {
+
+CF::StrPtrLen HTTPProtocol::sMethods[] =
     {
         StrPtrLen("GET"),
         StrPtrLen("HEAD"),
@@ -368,4 +371,6 @@ EasyStreamType HTTPProtocol::GetStreamType(StrPtrLen *streamTypeStr) {
   }
 
   return easyIllegalStreamType;
+}
+
 }

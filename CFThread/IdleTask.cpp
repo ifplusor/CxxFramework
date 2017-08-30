@@ -25,19 +25,22 @@
 /*
     File:       IdleTask.cpp
 
-    Contains:   IdleTasks are identical to normal tasks (see task.h) with one exception:
+    Contains:   IdleTasks are identical to normal tasks (see task.h) with one
+                exception:
 
                 You can schedule them for timeouts. If you call SetIdleTimer
-                on one, after the time has elapsed the task object will receive an
-                OS_IDLE event.
+                on one, after the Time has elapsed the task object will receive
+                an OS_IDLE event.
 
 */
 
-#include "IdleTask.h"
-#include <OSTime.h>
+#include <CF/Thread/IdleTask.h>
+#include <CF/Core/Time.h>
+
+using namespace CF::Thread;
 
 // IDLE_TASK_THREAD IMPLEMENTATION:
-std::shared_ptr<IdleTaskThread> IdleTask::sIdleThread = nullptr;
+IdleTaskThread *IdleTask::sIdleThread = nullptr;
 
 IdleTaskThread::~IdleTaskThread() {
   Assert(fIdleHeap.CurrentHeapSize() == 0);
@@ -49,10 +52,10 @@ void IdleTaskThread::SetIdleTimer(IdleTask *activeObj, SInt64 msec) {
   if (activeObj->fIdleElem.IsMemberOfAnyHeap())
     return;
 
-  activeObj->fIdleElem.SetValue(OSTime::Milliseconds() + msec);
+  activeObj->fIdleElem.SetValue(Core::Time::Milliseconds() + msec);
 
   {
-    OSMutexLocker locker(&fHeapMutex);
+    Core::MutexLocker locker(&fHeapMutex);
     fIdleHeap.Insert(&activeObj->fIdleElem);
   }
 
@@ -61,14 +64,14 @@ void IdleTaskThread::SetIdleTimer(IdleTask *activeObj, SInt64 msec) {
 
 void IdleTaskThread::CancelTimeout(IdleTask *idleObj) {
   Assert(idleObj != nullptr);
-  OSMutexLocker locker(&fHeapMutex);
+  Core::MutexLocker locker(&fHeapMutex);
   fIdleHeap.Remove(&idleObj->fIdleElem);
 }
 
 void IdleTaskThread::Entry() {
   // 空闲任务线程启动后，该函数运行。主要由一个大循环构成:
 
-  OSMutexLocker locker(&fHeapMutex);
+  Core::MutexLocker locker(&fHeapMutex);
 
   while (true) {
     // if there are no events to process, block.
@@ -77,9 +80,9 @@ void IdleTaskThread::Entry() {
       fHeapCond.Wait(&fHeapMutex, 1000);
     }
 
-    SInt64 msec = OSTime::Milliseconds();
+    SInt64 msec = Core::Time::Milliseconds();
 
-    // pop elements out of the heap as long as their timeout time has arrived
+    // pop elements out of the Heap as long as their timeout Time has arrived
     while ((fIdleHeap.CurrentHeapSize() > 0)
         && (fIdleHeap.PeekMin()->GetValue() <= msec)) {
       IdleTask *elem = (IdleTask *) fIdleHeap.ExtractMin()->GetEnclosingObject();
@@ -88,7 +91,7 @@ void IdleTaskThread::Entry() {
     }
 
     // we are done sending idle events. If there is a lowest tick count, then
-    // we need to sleep until that time.
+    // we need to sleep until that Time.
     if (fIdleHeap.CurrentHeapSize() > 0) {
       SInt64 timeoutTime = fIdleHeap.PeekMin()->GetValue();
       // because sleep takes a 32 bit number
@@ -102,24 +105,19 @@ void IdleTaskThread::Entry() {
 
 void IdleTask::Initialize() {
   if (!sIdleThread) {
-    sIdleThread = std::shared_ptr<IdleTaskThread>(
-        new IdleTaskThread(),
-        [&](IdleTaskThread *idle) {
-          delete idle;
-          idle = nullptr;
-        });
+    sIdleThread = new IdleTaskThread();
     sIdleThread->Start();
   }
 }
 
 IdleTask::~IdleTask() {
-  // clean up stuff used by idle thread routines
+  // clean up stuff used by idle Thread routines
   Assert(sIdleThread);
 
-  OSMutexLocker locker(&sIdleThread->fHeapMutex);
+  Core::MutexLocker locker(&sIdleThread->fHeapMutex);
 
   // Check to see if there is a pending timeout. If so, get this object
-  // out of the heap
+  // out of the Heap
   if (fIdleElem.IsMemberOfAnyHeap())
     sIdleThread->CancelTimeout(this);
 }

@@ -8,7 +8,7 @@ include(DetectTarget)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
 
-# detect os and architecture
+# detect Core and architecture
 target_platform(CONF_PLATFORM)
 target_architecture(CONF_ARCH)
 
@@ -40,14 +40,14 @@ add_subdirectory(CFSocket)
 add_subdirectory(CFHttp)
 
 set(HEADER_FILES
-        Include/PlatformHeader.h
-        Include/OSHeaders.h
-        Include/revision.h
-        Include/CFDef.h
-        Include/CFEnv.h
-        Include/CFConfigure.h
-        Include/CF.h
-        Include/CFState.h)
+        Include/CF/Platform.h
+        Include/CF/Types.h
+        Include/CF/Revision.h
+        Include/CF/CFDef.h
+        Include/CF/CFEnv.h
+        Include/CF/CFConfigure.h
+        Include/CF/CF.h
+        Include/CF/CFState.h)
 
 set(SOURCE_FILES
         CFEnv.cpp
@@ -63,6 +63,8 @@ else ()
     add_library(CxxFramework SHARED
             ${HEADER_FILES} ${SOURCE_FILES})
 endif ()
+target_include_directories(CxxFramework
+        PUBLIC Include)
 target_link_libraries(CxxFramework
         PUBLIC CFBasic
         PUBLIC CFCore

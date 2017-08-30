@@ -30,7 +30,7 @@
 
 */
 
-#include "TCPListenerSocket.h"
+#include <CF/Net/Socket/TCPListenerSocket.h>
 
 #if !__WinSock__
 
@@ -42,21 +42,23 @@
 
 #endif
 
+using namespace CF::Net;
+
 OS_Error TCPListenerSocket::listen(UInt32 queueLength) {
   if (fFileDesc == EventContext::kInvalidFileDesc)
     return (OS_Error) EBADF;
 
   int err = ::listen(fFileDesc, queueLength);
   if (err != 0)
-    return (OS_Error) OSThread::GetErrno();
+    return (OS_Error) Core::Thread::GetErrno();
   return OS_NoErr;
 }
 
 /*
  * 创建打开流套接字(SOCK_STREAM)端口,并绑定 IP 地址、端口，执行 listen 操作。
- * 注意在这个函数里调用了 SetSocketRcvBufSize 成员函数,以设置这个 socket 的
+ * 注意在这个函数里调用了 SetSocketRcvBufSize 成员函数,以设置这个 Socket 的
  * 接收缓冲区大小为 96K。而内核规定该值最大为 sysctl_rmem_max，可以通过
- * /proc/sys/net/core/rmem_default 和 /proc/sys/net/core/rmem_max 来了解缺省值
+ * /proc/sys/Net/Core/rmem_default 和 /proc/sys/Net/Core/rmem_max 来了解缺省值
  * 和最大值。(注意 proc 下的这两个值也是可写的，可以通过调整这些值来达到优化
  * TCP/IP 的目的。
  */
@@ -65,7 +67,7 @@ OS_Error TCPListenerSocket::Initialize(UInt32 addr, UInt16 port) {
   OS_Error err = this->TCPSocket::Open();
   if (0 == err)
     do {
-      // set SO_REUSEADDR socket option before calling bind.
+      // set SO_REUSEADDR Socket option before calling bind.
 #if !__WinSock__
       // this causes problems on NT (multiple processes can bind simultaneously),
       // so don't do it on NT.
@@ -80,7 +82,7 @@ OS_Error TCPListenerSocket::Initialize(UInt32 addr, UInt16 port) {
       // to run out of memory faster if it gets bogged down, but it is unavoidable.
       this->SetSocketRcvBufSize(512 * 1024);
       err = this->listen(kListenQueueLength);
-      AssertV(err == 0, OSThread::GetErrno());
+      AssertV(err == 0, Core::Thread::GetErrno());
       if (err != 0) break;
 
     } while (false);
@@ -89,22 +91,22 @@ OS_Error TCPListenerSocket::Initialize(UInt32 addr, UInt16 port) {
 }
 
 /*
- * 在 fListeners 申请监听流套接字端口后，一旦 socket 端口有数据,该函数会被调用。
+ * 在 fListeners 申请监听流套接字端口后，一旦 Socket 端口有数据,该函数会被调用。
  * 这个函数的流程是这样的:
- *   1.首先通过 accept 获得客户端的地址以及服务器端新创建的 socket 端口。
+ *   1.首先通过 accept 获得客户端的地址以及服务器端新创建的 Socket 端口。
  *   2.通过 GetSessionTask 创建一个 RTSPSession 的类对象<每个 RTSPSession
- *     对象对应一个 RTSP 连接>，并将新创建的 socket 端口描述符、sockaddr
+ *     对象对应一个 RTSP 连接>，并将新创建的 Socket 端口描述符、sockaddr
  *     信息保存到 RTSPSession 的 TCPSocket 类型成员 fSocket。
  *   3.同时调用 fSocket::SetTask 和 RequestEvent(EV_RE)，这样 EventThread
- *     在监听到这个 socket 端口有数据时，会调用 EventContext::processEvent
+ *     在监听到这个 Socket 端口有数据时，会调用 EventContext::processEvent
  *     函数，在这个函数里会调用 fTask->Signal(Task::kReadEvent)，
  *   4.最终 TaskThread 会调用 RTSPSession::Run 函数。
- * 而 TCPListenerSocket 自己的 socket 端口会继续被申请监听。
+ * 而 TCPListenerSocket 自己的 Socket 端口会继续被申请监听。
  */
 void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
 
-  // we are executing on the same thread as every other
-  // socket, so whatever you do here has to be fast.
+  // we are executing on the same Thread as every other
+  // Socket, so whatever you do here has to be fast.
 
   struct sockaddr_in addr;
 #if __Win32__ || __osf__ || __sgi__ || __hpux__
@@ -112,7 +114,7 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
 #else
   socklen_t size = sizeof(addr);
 #endif
-  Task *theTask = nullptr;
+  Thread::Task *theTask = nullptr;
   TCPSocket *theSocket = nullptr;
 
   // fSocket data member of TCPSocket.
@@ -121,10 +123,10 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
   // test osSocket = -1;
   if (osSocket == -1) {
     // take a look at what this error is.
-    int acceptError = OSThread::GetErrno();
+    int acceptError = Core::Thread::GetErrno();
 
     if (acceptError == EAGAIN) {
-      // If it's EAGAIN, there's nothing on the listen queue right now,
+      // If it's EAGAIN, there's nothing on the listen Queue right now,
       // so modwatch and return
       this->RequestEvent(EV_RE);
       return;
@@ -137,17 +139,17 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
       // if these error gets returned, we're out of file descriptors, the server
       // is going to be failing on sockets, logs, qtgroups and qtuser auth file
       // accesses and movie files. The server is not functional.
-      qtss_printf("Out of File Descriptors. Set max connections lower and check"
-                      " for competing usage from other processes. Exiting.");
+      s_printf("Out of File Descriptors. Set max connections lower and check"
+                   " for competing usage from other processes. Exiting.");
       exit(EXIT_FAILURE);
     } else {
       char errStr[256];
       errStr[sizeof(errStr) - 1] = 0;
-      qtss_snprintf(errStr,
-                    sizeof(errStr) - 1,
-                    "accept error = %d '%s' on socket. Clean up and continue.",
-                    acceptError,
-                    strerror(acceptError));
+      s_snprintf(errStr,
+                 sizeof(errStr) - 1,
+                 "accept error = %d '%s' on Socket. Clean up and continue.",
+                 acceptError,
+                 strerror(acceptError));
       WarnV((acceptError == 0), errStr);
 
       // TODO(james): there have some questions.
@@ -172,7 +174,7 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
       theSocket->fState &= ~kConnected; // turn off connected state
   } else {
     Assert(osSocket != EventContext::kInvalidFileDesc);
-    // set options on the socket
+    // set options on the Socket
 
     // we are a server, always disable nagle algorithm
     int one = 1;
@@ -181,14 +183,14 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
                            TCP_NODELAY,
                            (char *) &one,
                            sizeof(int));
-    AssertV(err == 0, OSThread::GetErrno());
+    AssertV(err == 0, Core::Thread::GetErrno());
 
     err = ::setsockopt(osSocket,
                        SOL_SOCKET,
                        SO_KEEPALIVE,
                        (char *) &one,
                        sizeof(int));
-    AssertV(err == 0, OSThread::GetErrno());
+    AssertV(err == 0, Core::Thread::GetErrno());
 
     int sndBufSize = 96L * 1024L;
     err = ::setsockopt(osSocket,
@@ -196,9 +198,9 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
                        SO_SNDBUF,
                        (char *) &sndBufSize,
                        sizeof(int));
-    AssertV(err == 0, OSThread::GetErrno());
+    AssertV(err == 0, Core::Thread::GetErrno());
 
-    // setup the socket. When there is data on the socket,
+    // setup the Socket. When there is data on the Socket,
     // theTask will get an kReadEvent event
     theSocket->Set(osSocket, &addr);
     theSocket->InitNonBlocking(osSocket);
@@ -206,7 +208,7 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
     theSocket->RequestEvent(EV_RE);
 
     // The Message Task processing threads
-    theTask->SetThreadPicker(Task::GetBlockingTaskThreadPicker());
+    theTask->SetThreadPicker(Thread::Task::GetBlockingTaskThreadPicker());
   }
 
   /*
@@ -216,13 +218,13 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
    */
   if (fSleepBetweenAccepts) {
     // We are at our maximum supported sockets
-    // slow down so we have time to process the active ones (we will respond with errors or service).
-    // wake up and execute again after sleeping. The timer must be reset each time through
-    //qtss_printf("TCPListenerSocket slowing down\n");
+    // slow down so we have Time to process the active ones (we will respond with errors or service).
+    // wake up and execute again after sleeping. The timer must be reset each Time through
+    //s_printf("TCPListenerSocket slowing down\n");
     this->SetIdleTimer(kTimeBetweenAcceptsInMsec); //sleep 1 second
   } else {
     // sleep until there is a read event outstanding (another client wants to connect)
-    //qtss_printf("TCPListenerSocket normal speed\n");
+    //s_printf("TCPListenerSocket normal speed\n");
     this->RequestEvent(EV_RE);
   }
 
@@ -234,15 +236,15 @@ SInt64 TCPListenerSocket::Run() {
 
   //
   // ProcessEvent cannot be going on when this object gets deleted, because
-  // the resolve / release mechanism of EventContext will ensure this thread
+  // the resolve / release mechanism of EventContext will ensure this Thread
   // will block before destructing stuff.
-  if (events & Task::kKillEvent)
+  if (events & Thread::Task::kKillEvent)
     return -1;
 
   // This function will get called when we have run out of file descriptors.
-  // All we need to do is check the listen queue to see if the situation has
+  // All we need to do is check the listen Queue to see if the situation has
   // cleared up.
   (void) this->GetEvents();
-  this->ProcessEvent(Task::kReadEvent);
+  this->ProcessEvent(Thread::Task::kReadEvent);
   return 0;
 }

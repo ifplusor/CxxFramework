@@ -28,8 +28,8 @@
 */
 
 
-#include <base64.h>
-#include "ClientSocket.h"
+#include <CF/base64.h>
+#include <CF/Net/Socket/ClientSocket.h>
 
 #if !__WinSock__
 
@@ -39,7 +39,7 @@
 
 #endif
 
-#define CLIENT_SOCKET_DEBUG 0
+using namespace CF::Net;
 
 ClientSocket::ClientSocket()
     : fHostAddr(0),
@@ -119,7 +119,7 @@ OS_Error ClientSocket::SendSendBuffer(TCPSocket *inSocket) {
   if (theErr == OS_NoErr)
     fSendBuffer.Len = fSentLength = 0; // Message was sent
   else {
-    // Message wasn't entirely sent. Caller should wait for a read event on the POST socket
+    // Message wasn't entirely sent. Caller should wait for a read event on the POST Socket
     fSocketP = inSocket;
     fEventMask = EV_WR;
   }
@@ -129,42 +129,42 @@ OS_Error ClientSocket::SendSendBuffer(TCPSocket *inSocket) {
 TCPClientSocket::TCPClientSocket(UInt32 inSocketType)
     : fSocket(nullptr, inSocketType) {
   //
-  // It is necessary to open the socket right when we construct the
+  // It is necessary to open the Socket right when we construct the
   // object because the QTSSSplitterModule that uses this class uses
-  // the socket file descriptor in the QTSS_CreateStreamFromSocket call.
+  // the Socket file descriptor in the QTSS_CreateStreamFromSocket call.
   fSocketP = &fSocket;
   this->Open(&fSocket);
 }
 
 void TCPClientSocket::SetOptions(int sndBufSize,
-                                 int rcvBufSize) {   //set options on the socket
+                                 int rcvBufSize) {   //set options on the Socket
 
-  //qtss_printf("TCPClientSocket::SetOptions sndBufSize=%d,rcvBuf=%d,keepAlive=%d,noDelay=%d\n",sndBufSize,rcvBufSize,(int)keepAlive,(int)noDelay);
+  //s_printf("TCPClientSocket::SetOptions sndBufSize=%d,rcvBuf=%d,keepAlive=%d,noDelay=%d\n",sndBufSize,rcvBufSize,(int)keepAlive,(int)noDelay);
   int err = ::setsockopt(fSocket.GetSocketFD(),
                          SOL_SOCKET,
                          SO_SNDBUF,
                          (char *) &sndBufSize,
                          sizeof(int));
-  AssertV(err == 0, OSThread::GetErrno());
+  AssertV(err == 0, Core::Thread::GetErrno());
 
   err = ::setsockopt(fSocket.GetSocketFD(),
                      SOL_SOCKET,
                      SO_RCVBUF,
                      (char *) &rcvBufSize,
                      sizeof(int));
-  AssertV(err == 0, OSThread::GetErrno());
+  AssertV(err == 0, Core::Thread::GetErrno());
 
 #if __FreeBSD__ || __MacOSX__
-  struct timeval time;
-  //int len = sizeof(time);
-  time.tv_sec = 0;
-  time.tv_usec = 0;
+  struct timeval Time;
+  //int len = sizeof(Time);
+  Time.tv_sec = 0;
+  Time.tv_usec = 0;
 
-  err = ::setsockopt(fSocket.GetSocketFD(), SOL_SOCKET, SO_RCVTIMEO, (char*)&time, sizeof(time));
-  AssertV(err == 0, OSThread::GetErrno());
+  err = ::setsockopt(fSocket.GetSocketFD(), SOL_SOCKET, SO_RCVTIMEO, (char*)&Time, sizeof(Time));
+  AssertV(err == 0, Core::Thread::GetErrno());
 
-  err = ::setsockopt(fSocket.GetSocketFD(), SOL_SOCKET, SO_SNDTIMEO, (char*)&time, sizeof(time));
-  AssertV(err == 0, OSThread::GetErrno());
+  err = ::setsockopt(fSocket.GetSocketFD(), SOL_SOCKET, SO_SNDTIMEO, (char*)&Time, sizeof(Time));
+  AssertV(err == 0, Core::Thread::GetErrno());
 #endif
 
 }
@@ -223,13 +223,13 @@ OS_Error HTTPClientSocket::Read(void *inBuffer,
   //
   // Bring up the GET connection if we need to
   if (!fGetSocket.IsConnected()) {
-#if CLIENT_SOCKET_DEBUG
-    qtss_printf("HTTPClientSocket::Read: Sending GET\n");
+#if DEBUG_CLIENT_SOCKET
+    s_printf("HTTPClientSocket::Read: Sending GET\n");
 #endif
-    qtss_sprintf(fSendBuffer.Ptr,
-                 "GET %s HTTP/1.0\r\nX-SessionCookie: %"   _U32BITARG_   "\r\nAccept: application/x-rtsp-rtp-interleaved\r\nUser-Agent: QTSS/2.0\r\n\r\n",
-                 fURL.Ptr,
-                 fCookie);
+    s_sprintf(fSendBuffer.Ptr,
+              "GET %s HTTP/1.0\r\nX-SessionCookie: %"   _U32BITARG_   "\r\nAccept: application/x-rtsp-rtp-interleaved\r\nUser-Agent: QTSS/2.0\r\n\r\n",
+              fURL.Ptr,
+              fCookie);
     fSendBuffer.Len = ::strlen(fSendBuffer.Ptr);
     Assert(fSentLength == 0);
   }
@@ -265,8 +265,8 @@ OS_Error HTTPClientSocket::Read(void *inBuffer,
         // real RTSP response data. First skip past the \r\n\r\n
         theGetEnd += 4;
 
-#if CLIENT_SOCKET_DEBUG
-        qtss_printf("HTTPClientSocket::Read: Received GET response\n");
+#if DEBUG_CLIENT_SOCKET
+        s_printf("HTTPClientSocket::Read: Received GET response\n");
 #endif
 
         // Whatever remains is part of an RTSP request, so move that to
@@ -280,10 +280,10 @@ OS_Error HTTPClientSocket::Read(void *inBuffer,
       Assert(fGetReceived < inLength);
     } while (*outRcvLen > 0);
 
-#if CLIENT_SOCKET_DEBUG
-    qtss_printf("HTTPClientSocket::Read: Waiting for GET response\n");
+#if DEBUG_CLIENT_SOCKET
+    s_printf("HTTPClientSocket::Read: Waiting for GET response\n");
 #endif
-    // Message wasn't entirely received. Caller should wait for a read event on the GET socket
+    // Message wasn't entirely received. Caller should wait for a read event on the GET Socket
     Assert(theErr != OS_NoErr);
     fSocketP = &fGetSocket;
     fEventMask = EV_RE;
@@ -294,15 +294,15 @@ OS_Error HTTPClientSocket::Read(void *inBuffer,
                            inLength - fGetReceived,
                            outRcvLen);
   if (theErr != OS_NoErr) {
-#if CLIENT_SOCKET_DEBUG
-    //qtss_printf("HTTPClientSocket::Read: Waiting for data\n");
+#if DEBUG_CLIENT_SOCKET
+    //s_printf("HTTPClientSocket::Read: Waiting for data\n");
 #endif
     fSocketP = &fGetSocket;
     fEventMask = EV_RE;
   }
-#if CLIENT_SOCKET_DEBUG
+#if DEBUG_CLIENT_SOCKET
   //else
-      //qtss_printf("HTTPClientSocket::Read: Got some data\n");
+      //s_printf("HTTPClientSocket::Read: Got some data\n");
 #endif
   return theErr;
 }
@@ -314,13 +314,13 @@ OS_Error HTTPClientSocket::SendV(iovec *inVec, UInt32 inNumVecs) {
     fPostSocket = new TCPSocket(nullptr, fSocketType);
 
   if (!fPostSocket->IsConnected()) {
-#if CLIENT_SOCKET_DEBUG
-    qtss_printf("HTTPClientSocket::Send: Sending POST\n");
+#if DEBUG_CLIENT_SOCKET
+    s_printf("HTTPClientSocket::Send: Sending POST\n");
 #endif
-    qtss_sprintf(fSendBuffer.Ptr,
-                 "POST %s HTTP/1.0\r\nX-SessionCookie: %"   _U32BITARG_   "\r\nAccept: application/x-rtsp-rtp-interleaved\r\nUser-Agent: QTSS/2.0\r\n\r\n",
-                 fURL.Ptr,
-                 fCookie);
+    s_sprintf(fSendBuffer.Ptr,
+              "POST %s HTTP/1.0\r\nX-SessionCookie: %"   _U32BITARG_   "\r\nAccept: application/x-rtsp-rtp-interleaved\r\nUser-Agent: QTSS/2.0\r\n\r\n",
+              fURL.Ptr,
+              fCookie);
     fSendBuffer.Len = ::strlen(fSendBuffer.Ptr);
     this->encodeVec(inVec, inNumVecs);
   }
@@ -335,8 +335,8 @@ OS_Error HTTPClientSocket::SendV(iovec *inVec, UInt32 inNumVecs) {
   if (fSendBuffer.Len == 0)
     this->encodeVec(inVec, inNumVecs);
 
-#if CLIENT_SOCKET_DEBUG
-  //qtss_printf("HTTPClientSocket::Send: Sending data\n");
+#if DEBUG_CLIENT_SOCKET
+  //s_printf("HTTPClientSocket::Send: Sending data\n");
 #endif
   return this->SendSendBuffer(fPostSocket);
 }

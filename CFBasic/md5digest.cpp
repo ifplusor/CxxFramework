@@ -28,8 +28,8 @@
     Contains:   Implements the function declared in md5digest.h
 */
 
-#include "md5.h"
-#include "md5digest.h"
+#include <CF/md5.h>
+#include <CF/md5digest.h>
 
 static StrPtrLen sColon(":", 1);
 static StrPtrLen sMD5Sess("md5-sess", 8);

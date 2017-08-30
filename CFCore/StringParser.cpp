@@ -29,8 +29,9 @@
 
 */
 
-#include "StringParser.h"
-#include "MyAssert.h"
+#include <CF/StringParser.h>
+
+using namespace CF;
 
 UInt8 StringParser::sNonWordFSlashMask[] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //0-9
@@ -208,7 +209,7 @@ UInt8 StringParser::sNonWhitespaceMask[] = {
 };
 
 UInt8 StringParser::sEOLWhitespaceMask[] = {
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 1, //0-9     \t is a stop
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 1, //0-9     '\t' is a stop
     1, 1, 1, 1, 0, 0, 0, 0, 0, 0, //10-19   '\r' & '\n' are stop conditions
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //20-29
     0, 0, 1, 0, 0, 0, 0, 0, 0, 0, //30-39   ' '  is a stop
@@ -237,7 +238,7 @@ UInt8 StringParser::sEOLWhitespaceMask[] = {
 };
 
 UInt8 StringParser::sEOLWhitespaceQueryMask[] = {
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 1, //0-9      \t is a stop
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 1, //0-9      '\t' is a stop
     1, 1, 1, 1, 0, 0, 0, 0, 0, 0, //10-19    '\r' & '\n' are stop conditions
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //20-29
     0, 0, 1, 0, 0, 0, 0, 0, 0, 0, //30-39    ' '  is a stop
@@ -511,28 +512,27 @@ void StringParser::advanceMark() {
   fStartGet++;
 }
 
-#if STRINGPARSER_TESTING
-bool StringParser::Test()
-{
-    static char* string1 = "RTSP 200 OK\r\nContent-Type: MeowMix\r\n\t   \n3450";
+#if STRING_PARSER_TESTING
+bool StringParser::Test() {
+  static char *string1 = "RTSP 200 OK\r\nContent-Type: MeowMix\r\n\t   \n3450";
 
-    StrPtrLen theString(string1, strlen(string1));
+  StrPtrLen theString(string1, strlen(string1));
 
-    StringParser victim(&theString);
+  StringParser victim(&theString);
 
-    StrPtrLen rtsp;
-    SInt32 theInt = victim.ConsumeInteger();
-    if (theInt != 0)
-        return false;
-    victim.ConsumeWord(&rtsp);
-    if ((rtsp.len != 4) && (strncmp(rtsp.Ptr, "RTSP", 4) != 0))
-        return false;
+  StrPtrLen rtsp;
+  SInt32 theInt = victim.ConsumeInteger();
+  if (theInt != 0)
+    return false;
+  victim.ConsumeWord(&rtsp);
+  if ((rtsp.Len != 4) && (strncmp(rtsp.Ptr, "RTSP", 4) != 0))
+    return false;
 
-    victim.ConsumeWhiteSpace();
-    theInt = victim.ConsumeInteger();
-    if (theInt != 200)
-        return false;
+  victim.ConsumeWhitespace();
+  theInt = victim.ConsumeInteger();
+  if (theInt != 200)
+    return false;
 
-    return true;
+  return true;
 }
 #endif

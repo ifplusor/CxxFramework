@@ -23,7 +23,9 @@
  *
  */
 
-#include "MyAssert.h"
+#include <CF/MyAssert.h>
+
+using namespace CF;
 
 static AssertLogger *sLogger = nullptr;
 
@@ -35,7 +37,7 @@ void MyAssert(char *inMessage) {
   if (sLogger != nullptr)
     sLogger->LogAssert(inMessage);
   else {
-    qtss_printf("%s\n", inMessage);
+    s_printf("%s\n", inMessage);
 #if __Win32__
     DebugBreak();
 #else

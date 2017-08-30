@@ -1,14 +1,14 @@
 set(HEADER_FILES
-        include/ev.h
-        include/ClientSocket.h
-        include/EventContext.h
-        include/Socket.h
-        include/SocketUtils.h
-        include/TCPListenerSocket.h
-        include/TCPSocket.h
-        include/UDPDemuxer.h
-        include/UDPSocket.h
-        include/UDPSocketPool.h)
+        include/CF/Net/ev.h
+        include/CF/Net/Socket/ClientSocket.h
+        include/CF/Net/Socket/EventContext.h
+        include/CF/Net/Socket/Socket.h
+        include/CF/Net/Socket/SocketUtils.h
+        include/CF/Net/Socket/TCPListenerSocket.h
+        include/CF/Net/Socket/TCPSocket.h
+        include/CF/Net/Socket/UDPDemuxer.h
+        include/CF/Net/Socket/UDPSocket.h
+        include/CF/Net/Socket/UDPSocketPool.h)
 
 set(SOURCE_FILES
         ClientSocket.cpp
@@ -28,8 +28,7 @@ elseif (${CONF_PLATFORM} STREQUAL "Win32")
 elseif (${CONF_PLATFORM} STREQUAL "MinGW")
     set(SOURCE_FILES ${SOURCE_FILES} win32ev.cpp)
 else (${CONF_PLATFORM} STREQUAL "OSX")
-    set(HEADER_FILES ${HEADER_FILES} include/tempcalls.h)
-#    set(SOURCE_FILES ${SOURCE_FILES} ev.cpp)
+    set(HEADER_FILES ${HEADER_FILES} include/CF/Net/tempcalls.h)
 endif ()
 
 add_library(CFSocket STATIC

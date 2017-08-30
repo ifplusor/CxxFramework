@@ -29,11 +29,14 @@
 
 */
 
-#include <string.h>
 #include <ctype.h>
-#include <stdio.h>
-#include "StringTranslator.h"
-#include <MyAssert.h>
+#include <CF/StringTranslator.h>
+
+#if STRING_TRANSLATOR_TESTING
+#include <string.h>
+#endif
+
+using namespace CF;
 
 SInt32 StringTranslator::DecodeURL(const char *inSrc,
                                    SInt32 inSrcLen,
@@ -154,7 +157,7 @@ SInt32 StringTranslator::EncodeURL(const char *inSrc,
       if (inDestLen - theLengthWritten < 3)
         return OS_NotEnoughSpace;
 
-      qtss_sprintf(ioDest, "%%%X", (unsigned char) *inSrc);
+      s_sprintf(ioDest, "%%%X", (unsigned char) *inSrc);
       ioDest += 3;
       theLengthWritten += 3;
       inSrc++;
@@ -194,7 +197,7 @@ SInt32 StringTranslator::EncodeURL(const char *inSrc,
         if ((inDestLen - theLengthWritten) < 3)
           return OS_NotEnoughSpace;
 
-        qtss_sprintf(ioDest, "%%%X", (int) *inSrc);
+        s_sprintf(ioDest, "%%%X", (int) *inSrc);
         ioDest += 3;
         theLengthWritten += 3;
         break;
@@ -219,9 +222,8 @@ void StringTranslator::DecodePath(char *inSrc, UInt32 inSrcLen) {
       inSrc[x] = kPathDelimiterChar;
 }
 
-#if STRINGTRANSLATORTESTING
-bool StringTranslator::Test()
-{
+#if STRING_TRANSLATOR_TESTING
+Bool16 StringTranslator::Test() {
     //static char* test1 = "/%5D%3f%7eAveryweird%7C/and/long/path/ya/%5d%3F%7eAveryweird%7C/and/long/p%40/ya/%5D%3F%7EAveryweird%7C/and/long/path/ya/%5D%3F%7EAveryweird%7C/and/long/path/ya/%2560%2526a%20strange%3B%23%3D%25filename"
     static char dest[1000];
     static char* test1 = "/Hello%23%20 I want%28don't%29";

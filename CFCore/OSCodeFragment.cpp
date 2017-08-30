@@ -30,7 +30,7 @@
 
 */
 
-#include "SafeStdLib.h"
+#include "cf/sstdlib.h"
 
 #if __Win32__
 // Win32 includes here
@@ -41,7 +41,7 @@
 #include <dlfcn.h>
 #endif
 
-#include "OSCodeFragment.h"
+#include "../include/os/OSCodeFragment.h"
 
 void OSCodeFragment::Initialize() {
   // does nothing...should do any CFM initialization here

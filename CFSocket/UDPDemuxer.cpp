@@ -29,12 +29,14 @@
 
 */
 
-#include "UDPDemuxer.h"
+#include <CF/Net/Socket/UDPDemuxer.h>
+
+using namespace CF::Net;
 
 OS_Error UDPDemuxer::RegisterTask(UInt32 inRemoteAddr, UInt16 inRemotePort,
                                   UDPDemuxerTask *inTaskP) {
   Assert(NULL != inTaskP);
-  OSMutexLocker locker(&fMutex);
+  Core::MutexLocker locker(&fMutex);
   if (this->GetTask(inRemoteAddr, inRemotePort) != NULL)
     return (OS_Error) EPERM;
   inTaskP->set(inRemoteAddr, inRemotePort);
@@ -44,7 +46,7 @@ OS_Error UDPDemuxer::RegisterTask(UInt32 inRemoteAddr, UInt16 inRemotePort,
 
 OS_Error UDPDemuxer::UnregisterTask(UInt32 inRemoteAddr, UInt16 inRemotePort,
                                     UDPDemuxerTask *inTaskP) {
-  OSMutexLocker locker(&fMutex);
+  Core::MutexLocker locker(&fMutex);
   //remove by executing a lookup based on key information
   UDPDemuxerTask *theTask = this->GetTask(inRemoteAddr, inRemotePort);
 

@@ -30,7 +30,7 @@
 */
 
 #include <string.h>
-#include "SocketUtils.h"
+#include <CF/Net/Socket/SocketUtils.h>
 
 #if !__WinSock__
 
@@ -74,9 +74,11 @@ struct clucall_vector clua_vectors[] = {
 
 #endif /* TRUCLUSTER */
 
+using namespace CF::Net;
+
 UInt32 SocketUtils::sNumIPAddrs = 0;
 SocketUtils::IPAddrInfo *SocketUtils::sIPAddrInfoArray = nullptr;
-OSMutex SocketUtils::sMutex;
+CF::Core::Mutex SocketUtils::sMutex;
 
 #if __FreeBSD__
 
@@ -358,7 +360,7 @@ void SocketUtils::Initialize(bool lookupDNSName) {
   tempSocket = -1;
 
   //walk through the list of IP addrs twice. Once to find out how many,
-  //the second time to actually grab their information
+  //the second Time to actually grab their information
   char *ifReqIter = nullptr;
   sNumIPAddrs = 0;
 

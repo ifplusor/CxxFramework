@@ -28,8 +28,10 @@
     Contains:   Impelementation of object in .h
 */
 
-#include "HTTPResponseStream.h"
-#include <OSTime.h>
+#include <CF/Net/Http/HTTPResponseStream.h>
+#include <CF/Core/Time.h>
+
+using namespace CF::Net;
 
 CF_Error HTTPResponseStream::WriteV(iovec *inVec,
                                       UInt32 inNumVectors,
@@ -50,13 +52,12 @@ CF_Error HTTPResponseStream::WriteV(iovec *inVec,
     theErr = fSocket->WriteV(inVec, inNumVectors, &theLengthSent);
 
     if (fPrintRTSP) {
-      DateBuffer theDate;
-      DateTranslator::UpdateDateBuffer(&theDate,
-                                       0); // get the current GMT date and time
+      Core::DateBuffer theDate;
+      Core::DateTranslator::UpdateDateBuffer(&theDate, 0); // get the current GMT date and Time
 
-      qtss_printf("\n#S->C:\n#time: ms=%"   _U32BITARG_   " date=%s\n",
-                  (UInt32) OSTime::StartTimeMilli_Int(),
-                  theDate.GetDateBuffer());
+      s_printf("\n#S->C:\n#Time: ms=%"   _U32BITARG_   " date=%s\n",
+               (UInt32) Core::Time::StartTimeMilli_Int(),
+               theDate.GetDateBuffer());
       for (UInt32 i = 0; i < inNumVectors; i++) {
         StrPtrLen str((char *) inVec[i].iov_base, (UInt32) inVec[i].iov_len);
         str.PrintStrEOL();
@@ -96,7 +97,7 @@ CF_Error HTTPResponseStream::WriteV(iovec *inVec,
     *outLengthSent = theLengthSent;
 
   // Update the StringFormatter fBytesWritten variable... this data
-  // wasn't buffered in the output buffer at any time, so if we
+  // wasn't buffered in the output buffer at any Time, so if we
   // don't do this, this amount would get lost
   fBytesWritten += theLengthSent;
 
@@ -141,12 +142,12 @@ CF_Error HTTPResponseStream::Flush() {
   UInt32 amtInBuffer = this->GetCurrentOffset() - fBytesSentInBuffer;
   if (amtInBuffer > 0) {
     if (fPrintRTSP) {
-      DateBuffer theDate;
-      DateTranslator::UpdateDateBuffer(&theDate, 0); // get the current GMT date and time
+      Core::DateBuffer theDate;
+      Core::DateTranslator::UpdateDateBuffer(&theDate, 0); // get the current GMT date and Time
 
-      qtss_printf("\n#S->C:\n#time: ms=%"   _U32BITARG_   " date=%s\n",
-                  (UInt32) OSTime::StartTimeMilli_Int(),
-                  theDate.GetDateBuffer());
+      s_printf("\n#S->C:\n#Time: ms=%"   _U32BITARG_   " date=%s\n",
+               (UInt32) Core::Time::StartTimeMilli_Int(),
+               theDate.GetDateBuffer());
       StrPtrLen str(this->GetBufPtr() + fBytesSentInBuffer, amtInBuffer);
       str.PrintStrEOL();
     }

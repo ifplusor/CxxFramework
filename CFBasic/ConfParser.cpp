@@ -23,9 +23,10 @@
  *
  */
 
-#include "ConfParser.h"
-#include "GetWord.h"
-#include "Trim.h"
+#include <string.h>
+#include <CF/ConfParser.h>
+#include <CF/GetWord.h>
+#include <CF/Trim.h>
 
 #if TEST_CONF_PARSER
 
@@ -43,7 +44,7 @@ static bool SampleConfigSetter(const char *paramName,
     x++;
   }
 
-  qtss_printf("\n");
+  s_printf("\n");
 
   return false;
 }
@@ -60,18 +61,18 @@ static void DisplayConfigErr(const char *fname,
                              const char *lineBuff,
                              const char *errMessage) {
 
-  qtss_printf("- Configuration file error:\n");
+  s_printf("- Configuration file error:\n");
 
   if (lineCount)
-    qtss_printf("  file: %s, line# %i\n", fname, lineCount);
+    s_printf("  file: %s, line# %i\n", fname, lineCount);
   else
-    qtss_printf("  file: %s\n", fname);
+    s_printf("  file: %s\n", fname);
 
   if (lineBuff)
-    qtss_printf("  text: %s", lineBuff); // lineBuff already includes a \n
+    s_printf("  text: %s", lineBuff); // lineBuff already includes a \n
 
   if (errMessage)
-    qtss_printf("  reason: %s\n", errMessage); // lineBuff already includes a \n
+    s_printf("  reason: %s\n", errMessage); // lineBuff already includes a \n
 }
 
 int ParseConfigFile(bool allowNullValues,
@@ -119,7 +120,7 @@ int ParseConfigFile(bool allowNullValues,
           // it's a comment
           // probably do nothing in release version?
 
-          //qtss_printf( "comment: %s" , &lineBuff[1] );
+          //s_printf( "comment: %s" , &lineBuff[1] );
 
           error = 0;
 
@@ -134,7 +135,7 @@ int ParseConfigFile(bool allowNullValues,
 
           Assert(*wordBuff);
 
-          param = new char[strlen(wordBuff) + 1];
+          param = new char[::strlen(wordBuff) + 1];
 
           Assert(param);
 
@@ -142,7 +143,7 @@ int ParseConfigFile(bool allowNullValues,
             const char *values[kConfParserMaxParamValues + 1];
             int maxValues = 0;
 
-            strcpy(param, wordBuff);
+            ::strcpy(param, wordBuff);
 
             values[maxValues] = nullptr;
 
@@ -156,12 +157,12 @@ int ParseConfigFile(bool allowNullValues,
                 else
                   next = GetWord(wordBuff, next, wordBuffSize);
 
-                char *value = new char[strlen(wordBuff) + 1];
+                char *value = new char[::strlen(wordBuff) + 1];
 
                 Assert(value);
 
                 if (value) {
-                  strcpy(value, wordBuff);
+                  ::strcpy(value, wordBuff);
 
                   values[maxValues++] = value;
                   values[maxValues] = 0;
@@ -203,7 +204,7 @@ int ParseConfigFile(bool allowNullValues,
     (void) fclose(configFile);
   }
   //  else {
-  //      qtss_printf("Couldn't open config file at: %s\n", fname);
+  //      s_printf("Couldn't open config file at: %s\n", fname);
   //  }
 
   return error;
