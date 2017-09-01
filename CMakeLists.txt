@@ -30,6 +30,13 @@ else ()
     message(FATAL_ERROR "no configure for ${CMAKE_SYSTEM_NAME}-${CONF_PLATFORM}, quit!")
 endif ()
 
+# find dependencies
+find_package(Boost)
+if (NOT Boost_FOUND)
+    message(WARNING "can not found boost!")
+endif ()
+
+#add_subdirectory(ThirdParty)
 
 include_directories(Include)
 
