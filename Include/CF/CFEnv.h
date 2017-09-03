@@ -65,7 +65,7 @@ class CFEnv {
   static char sServerHeader[kMaxServerHeaderLen];
   static StrPtrLen sServerHeaderStr;
 
-  friend CF::Net::EventThread;
+  friend class CF::Net::EventThread;
 };
 
 }
