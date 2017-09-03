@@ -45,16 +45,18 @@ add_library(CFCore STATIC
         ${HEADER_FILES} ${SOURCE_FILES})
 target_include_directories(CFCore
         PUBLIC include)
-target_compile_options(CFCore
-        PRIVATE -fPIC)
 
-if (${CONF_PLATFORM} STREQUAL "Linux")
+if (NOT (${CONF_PLATFORM} STREQUAL "Win32"))
+    target_compile_options(CFCore
+            PRIVATE -fPIC)
+endif ()
+
+if (__PTHREADS__)
     target_link_libraries(CFCore
             PUBLIC pthread)
-elseif (${CONF_PLATFORM} STREQUAL "Win32")
-    target_link_libraries(CFCore
-            PUBLIC winmm)
-elseif (${CONF_PLATFORM} STREQUAL "MinGW")
+endif ()
+
+if ((${CONF_PLATFORM} STREQUAL "Win32") OR (${CONF_PLATFORM} STREQUAL "MinGW"))
     target_link_libraries(CFCore
             PUBLIC winmm)
 endif ()

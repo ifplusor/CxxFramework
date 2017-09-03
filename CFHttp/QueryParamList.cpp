@@ -1,4 +1,3 @@
-
 /*
  *
  * @APPLE_LICENSE_HEADER_START@
@@ -27,20 +26,20 @@
 #include <CF/Net/Http/QueryParamList.h>
 #include <CF/StringParser.h>
 
-namespace CF::Net {
+using namespace CF::Net;
 
 QueryParamList::QueryParamList(const std::string &queryString) {
-  StrPtrLen
-      querySPL(const_cast<char *>(queryString.c_str()), queryString.size());
+  StrPtrLen querySPL(const_cast<char *>(queryString.c_str()),
+                     queryString.size());
 
-  fNameValueQueryParamlist = new PLDoubleLinkedList<QueryParamListElement>;
+  fNameValueQueryParamlist = new PLDoubleLinkedList<QueryParamListElement>();
 
   this->BulidList(&querySPL);
 }
 
-QueryParamList::QueryParamList(StrPtrLen *querySPL) {
+QueryParamList::QueryParamList(CF::StrPtrLen *querySPL) {
   // ctor from StrPtrLen
-  fNameValueQueryParamlist = new PLDoubleLinkedList<QueryParamListElement>;
+  fNameValueQueryParamlist = new PLDoubleLinkedList<QueryParamListElement>();
 
   this->BulidList(querySPL);
 }
@@ -49,12 +48,12 @@ QueryParamList::QueryParamList(char *queryString) {
   // ctor from char*
   StrPtrLen querySPL(queryString);
 
-  fNameValueQueryParamlist = new PLDoubleLinkedList<QueryParamListElement>;
+  fNameValueQueryParamlist = new ::PLDoubleLinkedList<QueryParamListElement>();
 
   this->BulidList(&querySPL);
 }
 
-void QueryParamList::BulidList(StrPtrLen *querySPL) {
+void QueryParamList::BulidList(CF::StrPtrLen *querySPL) {
   // parse the string and build the name/value list from the tokens.
   // the string is a 'form' encoded query string ( see rfc - 1808 )
 
@@ -68,35 +67,31 @@ void QueryParamList::BulidList(StrPtrLen *querySPL) {
     // leaves "=..." in cgiParser, puts item keywd in theCGIParamName
     queryParser.ConsumeUntil(&theCGIParamName, '=');
 
-    //if ( queryParser.GetDataRemaining() > 1  )
     if (queryParser.GetDataRemaining() >= 1) {
-      /* change,邵帅，20160614,对于"xxxxx="这种会陷入死循环，阻塞任务线程。*/
 
       queryParser.ConsumeLength(&theCGIParamValue, 1);   // the '='
 
       stopCharPtr = queryParser.GetCurrentPosition();
-      if (*stopCharPtr == '"') // if quote read to next quote
-      {
+      if (*stopCharPtr == '"') { // if quote read to next quote
         queryParser.ConsumeLength(nullptr, 1);
         queryParser.ConsumeUntil(&theCGIParamValue, '"');
         queryParser.ConsumeLength(nullptr, 1);
-        queryParser.ConsumeUntil(nullptr,
-                                 '&');   // our value will end by here...
+        queryParser.ConsumeUntil(nullptr, '&');
+        // our value will end by here...
       } else {
-        queryParser.ConsumeUntil(&theCGIParamValue,
-                                 '&');   // our value will end by here...
+        queryParser.ConsumeUntil(&theCGIParamValue, '&');
+        // our value will end by here...
       }
 
       AddNameValuePairToList(theCGIParamName.GetAsCString(),
                              theCGIParamValue.GetAsCString());
 
       queryParser.ConsumeLength(&theCGIParamValue, 1);   // the '='
-
     }
   }
 }
 
-static void PrintNameAndValue(PLDoubleLinkedListNode<QueryParamListElement> *node,
+static void PrintNameAndValue(::PLDoubleLinkedListNode<QueryParamListElement> *node,
                               void *userData) {
   // used by QueryParamList::PrintAll
   QueryParamListElement *nvPair = node->fElement;
@@ -112,16 +107,15 @@ void QueryParamList::PrintAll(char *idString) {
   fNameValueQueryParamlist->ForEach(PrintNameAndValue, idString);
 }
 
-static bool CompareStrToName(PLDoubleLinkedListNode<QueryParamListElement> *node,
+/*
+ * make a case insenstitive comparison between "node" name and the userData
+ * used by QueryParamList::DoFindCGIValueForParam
+ */
+static bool CompareStrToName(::PLDoubleLinkedListNode<QueryParamListElement> *node,
                              void *userData) {
-  /*
-      make a case insenstitive comparison between "node" name and the userData
 
-      used by QueryParamList::DoFindCGIValueForParam
-  */
-
-  QueryParamListElement *nvPair = node->fElement;
-  StrPtrLen name(nvPair->mName);
+  CF::Net::QueryParamListElement *nvPair = node->fElement;
+  CF::StrPtrLen name(nvPair->mName);
 
   if (name.EqualIgnoreCase((char *) userData, strlen((char *) userData)))
     return true;
@@ -129,31 +123,29 @@ static bool CompareStrToName(PLDoubleLinkedListNode<QueryParamListElement> *node
   return false;
 }
 
+/*
+ * return the first value where the paramter name matches "name"
+ * use case insenstitive comparison
+ */
 const char *QueryParamList::DoFindCGIValueForParam(char *name) {
-  /*
-      return the first value where the paramter name matches "name"
-      use case insenstitive comparison
 
-  */
-  PLDoubleLinkedListNode<QueryParamListElement> *node;
+  ::PLDoubleLinkedListNode<QueryParamListElement> *node;
 
   node = fNameValueQueryParamlist->ForEachUntil(CompareStrToName, name);
 
   if (node != nullptr) {
-    QueryParamListElement *nvPair = (QueryParamListElement *) node->fElement;
-
+    QueryParamListElement *nvPair = node->fElement;
     return nvPair->mValue;
   }
 
   return nullptr;
-
 }
 
 void QueryParamList::AddNameValuePairToList(char *name, char *value) {
   // add the name/value pair to the by creating the holder struct
   // then adding that as the element in the linked list
 
-  PLDoubleLinkedListNode<QueryParamListElement> *nvNode;
+  ::PLDoubleLinkedListNode<QueryParamListElement> *nvNode;
   QueryParamListElement *nvPair;
 
   this->DecodeArg(name);
@@ -163,7 +155,7 @@ void QueryParamList::AddNameValuePairToList(char *name, char *value) {
 
 
   // create a node to hold the pair
-  nvNode = new PLDoubleLinkedListNode<QueryParamListElement>(nvPair);
+  nvNode = new ::PLDoubleLinkedListNode<QueryParamListElement>(nvPair);
 
   // add it to the list
   fNameValueQueryParamlist->AddNode(nvNode);
@@ -252,6 +244,4 @@ bool QueryParamList::IsHex(char c) {
     return true;
 
   return false;
-}
-
 }

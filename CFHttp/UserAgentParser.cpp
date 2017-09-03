@@ -104,7 +104,7 @@ UInt8 UserAgentParser::sEOLSemicolonCloseParenMask[] =
         0, 0, 0, 0, 0, 0              //250-255
     };
 
-void UserAgentParser::Parse(StrPtrLen *inStream) {
+void UserAgentParser::Parse(CF::StrPtrLen *inStream) {
   StrPtrLen tempID;
   StrPtrLen tempData;
   StringParser parser(inStream);

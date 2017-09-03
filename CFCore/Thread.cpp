@@ -264,7 +264,7 @@ void *Thread::_Entry(void *inThread) {
 
 Thread *Thread::GetCurrent() {
 #ifdef __Win32__
-  return (OSThread *)::TlsGetValue(sThreadStorageIndex);
+  return (Thread *)::TlsGetValue(sThreadStorageIndex);
 #elif __PTHREADS__
   return (Thread *) pthread_getspecific(Thread::gMainKey);
 #else

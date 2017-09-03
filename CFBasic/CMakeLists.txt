@@ -20,5 +20,8 @@ target_include_directories(CFBasic
         PUBLIC include)
 target_link_libraries(CFBasic
         PUBLIC CFCore)
-target_compile_options(CFBasic
-        PRIVATE -fPIC)
+
+if (NOT (${CONF_PLATFORM} STREQUAL "Win32"))
+    target_compile_options(CFBasic
+            PRIVATE -fPIC)
+endif ()

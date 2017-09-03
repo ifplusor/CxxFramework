@@ -56,8 +56,7 @@ class StringParser {
   static UInt8 sWordMask[];       // stop when you hit a word
   static UInt8 sEOLMask[];        // stop when you hit an eol
   static UInt8 sEOLWhitespaceMask[]; // stop when you hit an EOL or whitespace
-  static UInt8
-      sEOLWhitespaceQueryMask[]; // stop when you hit an EOL, ? or whitespace
+  static UInt8 sEOLWhitespaceQueryMask[]; // stop when you hit an EOL, ? or whitespace
 
   static UInt8 sNonWordFSlashMask[]; // skip over word and forward slash
 

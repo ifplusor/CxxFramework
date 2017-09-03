@@ -46,17 +46,17 @@
 
 #if __PTHREADS_MUTEXES__
 
-#if __MacOSX__
+#if __OSX__
 
 #ifndef _POSIX_PTHREAD_H
 #include <pthread.h>
 #endif // _POSIX_PTHREAD_H
 
-#else // !__MacOSX__
+#else // !__OSX__
 
 #include <pthread.h>
 
-#endif // !__MacOSX__
+#endif // !__OSX__
 
 #include <unistd.h>
 

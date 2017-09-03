@@ -64,8 +64,7 @@ void Task::SetTaskName(char *name) {
 
   ::strncpy(fTaskName, sTaskStateStr, sizeof(fTaskName) - 1);
   ::strncat(fTaskName, name, sizeof(fTaskName) - strlen(fTaskName) - 1);
-  fTaskName[sizeof(fTaskName) - 1] =
-      0; //terminate in case it is longer than fTaskName.
+  fTaskName[sizeof(fTaskName) - 1] = 0; //terminate in case it is longer than fTaskName.
 }
 
 bool Task::Valid() {

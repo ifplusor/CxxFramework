@@ -197,7 +197,7 @@ OS_Error TCPClientSocket::Read(void *inBuffer,
   return theErr;
 }
 
-HTTPClientSocket::HTTPClientSocket(const StrPtrLen &inURL,
+HTTPClientSocket::HTTPClientSocket(const CF::StrPtrLen &inURL,
                                    UInt32 inCookie,
                                    UInt32 inSocketType)
     : fCookie(inCookie),

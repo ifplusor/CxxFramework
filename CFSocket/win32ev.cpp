@@ -169,7 +169,7 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
   if (theErr != 0) {
     // TODO: there may have an error
     if (theErr == -1) {
-      qtss_printf("encounter error when getmessage");
+      s_printf("encounter error when getmessage");
       Assert(0);
     }
     if (theMessage.message == WM_TIMER) return EINTR; // timeout

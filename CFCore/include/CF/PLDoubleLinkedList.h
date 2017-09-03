@@ -32,7 +32,7 @@
 #include <CF/sstdlib.h>
 
 #ifndef __PLDoubleLinkedListDEBUG__
-#define __PLDoubleLinkedListDEBUG__ 0
+#define __PLDoubleLinkedListDEBUG__ 1
 #endif
 
 template<class T>
@@ -51,7 +51,7 @@ class PLDoubleLinkedListNode {
   }
   virtual ~PLDoubleLinkedListNode() {
 #if __PLDoubleLinkedListDEBUG__
-    Assert( fPrev == NULL && fNext == NULL );
+    Assert(fPrev == NULL && fNext == NULL);
 #endif
 
     delete fElement;
@@ -80,64 +80,50 @@ class PLDoubleLinkedList {
 
 #if __PLDoubleLinkedListDEBUG__
 
-  void                    ValidateLinks()
-                          {
-                              PLDoubleLinkedListNode<T> *nextNode;
+  void ValidateLinks() {
+    PLDoubleLinkedListNode<T> *nextNode;
 
-                              Assert( fHead == NULL || fHead->fPrev == NULL );
-                              Assert( fTail == NULL || fTail->fNext == NULL );
+    Assert(fHead == NULL || fHead->fPrev == NULL);
+    Assert(fTail == NULL || fTail->fNext == NULL);
 
+    if (fTail == fHead && fTail != NULL) {
+      Assert(fTail->fPrev == NULL && fTail->fNext == NULL);
+    }
 
-                              if ( fTail == fHead && fTail != NULL )
-                              {
-                                  Assert(  fTail->fPrev == NULL && fTail->fNext == NULL );
-                              }
+    if (fHead) {
+      Assert(fTail != NULL);
+    }
 
-                              if ( fHead  )
-                              {
-                                  Assert(  fTail != NULL  );
-                              }
+    if (fTail) {
+      Assert(fHead != NULL);
+    }
 
-                              if ( fTail  )
-                              {
-                                  Assert(  fHead != NULL  );
-                              }
+    if (fTail && fTail->fPrev) Assert(fTail->fPrev->fNext == fTail);
 
+    if (fHead && fHead->fNext) Assert(fHead->fNext->fPrev == fHead);
 
-                              if ( fTail && fTail->fPrev )
-                                  Assert( fTail->fPrev->fNext == fTail  );
+    nextNode = fHead;
 
-                              if ( fHead && fHead->fNext )
-                                  Assert( fHead->fNext->fPrev == fHead  );
+    while (nextNode) {
+      Assert(fHead == nextNode || nextNode->fPrev->fNext == nextNode);
+      Assert(fTail == nextNode || nextNode->fNext->fPrev == nextNode);
 
+      if (!nextNode->fNext) Assert(fTail == nextNode);
 
+      nextNode = nextNode->fNext;
+    }
 
-                              nextNode = fHead;
+    nextNode = fTail;
 
-                              while ( nextNode )
-                              {
-                                  Assert( fHead == nextNode || nextNode->fPrev->fNext == nextNode );
-                                  Assert( fTail == nextNode || nextNode->fNext->fPrev == nextNode );
+    while (nextNode) {
+      Assert(fHead == nextNode || nextNode->fPrev->fNext == nextNode);
+      Assert(fTail == nextNode || nextNode->fNext->fPrev == nextNode);
 
-                                  if ( !nextNode->fNext )
-                                      Assert( fTail == nextNode );
+      if (!nextNode->fPrev) Assert(fHead == nextNode);
 
-                                  nextNode = nextNode->fNext;
-                              }
-
-                              nextNode = fTail;
-
-                              while ( nextNode )
-                              {
-                                  Assert( fHead == nextNode || nextNode->fPrev->fNext == nextNode );
-                                  Assert( fTail == nextNode || nextNode->fNext->fPrev == nextNode );
-
-                                  if ( !nextNode->fPrev )
-                                      Assert( fHead == nextNode );
-
-                                  nextNode = nextNode->fPrev;
-                              }
-                          }
+      nextNode = nextNode->fPrev;
+    }
+  }
 #endif // __PLDoubleLinkedListDEBUG__
 
   PLDoubleLinkedListNode<T> *GetFirst() { return fHead; };
@@ -146,7 +132,7 @@ class PLDoubleLinkedList {
 
 #if __PLDoubleLinkedListDEBUG__
     // must not be associated with another list
-    Assert( node->fPrev == NULL && node->fNext == NULL );
+    Assert(node->fPrev == NULL && node->fNext == NULL);
 #endif
 
     if (fTail)
@@ -170,7 +156,7 @@ class PLDoubleLinkedList {
   void AddNode(PLDoubleLinkedListNode<T> *node) {
 #if __PLDoubleLinkedListDEBUG__
     // must not be associated with another list
-    Assert( node->fPrev == NULL && node->fNext == NULL );
+    Assert(node->fPrev == NULL && node->fNext == NULL);
 #endif
 
     if (fHead)
@@ -196,10 +182,10 @@ class PLDoubleLinkedList {
 
 #if __PLDoubleLinkedListDEBUG__
     // must be associated with this list
-    Assert( fHead == node || node->fPrev->fNext == node );
+    Assert(fHead == node || node->fPrev->fNext == node);
 
     // must be associated with this list
-    Assert( fTail == node || node->fNext->fPrev == node );
+    Assert(fTail == node || node->fNext->fPrev == node);
 #endif
 
     if (fHead == node)
@@ -220,13 +206,11 @@ class PLDoubleLinkedList {
 #if __PLDoubleLinkedListDEBUG__
     ValidateLinks();
 #endif
-
   }
 
-  PLDoubleLinkedListNode<T> *ForEachUntil(
-      bool (*doFunc)(PLDoubleLinkedListNode<T> *node, void *userData),
-      void *userData) {
-    PLDoubleLinkedListNode<T> *nextElement, *curElement;
+  typedef bool (*DoFunc1)(::PLDoubleLinkedListNode<T> *node, void *userData);
+  ::PLDoubleLinkedListNode<T> *ForEachUntil(DoFunc1 doFunc, void *userData) {
+    ::PLDoubleLinkedListNode<T> *nextElement, *curElement;
     bool stopIteration = false;
 
     curElement = fHead;
@@ -234,7 +218,7 @@ class PLDoubleLinkedList {
     while (curElement && !stopIteration) {
       nextElement = curElement->fNext;
 
-      stopIteration = (*doFunc)(curElement, userData);
+      stopIteration = doFunc(curElement, userData);
 
       if (!stopIteration)
         curElement = nextElement;
@@ -243,20 +227,17 @@ class PLDoubleLinkedList {
     return curElement;
   }
 
-  void ForEach(void (*doFunc)(PLDoubleLinkedListNode<T> *node, void *userData),
-               void *userData) {
-    PLDoubleLinkedListNode<T> *nextElement, *curElement;
+  typedef void (*DoFunc2)(::PLDoubleLinkedListNode<T> *node, void *userData);
+  void ForEach(DoFunc2 doFunc, void *userData) {
+    ::PLDoubleLinkedListNode<T> *nextElement, *curElement;
 
     curElement = fHead;
 
     while (curElement) {
       nextElement = curElement->fNext;
-
-      (*doFunc)(curElement, userData);
-
+      doFunc(curElement, userData);
       curElement = nextElement;
     }
-
   }
 
   void ClearList() {

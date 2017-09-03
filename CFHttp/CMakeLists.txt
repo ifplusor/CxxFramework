@@ -33,5 +33,8 @@ target_include_directories(CFHttp
         PUBLIC include)
 target_link_libraries(CFHttp
         PUBLIC CFSocket)
-target_compile_options(CFHttp
-        PRIVATE -fPIC)
+
+if (NOT (${CONF_PLATFORM} STREQUAL "Win32"))
+    target_compile_options(CFHttp
+            PRIVATE -fPIC)
+endif ()

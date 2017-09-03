@@ -582,7 +582,7 @@ bool SocketUtils::IsLocalIPAddr(UInt32 inAddress) {
 }
 
 void SocketUtils::ConvertAddrToString(const struct in_addr &theAddr,
-                                      StrPtrLen *ioStr) {
+                                  CF::StrPtrLen *ioStr) {
   //re-entrant version of code below
   //inet_ntop(AF_INET, &theAddr, ioStr->Ptr, ioStr->Len);
   //ioStr->Len = ::strlen(ioStr->Ptr);

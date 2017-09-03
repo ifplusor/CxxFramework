@@ -58,7 +58,7 @@ void MyAssert(char *s);
   if (!(condition)) {                          \
     char s[kAssertBuffSize];                   \
     s[kAssertBuffSize -1] = 0;                 \
-    s_snprintf(s, kAssertBuffSize -1,       \
+    s_snprintf(s, kAssertBuffSize -1,          \
                   "_Assert: %s, %d",           \
                   __FILE__, __LINE__);         \
     MyAssert(s);                               \
@@ -69,7 +69,7 @@ void MyAssert(char *s);
   if (!(condition)) {                          \
     char s[kAssertBuffSize];                   \
     s[kAssertBuffSize -1] = 0;                 \
-    s_snprintf(s, kAssertBuffSize -1,       \
+    s_snprintf(s, kAssertBuffSize -1,          \
                   "_Assert: %s, %d, Msg:%s ",  \
                   __FILE__, __LINE__, msg);    \
     MyAssert(s);                               \
@@ -80,7 +80,7 @@ void MyAssert(char *s);
   if (!(condition)) {                          \
     char s[kAssertBuffSize];                   \
     s[kAssertBuffSize -1] = 0;                 \
-    s_snprintf(s, kAssertBuffSize -1,       \
+    s_snprintf(s, kAssertBuffSize -1,          \
                   "_AssertV: %s, %d (%d)",     \
                   __FILE__, __LINE__, errNo);  \
     MyAssert(s);                               \
@@ -89,13 +89,13 @@ void MyAssert(char *s);
 
 #define Warn(condition) {                      \
   if (!(condition))                            \
-    s_printf("_Warn: %s, %d\n",             \
+    s_printf("_Warn: %s, %d\n",                \
                 __FILE__, __LINE__);           \
 }
 
 #define WarnV(condition, msg) {                \
   if (!(condition))                            \
-    s_printf("_WarnV: %s, %d (%s)\n",       \
+    s_printf("_WarnV: %s, %d (%s)\n",          \
                 __FILE__, __LINE__, msg );     \
 }
 
@@ -103,7 +103,7 @@ void MyAssert(char *s);
   if (!(condition)) {                                           \
     char buffer[kAssertBuffSize];                               \
     buffer[kAssertBuffSize -1] = 0;                             \
-    s_printf("_WarnV: %s, %d (%s, %s [err=%d])\n",           \
+    s_printf("_WarnV: %s, %d (%s, %s [err=%d])\n",              \
                 __FILE__, __LINE__, msg,                        \
                 qtss_strerror(err, buffer, sizeof(buffer) - 1), \
                 err );                                          \

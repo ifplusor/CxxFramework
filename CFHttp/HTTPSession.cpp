@@ -269,9 +269,9 @@ SInt64 HTTPSession::Run() {
   return 0;
 }
 
-CF_Error HTTPSession::SendHTTPPacket(StrPtrLen *contentXML,
-                                       bool connectionClose,
-                                       bool decrement) {
+CF_Error HTTPSession::SendHTTPPacket(CF::StrPtrLen *contentXML,
+                                     bool connectionClose,
+                                     bool decrement) {
   HTTPPacket httpAck(&CFEnv::GetServerHeader());
   httpAck.CreateResponseHeader();
   if (contentXML->Len)

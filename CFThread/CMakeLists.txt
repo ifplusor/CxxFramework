@@ -14,5 +14,8 @@ target_include_directories(CFThread
         PUBLIC include)
 target_link_libraries(CFThread
         PUBLIC CFCore)
-target_compile_options(CFThread
-        PRIVATE -fPIC)
+
+if (NOT (${CONF_PLATFORM} STREQUAL "Win32"))
+    target_compile_options(CFThread
+            PRIVATE -fPIC)
+endif ()

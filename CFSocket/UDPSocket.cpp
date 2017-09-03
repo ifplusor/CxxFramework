@@ -54,7 +54,7 @@
 
 using namespace CF::Net;
 
-UDPSocket::UDPSocket(Thread::Task *inTask, UInt32 inSocketType)
+UDPSocket::UDPSocket(CF::Thread::Task *inTask, UInt32 inSocketType)
     : Socket(inTask, inSocketType), fDemuxer(nullptr) {
   if (inSocketType & kWantsDemuxer)
     fDemuxer = new UDPDemuxer();

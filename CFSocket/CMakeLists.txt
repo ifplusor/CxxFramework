@@ -38,15 +38,18 @@ target_include_directories(CFSocket
 target_link_libraries(CFSocket
         PUBLIC CFThread
         PUBLIC CFBasic)
-target_compile_options(CFSocket
-        PRIVATE -fPIC)
 
-if (${CONF_PLATFORM} STREQUAL "Win32")
+if (NOT (${CONF_PLATFORM} STREQUAL "Win32"))
+    target_compile_options(CFSocket
+            PRIVATE -fPIC)
+endif ()
+
+if (__WinSock__)
     target_link_libraries(CFSocket
             PUBLIC WS2_32)
-elseif (${CONF_PLATFORM} STREQUAL "MinGW")
-    target_link_libraries(CFSocket
-            PUBLIC WS2_32)
+endif ()
+
+if (${CONF_PLATFORM} STREQUAL "MinGW")
     target_compile_options(CFSocket
             PRIVATE -fpermissive)
 endif ()

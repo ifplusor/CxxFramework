@@ -108,13 +108,13 @@ class Thread {
   void DecrementLocksHeld() {}
 #endif
 
-#if __linux__ || __MacOSX__
+#if __Linux__ || __OSX__
 
   static void WrapSleep(bool wrapSleep) { sWrapSleep = wrapSleep; }
 
 #endif
 
-#ifdef __WinSock__
+#if __WinSock__
   static int TransferErrno(int winErr);
 #endif
 
@@ -167,7 +167,7 @@ class Thread {
 
 #endif
 
-#if __linux__ || __MacOSX__
+#if __Linux__ || __OSX__
   static bool sWrapSleep;
 #endif
 

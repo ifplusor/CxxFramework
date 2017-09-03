@@ -26,6 +26,8 @@
 #ifndef __CF_NET_EVENT_H__
 #define __CF_NET_EVENT_H__
 
+#include <CF/Types.h>
+
 #if !__Win32__ && !__solaris__ && !__sgi__ && !__osf__ && !__hpux__ && !__MinGW__
 #include <sys/queue.h>
 #endif

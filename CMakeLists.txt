@@ -13,22 +13,58 @@ target_platform(CONF_PLATFORM)
 target_architecture(CONF_ARCH)
 
 # configure options
+# follow options must be configure:
+#set(PLATFORM_DEFINE __linux__)
+# follow options can be configure:
+#set(DEBUG FALSE)
+#set(ASSERT FALSE)
+#set(USE_ENUM FALSE)
+#set(MMAP_TABLES FALSE)
+#set(USE_ATOMICLIB FALSE)
+#set(MACOSXEVENTQUEUE FALSE)
+#set(__PTHREADS__ FALSE)
+#set(__PTHREADS_MUTEXES__ FALSE)
+#set(ALLOW_NON_WORD_ALIGN_ACCESS FALSE)
+#set(USE_THREAD FALSE)
+#set(THREADING_IS_COOPERATIVE FALSE)
+#set(USE_THR_YIELD FALSE)
+#set(MACOSX_PUBLICBETA FALSE)
+#set(__WinSock__ FALSE)
+#set(USE_DEFAULT_STD_LIB FALSE)
 message(STATUS "Build for ${CONF_PLATFORM}-${CONF_ARCH}")
 if (${CONF_PLATFORM} STREQUAL "OSX")
     set(CONF_DLIB_EXT so)
-    add_definitions(-D__MacOSX__)
+    set(MACOSXEVENTQUEUE TRUE)
+    set(__PTHREADS__ TRUE)
+    set(__PTHREADS_MUTEXES__ TRUE)
+    set(ALLOW_NON_WORD_ALIGN_ACCESS TRUE)
+    set(USE_DEFAULT_STD_LIB TRUE)
 elseif (${CONF_PLATFORM} STREQUAL "Linux")
     set(CONF_DLIB_EXT so)
-    add_definitions(-D__linux__)
+    set(__PTHREADS__ TRUE)
+    set(__PTHREADS_MUTEXES__ TRUE)
+    set(ALLOW_NON_WORD_ALIGN_ACCESS TRUE)
+    set(_REENTRANT TRUE)
 elseif (${CONF_PLATFORM} STREQUAL "Win32")
     set(CONF_DLIB_EXT dll)
-    add_definitions(-D__Win32__)
+    set(__WinSock__ TRUE)
+    set(ALLOW_NON_WORD_ALIGN_ACCESS TRUE)
+    add_compile_options("/std:c++latest")
 elseif (${CONF_PLATFORM} STREQUAL "MinGW")
     set(CONF_DLIB_EXT dll)
-    add_definitions(-D__MinGW__)
+    set(__WinSock__ TRUE)
+    set(__PTHREADS__ TRUE)
+    set(__PTHREADS_MUTEXES__ TRUE)
+    set(ALLOW_NON_WORD_ALIGN_ACCESS TRUE)
+    set(_REENTRANT TRUE)
 else ()
     message(FATAL_ERROR "no configure for ${CMAKE_SYSTEM_NAME}-${CONF_PLATFORM}, quit!")
 endif ()
+if (__PTHREADS__)
+    add_definitions(-D_REENTRANT)
+endif ()
+set(DEBUG FALSE)
+set(ASSERT TRUE)
 
 # find dependencies
 find_package(Boost)
@@ -46,6 +82,10 @@ add_subdirectory(CFThread)
 add_subdirectory(CFSocket)
 add_subdirectory(CFHttp)
 
+configure_file(
+        ${PROJECT_SOURCE_DIR}/Platform.h.in
+        ${PROJECT_SOURCE_DIR}/Include/CF/Platform.h)
+
 set(HEADER_FILES
         Include/CF/Platform.h
         Include/CF/Types.h
@@ -60,16 +100,14 @@ set(SOURCE_FILES
         CFEnv.cpp
         CFMain.cpp)
 
-if (${CONF_PLATFORM} STREQUAL "Win32")
-    add_library(CxxFramework STATIC
-            ${HEADER_FILES} ${SOURCE_FILES})
-elseif (${CONF_PLATFORM} STREQUAL "MinGW")
+if ((${CONF_PLATFORM} STREQUAL "Win32") OR (${CONF_PLATFORM} STREQUAL "MinGW"))
     add_library(CxxFramework STATIC
             ${HEADER_FILES} ${SOURCE_FILES})
 else ()
     add_library(CxxFramework SHARED
             ${HEADER_FILES} ${SOURCE_FILES})
 endif ()
+
 target_include_directories(CxxFramework
         PUBLIC Include)
 target_link_libraries(CxxFramework
@@ -78,8 +116,11 @@ target_link_libraries(CxxFramework
         PUBLIC CFThread
         PUBLIC CFSocket
         PUBLIC CFHttp)
-target_compile_options(CxxFramework
-        PRIVATE -fPIC)
+
+if (NOT (${CONF_PLATFORM} STREQUAL "Win32"))
+    target_compile_options(CxxFramework
+            PRIVATE -fPIC)
+endif ()
 
 add_executable(demo
         demo.cpp)

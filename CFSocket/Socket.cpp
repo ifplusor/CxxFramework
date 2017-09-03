@@ -58,7 +58,7 @@ using namespace CF::Net;
 
 EventThread *Socket::sEventThread = nullptr;
 
-Socket::Socket(Thread::Task *notifytask, UInt32 inSocketType)
+Socket::Socket(CF::Thread::Task *notifytask, UInt32 inSocketType)
     : EventContext(EventContext::kInvalidFileDesc, sEventThread),
       fState(inSocketType),
       fLocalAddrStrPtr(nullptr),

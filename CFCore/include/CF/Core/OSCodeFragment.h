@@ -38,7 +38,7 @@
 #include "cf/sstdlib.h"
 #include "CF/Types.h"
 
-#ifdef __MacOSX__
+#ifdef __OSX__
 #include <CoreFoundation/CFBundle.h>
 #endif
 
@@ -57,7 +57,7 @@ class OSCodeFragment {
 
 #ifdef __Win32__
   HMODULE fFragmentP;
-#elif __MacOSX__
+#elif __OSX__
   CFBundleRef fFragmentP;
 #else
   void *fFragmentP;

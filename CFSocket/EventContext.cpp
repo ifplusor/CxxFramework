@@ -196,7 +196,7 @@ void EventContext::RequestEvent(int theMask) {
             fUniqueID = (PointerSizedInt) WM_USER;
 
         //If the fUniqueID is used, find a new one until it's free
-        Core::Ref * ref = fEventThread->fRefTable.Resolve(&fUniqueIDStr);
+        Ref * ref = fEventThread->fRefTable.Resolve(&fUniqueIDStr);
         if (ref != NULL) {
             fEventThread->fRefTable.Release(ref);
         } else {
@@ -330,7 +330,7 @@ void EventThread::Entry() {
     static SInt64   numZeroYields;
 
     if (yieldDur > 1) {
-      s_printf("EventThread Time in OSTHread::Yield %i, numZeroYields %i\n",
+      s_printf("EventThread Time in OSThread::Yield %i, numZeroYields %i\n",
                (SInt32) yieldDur,
                (SInt32) numZeroYields);
         numZeroYields = 0;

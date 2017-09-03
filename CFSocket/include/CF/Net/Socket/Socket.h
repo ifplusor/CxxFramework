@@ -60,16 +60,16 @@ class Socket : public EventContext {
     int err = ::WSAStartup(wVersionRequested, &wsaData);
     if (err != 0) {
       // Tell the user that we could not find a usable Winsock DLL.
-      qtss_printf("WSAStartup failed with error: %d\n", err);
+      s_printf("WSAStartup failed with error: %d\n", err);
       exit(EXIT_FAILURE);
     }
     if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2) {
       // Tell the user that we could not find a usable WinSock DLL.
-      qtss_printf("Could not find a usable version of Winsock.dll\n");
+      s_printf("Could not find a usable version of Winsock.dll\n");
       WSACleanup();
       exit(EXIT_FAILURE);
     } else
-      qtss_printf("The Winsock 2.2 dll was found okay\n");
+      s_printf("The Winsock 2.2 dll was found okay\n");
 #endif
 
     sEventThread = new EventThread();

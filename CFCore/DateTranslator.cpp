@@ -31,8 +31,8 @@
 
 */
 
-#include <CF/StringParser.h>
 #include <CF/Core/DateTranslator.h>
+#include <CF/StringParser.h>
 #include <CF/Core/Time.h>
 
 using namespace CF::Core;
@@ -44,15 +44,15 @@ using namespace CF::Core;
 
 const UInt32 kMonthHashTable[] =
     {
-        12, 12, 12, 12, 12, 12, 12, 12, 12, 11,     // 0 - 9
-        1, 12, 12, 12, 12, 12, 12, 12, 12, 12,     // 10 - 19
-        12, 12, 0, 12, 12, 12, 7, 12, 12, 2,      // 20 - 29
-        12, 12, 3, 12, 12, 9, 4, 8, 12, 12,     // 30 - 39
-        6, 12, 5, 12, 12, 12, 12, 12, 10, 12      // 40 - 49
+        12, 12, 12, 12, 12, 12, 12, 12, 12, 11,  // 0 - 9
+        1, 12, 12, 12, 12, 12, 12, 12, 12, 12,   // 10 - 19
+        12, 12, 0, 12, 12, 12, 7, 12, 12, 2,     // 20 - 29
+        12, 12, 3, 12, 12, 9, 4, 8, 12, 12,      // 30 - 39
+        6, 12, 5, 12, 12, 12, 12, 12, 10, 12     // 40 - 49
     };
 const UInt32 kMonthHashTableSize = 49;
 
-SInt64 DateTranslator::ParseDate(StrPtrLen *inDateString) {
+SInt64 DateTranslator::ParseDate(CF::StrPtrLen *inDateString) {
   //SEE RFC 1123 for details on the date string format
   //ex: Mon, 04 Nov 1996 21:42:17 GMT
 

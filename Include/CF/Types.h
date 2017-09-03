@@ -57,7 +57,7 @@ struct iovec {
 #endif
 
 /* Platform-specific components */
-#if __MacOSX__
+#if __OSX__
 
 /* Defines */
 #define _64BITARG_ "ll"
@@ -136,7 +136,7 @@ typedef UInt8               Bool8;
 #define TW0_CHARS_TO_INT( c1, c2 )  ( c1 << 8 | c2 )
 
 
-#elif __linux__ || __linuxppc__ || __FreeBSD__
+#elif __Linux__ || __linuxppc__ || __FreeBSD__
 
 #include <stdint.h>
 
@@ -315,6 +315,9 @@ typedef FourCharCode        OSType;
 
 #undef kUInt64_Max
 #define kUInt64_Max  (kSInt64_Max * 2ULL + 1)
+
+#define strdup _strdup
+#define tzset _tzset
 
 #elif __sgi__
 /* Defines */
