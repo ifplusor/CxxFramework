@@ -49,7 +49,7 @@
 
 using namespace CF::Net;
 
-#ifdef __WinSock__
+#if __WinSock__
 // See commentary in RequestEvent
 std::atomic<unsigned int> EventContext::sUniqueID(WM_USER);
 #else

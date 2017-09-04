@@ -272,7 +272,7 @@ Thread *Thread::GetCurrent() {
 #endif
 }
 
-#ifdef __WinSock__
+#if __WinSock__
 
 int Thread::TransferErrno(int winErr) {
   switch (winErr)
