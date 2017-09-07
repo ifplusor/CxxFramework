@@ -66,7 +66,7 @@ class QueryParamList {
   QueryParamList(const std::string &queryString);
   QueryParamList(char *queryString);
   QueryParamList(StrPtrLen *querySPL);
-  ~QueryParamList() { delete fNameValueQueryParamlist; }
+  ~QueryParamList() { delete fNameValueQueryParamList; }
 
   void AddNameValuePairToList(char *name, char *value);
   const char *DoFindCGIValueForParam(char *name);
@@ -75,14 +75,15 @@ class QueryParamList {
  protected:
   void BulidList(StrPtrLen *querySPL);
   void DecodeArg(char *ioCodedPtr);
+
   enum {
     // escaping states
-        kLastWasText, kPctEscape, kRcvHexDigitOne
+    kLastWasText, kPctEscape, kRcvHexDigitOne
   };
 
   bool IsHex(char c);
 
-  PLDoubleLinkedList<QueryParamListElement> *fNameValueQueryParamlist;
+  PLDoubleLinkedList<QueryParamListElement> *fNameValueQueryParamList;
 
 };
 

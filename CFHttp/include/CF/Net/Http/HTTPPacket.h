@@ -29,6 +29,7 @@
 #include <CF/StringParser.h>
 #include <CF/ResizeableStringFormatter.h>
 #include <CF/Net/Http/HTTPProtocol.h>
+#include <CF/Net/Http/QueryParamList.h>
 
 namespace CF::Net {
 
@@ -77,6 +78,8 @@ class HTTPPacket {
   char *GetRequestPath() { return fRequestPath; }
   char *GetQueryString() { return fQueryString; }
 
+  const char *GetQueryValues(char *inParam);
+
   // If header field exists in the request, it will be found in the dictionary
   // and the value returned. Otherwise, NULL is returned.
   StrPtrLen *GetHeaderValue(HTTPHeader inHeader);
@@ -107,8 +110,10 @@ class HTTPPacket {
    * @note body 的内存将交由 Packet 对象管理
    */
   void SetBody(StrPtrLen *body) {
-    if (fHTTPBody != nullptr) delete[] fHTTPBody->Ptr;
-    delete fHTTPBody;
+    if (fHTTPBody != nullptr) {
+      delete[] fHTTPBody->Ptr;
+      delete fHTTPBody;
+    }
     fHTTPBody = body;
   }
 
@@ -181,6 +186,8 @@ class HTTPPacket {
   StrPtrLen fHostHeader; // If the full url is given in the request line
   char *fRequestPath; // Also contains the query string
   char *fQueryString;
+
+  QueryParamList *fQueryValues;
 
   bool fRequestKeepAlive;  // Keep-alive information in the client request
   StrPtrLen fFieldValues[httpNumHeaders]; // Array of header field values parsed from the request

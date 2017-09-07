@@ -32,14 +32,14 @@ QueryParamList::QueryParamList(const std::string &queryString) {
   StrPtrLen querySPL(const_cast<char *>(queryString.c_str()),
                      queryString.size());
 
-  fNameValueQueryParamlist = new PLDoubleLinkedList<QueryParamListElement>();
+  fNameValueQueryParamList = new PLDoubleLinkedList<QueryParamListElement>();
 
   this->BulidList(&querySPL);
 }
 
 QueryParamList::QueryParamList(CF::StrPtrLen *querySPL) {
   // ctor from StrPtrLen
-  fNameValueQueryParamlist = new PLDoubleLinkedList<QueryParamListElement>();
+  fNameValueQueryParamList = new PLDoubleLinkedList<QueryParamListElement>();
 
   this->BulidList(querySPL);
 }
@@ -48,7 +48,7 @@ QueryParamList::QueryParamList(char *queryString) {
   // ctor from char*
   StrPtrLen querySPL(queryString);
 
-  fNameValueQueryParamlist = new ::PLDoubleLinkedList<QueryParamListElement>();
+  fNameValueQueryParamList = new ::PLDoubleLinkedList<QueryParamListElement>();
 
   this->BulidList(&querySPL);
 }
@@ -104,7 +104,7 @@ static void PrintNameAndValue(::PLDoubleLinkedListNode<QueryParamListElement> *n
 
 void QueryParamList::PrintAll(char *idString) {
   // print name and value of each item in the list, print each pair preceded by "idString"
-  fNameValueQueryParamlist->ForEach(PrintNameAndValue, idString);
+  fNameValueQueryParamList->ForEach(PrintNameAndValue, idString);
 }
 
 /*
@@ -131,7 +131,7 @@ const char *QueryParamList::DoFindCGIValueForParam(char *name) {
 
   ::PLDoubleLinkedListNode<QueryParamListElement> *node;
 
-  node = fNameValueQueryParamlist->ForEachUntil(CompareStrToName, name);
+  node = fNameValueQueryParamList->ForEachUntil(CompareStrToName, name);
 
   if (node != nullptr) {
     QueryParamListElement *nvPair = node->fElement;
@@ -158,7 +158,7 @@ void QueryParamList::AddNameValuePairToList(char *name, char *value) {
   nvNode = new ::PLDoubleLinkedListNode<QueryParamListElement>(nvPair);
 
   // add it to the list
-  fNameValueQueryParamlist->AddNode(nvNode);
+  fNameValueQueryParamList->AddNode(nvNode);
 }
 
 void QueryParamList::DecodeArg(char *ioCodedPtr) {

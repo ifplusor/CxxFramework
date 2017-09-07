@@ -75,13 +75,14 @@ HTTPPacket::HTTPPacket(StrPtrLen *packetPtr)
       fPacketHeader(*packetPtr), // 浅拷贝
       fMethod(httpIllegalMethod),
       fVersion(httpIllegalVersion),
-//      fRequestLine(),
-//      fAbsoluteURI(),
-//      fRelativeURI(),
-//      fAbsoluteURIScheme(),
-//      fHostHeader(),
+      fRequestLine(),
+      fAbsoluteURI(),
+      fRelativeURI(),
+      fAbsoluteURIScheme(),
+      fHostHeader(),
       fRequestPath(nullptr),
       fQueryString(nullptr),
+      fQueryValues(nullptr),
       fStatusCode(httpOK),
       fRequestKeepAlive(false), // Default value when there is no version string
       fHTTPHeader(nullptr),
@@ -94,16 +95,17 @@ HTTPPacket::HTTPPacket(StrPtrLen *packetPtr)
 // Constructor for creating a new packet
 HTTPPacket::HTTPPacket(HTTPType httpType)
     : fSvrHeader(CFEnv::GetServerHeader()),
-//      fPacketHeader(),
+      fPacketHeader(),
       fMethod(httpIllegalMethod),
       fVersion(httpIllegalVersion),
-//      fRequestLine(),
-//      fAbsoluteURI(),
-//      fRelativeURI(),
-//      fAbsoluteURIScheme(),
-//      fHostHeader(),
+      fRequestLine(),
+      fAbsoluteURI(),
+      fRelativeURI(),
+      fAbsoluteURIScheme(),
+      fHostHeader(),
       fRequestPath(nullptr),
       fQueryString(nullptr),
+      fQueryValues(nullptr),
       fStatusCode(httpOK),
       fRequestKeepAlive(false), // Default value when there is no version string
       fHTTPHeader(nullptr),
@@ -126,6 +128,7 @@ HTTPPacket::~HTTPPacket() {
   delete fHTTPHeaderFormatter;
   delete[] fRequestPath;
   delete[] fQueryString;
+  delete fQueryValues;
 
   if (fHTTPBody != nullptr) {
     delete fHTTPBody->Ptr;
@@ -263,6 +266,9 @@ CF_Error HTTPPacket::parseURI(StringParser *parser) {
     }
   }
 
+  delete fQueryValues;
+  fQueryValues = new QueryParamList(fQueryString);
+
   // whatever is in this position is the relative URI
   StrPtrLen relativeURI(urlParser.GetCurrentPosition(),
                         urlParser.GetDataReceivedLen()
@@ -358,6 +364,10 @@ void HTTPPacket::setKeepAlive(StrPtrLen *keepAliveValue) {
                .EqualIgnoreCase(keepAliveValue->Ptr, keepAliveValue->Len));
     fRequestKeepAlive = sTrue;
   }
+}
+
+const char *HTTPPacket::GetQueryValues(char *inParam) {
+  return fQueryValues->DoFindCGIValueForParam(inParam);
 }
 
 StrPtrLen *HTTPPacket::GetHeaderValue(HTTPHeader inHeader) {
