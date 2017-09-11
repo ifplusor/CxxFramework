@@ -171,7 +171,7 @@ class StrPtrLenDel : public StrPtrLen {
   StrPtrLenDel() : StrPtrLen() {}
   StrPtrLenDel(char *sp) : StrPtrLen(sp) {}
   StrPtrLenDel(char *sp, UInt32 len) : StrPtrLen(sp, len) {}
-  ~StrPtrLenDel() { Delete(); }
+  ~StrPtrLenDel() override { Delete(); }
 };
 
 }

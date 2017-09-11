@@ -336,7 +336,7 @@ CF_Error HTTPSession::SetupRequest() {
     } else {
       theRequestBody = new char[content_length + 1];
       memset(theRequestBody, 0, content_length + 1);
-      requestBody = new StrPtrLen(theRequestBody, 0);
+      requestBody = new StrPtrLenDel(theRequestBody, 0);
       fRequest->SetBody(requestBody);
     }
 

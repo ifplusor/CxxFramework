@@ -105,15 +105,18 @@ class HTTPPacket {
   StrPtrLen *GetCompleteHTTPHeader() const;
 
   StrPtrLen *GetBody() { return fHTTPBody; }
+  StrPtrLen *GetAndSetBody(StrPtrLen *body) {
+    StrPtrLen *old = fHTTPBody;
+    fHTTPBody = body;
+    return old;
+  }
 
   /**
-   * @note body 的内存将交由 Packet 对象管理
+   * @note body “对象”的内存将交由 Packet 对象管理。如果想要自动释放 body->Ptr,
+   *       需要使用 StrPtrLenDel
    */
   void SetBody(StrPtrLen *body) {
-    if (fHTTPBody != nullptr) {
-      delete[] fHTTPBody->Ptr;
-      delete fHTTPBody;
-    }
+    delete fHTTPBody;
     fHTTPBody = body;
   }
 
@@ -161,7 +164,7 @@ class HTTPPacket {
   // Complete request and response headers
   StrPtrLen fPacketHeader; // for parse
   ResizeableStringFormatter *fHTTPHeaderFormatter; // for construct
-  StrPtrLen *fHTTPHeader; // for construct
+  StrPtrLen *fHTTPHeader; // for construct. it really is StrPtrLenDel
 
   // request and repose body
   StrPtrLen *fHTTPBody;

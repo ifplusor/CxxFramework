@@ -121,18 +121,11 @@ HTTPPacket::HTTPPacket(HTTPType httpType)
 HTTPPacket::~HTTPPacket() {
   // delete nullptr is no effect.
 
-  if (fHTTPHeader != nullptr) {
-    delete fHTTPHeader->Ptr;
-  }
   delete fHTTPHeader;
   delete fHTTPHeaderFormatter;
   delete[] fRequestPath;
   delete[] fQueryString;
   delete fQueryValues;
-
-  if (fHTTPBody != nullptr) {
-    delete fHTTPBody->Ptr;
-  }
   delete fHTTPBody;
 }
 
@@ -403,16 +396,12 @@ bool HTTPPacket::CreateResponseHeader() {
 
   // If we are creating a second response for the same request, make sure and
   // deallocate memory for old response and allocate fresh memory
-  if (fHTTPHeaderFormatter != NULL) {
-    if (fHTTPHeader->Ptr != NULL)
-      delete fHTTPHeader->Ptr;
-    delete fHTTPHeader;
-    delete fHTTPHeaderFormatter;
-  }
+  delete fHTTPHeader;
+  delete fHTTPHeaderFormatter;
 
   // Allocate memory for the response when you first create it
   char *responseString = new char[kMinHeaderSizeInBytes];
-  fHTTPHeader = new StrPtrLen(responseString, kMinHeaderSizeInBytes);
+  fHTTPHeader = new StrPtrLenDel(responseString, kMinHeaderSizeInBytes);
   fHTTPHeaderFormatter =
       new ResizeableStringFormatter(fHTTPHeader->Ptr, fHTTPHeader->Len);
 
@@ -435,16 +424,12 @@ bool HTTPPacket::CreateRequestHeader() {
 
   // If we are creating a second response for the same request, make sure and
   // deallocate memory for old response and allocate fresh memory
-  if (fHTTPHeaderFormatter != NULL) {
-    if (fHTTPHeader->Ptr != NULL)
-      delete fHTTPHeader->Ptr;
-    delete fHTTPHeader;
-    delete fHTTPHeaderFormatter;
-  }
+  delete fHTTPHeader;
+  delete fHTTPHeaderFormatter;
 
   // Allocate memory for the response when you first create it
   char *responseString = new char[kMinHeaderSizeInBytes];
-  fHTTPHeader = new StrPtrLen(responseString, kMinHeaderSizeInBytes);
+  fHTTPHeader = new StrPtrLenDel(responseString, kMinHeaderSizeInBytes);
   fHTTPHeaderFormatter =
       new ResizeableStringFormatter(fHTTPHeader->Ptr, fHTTPHeader->Len);
 
