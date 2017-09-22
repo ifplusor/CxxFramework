@@ -13,24 +13,24 @@ target_platform(CONF_PLATFORM)
 target_architecture(CONF_ARCH)
 
 # configure options
-# follow options must be configure:
-#set(PLATFORM_DEFINE __linux__)
-# follow options can be configure:
-#set(DEBUG FALSE)
-#set(ASSERT FALSE)
-#set(USE_ENUM FALSE)
-#set(MMAP_TABLES FALSE)
-#set(USE_ATOMICLIB FALSE)
-#set(MACOSXEVENTQUEUE FALSE)
-#set(__PTHREADS__ FALSE)
-#set(__PTHREADS_MUTEXES__ FALSE)
-#set(ALLOW_NON_WORD_ALIGN_ACCESS FALSE)
-#set(USE_THREAD FALSE)
-#set(THREADING_IS_COOPERATIVE FALSE)
-#set(USE_THR_YIELD FALSE)
-#set(MACOSX_PUBLICBETA FALSE)
-#set(__WinSock__ FALSE)
-#set(USE_DEFAULT_STD_LIB FALSE)
+# - follow options must be configure:
+#    set(PLATFORM_DEFINE __linux__)
+# - follow options can be configure:
+#    set(DEBUG FALSE)
+#    set(ASSERT FALSE)
+#    set(USE_ENUM FALSE)
+#    set(MMAP_TABLES FALSE)
+#    set(USE_ATOMICLIB FALSE)
+#    set(MACOSXEVENTQUEUE FALSE)
+#    set(__PTHREADS__ FALSE)
+#    set(__PTHREADS_MUTEXES__ FALSE)
+#    set(ALLOW_NON_WORD_ALIGN_ACCESS FALSE)
+#    set(USE_THREAD FALSE)
+#    set(THREADING_IS_COOPERATIVE FALSE)
+#    set(USE_THR_YIELD FALSE)
+#    set(MACOSX_PUBLICBETA FALSE)
+#    set(__WinSock__ FALSE)
+#    set(USE_DEFAULT_STD_LIB FALSE)
 message(STATUS "Build for ${CONF_PLATFORM}-${CONF_ARCH}")
 if (${CONF_PLATFORM} STREQUAL "OSX")
     set(CONF_DLIB_EXT so)
@@ -66,26 +66,30 @@ endif ()
 set(DEBUG FALSE)
 set(ASSERT TRUE)
 
+# generate platform flag include file
+configure_file(
+        ${PROJECT_SOURCE_DIR}/Platform.h.in
+        ${PROJECT_SOURCE_DIR}/Include/CF/Platform.h)
+
 # find dependencies
-find_package(Boost)
-if (NOT Boost_FOUND)
-    message(WARNING "can not found boost!")
-endif ()
+#find_package(Boost)
+#if (NOT Boost_FOUND)
+#    message(WARNING "can not found boost!")
+#endif ()
 
 #add_subdirectory(ThirdParty)
 
+# include common head file
 include_directories(Include)
 
+# add sub modules
 add_subdirectory(CFBasic)
 add_subdirectory(CFCore)
 add_subdirectory(CFThread)
 add_subdirectory(CFSocket)
 add_subdirectory(CFHttp)
 
-configure_file(
-        ${PROJECT_SOURCE_DIR}/Platform.h.in
-        ${PROJECT_SOURCE_DIR}/Include/CF/Platform.h)
-
+# define Cxx Framework
 set(HEADER_FILES
         Include/CF/Platform.h
         Include/CF/Types.h
@@ -100,7 +104,9 @@ set(SOURCE_FILES
         CFEnv.cpp
         CFMain.cpp)
 
-if ((${CONF_PLATFORM} STREQUAL "Win32") OR (${CONF_PLATFORM} STREQUAL "MinGW"))
+if ((DEFINED MAKE_STATIC)
+        OR (${CONF_PLATFORM} STREQUAL "Win32")
+        OR (${CONF_PLATFORM} STREQUAL "MinGW"))
     add_library(CxxFramework STATIC
             ${HEADER_FILES} ${SOURCE_FILES})
 else ()

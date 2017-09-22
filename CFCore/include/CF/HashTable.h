@@ -51,7 +51,7 @@ template<class T, class K>
 class HashTable {
  public:
   HashTable(UInt32 size) {
-    fHashTable = new (T *[size]);
+    fHashTable = new T*[size];
     Assert(fHashTable);
     memset(fHashTable, 0, sizeof(T *) * size);
     fSize = size;
