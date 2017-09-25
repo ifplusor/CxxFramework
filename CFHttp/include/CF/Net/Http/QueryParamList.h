@@ -40,7 +40,8 @@
 #include <CF/PLDoubleLinkedList.h>
 #include <CF/StrPtrLen.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class QueryParamListElement {
 
@@ -87,6 +88,7 @@ class QueryParamList {
 
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __QUERY_PARAM_LIST_H__

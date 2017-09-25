@@ -7,7 +7,8 @@
 
 #include <CF/Types.h>
 
-namespace CF::Core {
+namespace CF {
+namespace Core {
 
 class Time {
  public:
@@ -94,6 +95,7 @@ class Time {
   static SInt64 sLastTimeMilli;
 };
 
-}
+} // namespace Core
+} // namespace CF
 
 #endif // __OS_TIME_H__

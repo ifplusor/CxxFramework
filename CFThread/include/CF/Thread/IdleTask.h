@@ -38,7 +38,8 @@
 
 #include <CF/Thread/Task.h>
 
-namespace CF::Thread {
+namespace CF {
+namespace Thread {
 
 class IdleTask;
 
@@ -125,6 +126,7 @@ class IdleTask : public Task {
   friend class IdleTaskThread;
 };
 
-}
+} // namespace Task
+} // namespace CF
 
 #endif

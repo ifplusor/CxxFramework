@@ -40,7 +40,8 @@
 #include <CF/CFDef.h>
 #include <CF/Net/Socket/TCPSocket.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class HTTPRequestStream {
  public:
@@ -138,6 +139,7 @@ class HTTPRequestStream {
 
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif

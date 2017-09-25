@@ -7,7 +7,8 @@
 
 #include <CF/Net/Socket/TCPListenerSocket.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class HTTPListenerSocket : public TCPListenerSocket {
  public:
@@ -24,6 +25,7 @@ class HTTPListenerSocket : public TCPListenerSocket {
 
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __HTTP_LISTENER_SOCKET_H__

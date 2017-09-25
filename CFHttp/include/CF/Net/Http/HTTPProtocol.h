@@ -28,7 +28,8 @@
 #include <CF/Types.h>
 #include <CF/StrPtrLen.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 // Versions
 typedef enum {
@@ -229,6 +230,7 @@ class HTTPProtocol {
   static StrPtrLen sStreamTypes[];
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __HTTP_PROTOCOL_H__

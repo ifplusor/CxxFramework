@@ -35,7 +35,8 @@
 #include <string.h>
 #include <CF/Types.h>
 
-namespace CF::Core {
+namespace CF {
+namespace Core {
 
 class Utils {
  public:
@@ -113,6 +114,7 @@ inline UInt32 Utils::GetUInt32FromMemory(UInt32 *inP) {
 #endif
 }
 
-}
+} // namespace Core
+} // namespace CF
 
 #endif // __OS_H__

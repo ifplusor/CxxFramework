@@ -22,7 +22,8 @@
 #include <CF/CFDef.h>
 #include <CF/Net/Socket/ClientSocket.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class HTTPClientRequestStream {
  public:
@@ -99,6 +100,7 @@ class HTTPClientRequestStream {
 
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif

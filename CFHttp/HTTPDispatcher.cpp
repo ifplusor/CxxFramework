@@ -4,7 +4,8 @@
 
 #include <CF/Net/Http/HTTPDispatcher.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 StrPtrLen HTTPPathMapper::sAllSuffix("/*", 2);
 StrPtrLen HTTPPathMapper::sTypePrefix("*.", 2);
@@ -79,4 +80,5 @@ int HTTPPathMapper::ComparePriority(HTTPPathMapper *aMapper,
   return aMapper->ItsType() - bMapper->ItsType();
 }
 
-}
+} // namespace Net
+} // namespace CF

@@ -66,7 +66,8 @@
 
 #endif // !__Win32__
 
-namespace CF::Core {
+namespace CF {
+namespace Core {
 
 class Cond;
 
@@ -157,6 +158,7 @@ bool Mutex::TryLock() {
 #endif //!__PTHREADS__
 }
 
-}
+} // namespace Core
+} // namespace CF
 
 #endif // __OS_MUTEX_H__

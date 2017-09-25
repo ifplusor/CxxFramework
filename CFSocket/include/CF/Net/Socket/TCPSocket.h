@@ -44,7 +44,8 @@
 
 #endif
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class TCPSocket : public Socket {
  public:
@@ -106,7 +107,8 @@ class TCPSocket : public Socket {
   friend class TCPListenerSocket;
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __TCP_SOCKET_H__
 

@@ -36,7 +36,8 @@
 #define HTTP_SESSION_INTERFACE_DEBUGGING 0
 #endif
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 std::atomic_uint
     HTTPSessionInterface::sSessionIndexCounter{kFirstHTTPSessionID};
@@ -203,4 +204,5 @@ CF_Error HTTPSessionInterface::SendHTTPPacket(StrPtrLen *contentXML,
   return CF_NoErr;
 }
 
-}
+} // namespace Net
+} // namespace CF

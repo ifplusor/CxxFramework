@@ -50,7 +50,8 @@
 
 #define DEBUG_TASK 0
 
-namespace CF::Thread {
+namespace CF {
+namespace Thread {
 
 class TaskThread;
 
@@ -257,6 +258,7 @@ class TaskThreadPool {
   friend class TaskThread;
 };
 
-}
+} // namespace Task
+} // namespace CF
 
 #endif

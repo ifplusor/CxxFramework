@@ -41,7 +41,8 @@
 //messages to help debugging timeouts
 #define DEBUG_TIMEOUT 1
 
-namespace CF::Thread {
+namespace CF {
+namespace Thread {
 
 /**
  * @brief TimeoutTask 守护线程
@@ -135,7 +136,7 @@ class TimeoutTask {
   friend class TimeoutTaskThread;
 };
 
-}
+} // namespace Task
+} // namespace CF
 
 #endif //__TIMEOUT_TASK_H__
-

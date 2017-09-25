@@ -44,7 +44,8 @@
 
 #define DEBUG_SOCKET 0
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class Socket : public EventContext {
  public:
@@ -208,6 +209,7 @@ class Socket : public EventContext {
 
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __SOCKET_H__

@@ -36,7 +36,8 @@
 
 #define DEBUG_CLIENT_SOCKET 1
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class ClientSocket {
  public:
@@ -176,6 +177,7 @@ class HTTPClientSocket : public ClientSocket {
   TCPSocket *fPostSocket;
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif //__CLIENT_SOCKET__

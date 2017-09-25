@@ -29,7 +29,8 @@
 #include <CF/Core/Thread.h>
 #include <CF/CFEnv.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 StrPtrLen HTTPPacket::sColonSpace(": ", 2);
 static bool sFalse = false;
@@ -513,4 +514,5 @@ time_t HTTPPacket::ParseIfModSinceHeader() {
   return theIfModSinceDate;
 }
 
-}
+} // namespace Net
+} // namespace CF

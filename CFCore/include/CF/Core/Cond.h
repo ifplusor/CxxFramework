@@ -43,7 +43,8 @@
 #endif // __PTHREADS_MUTEXES__
 #endif // __Win32__
 
-namespace CF::Core {
+namespace CF {
+namespace Core {
 
 class Cond {
  public:
@@ -121,6 +122,7 @@ inline void Cond::Broadcast() {
 #endif
 }
 
-}
+} // namespace Core
+} // namespace CF
 
 #endif // __OS_COND_H__

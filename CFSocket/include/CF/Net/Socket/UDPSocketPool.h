@@ -37,7 +37,8 @@
 #include <CF/Core/Mutex.h>
 #include <CF/Queue.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class UDPSocketPair;
 
@@ -110,7 +111,7 @@ class UDPSocketPair {
   friend class UDPSocketPool;
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __UDPSOCKETPOOL_H__
-

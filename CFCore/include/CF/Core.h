@@ -16,7 +16,8 @@
 #include <CF/Core/Time.h>
 #include <CF/Core/Utils.h>
 
-namespace CF::Core {
+namespace CF {
+namespace Core {
 
 /**
  * @brief set global variables about time.
@@ -27,6 +28,7 @@ static void Initialize() {
   Thread::Initialize();
 }
 
-}
+} // namespace Core
+} // namespace CF
 
 #endif // __CF_CORE_H__

@@ -8,7 +8,8 @@
 #include <CF/Net/Http/HTTPDef.h>
 #include <CF/Net/Http/HTTPPacket.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class HTTPPathMapper;
 
@@ -135,6 +136,7 @@ class DefaultPathMapper : public HTTPPathMapper {
   bool Match(const StrPtrLen &path) override { return true; }
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __HTTP_DISPATCHER_H__

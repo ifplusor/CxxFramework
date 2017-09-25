@@ -39,7 +39,8 @@
 #include <CF/HashTable.h>
 #include <CF/Core/Mutex.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class Task;
 class UDPDemuxerKey;
@@ -168,8 +169,7 @@ class UDPDemuxer {
   Core::Mutex fMutex;//this data structure is shared!
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __UDPDEMUXER_H__
-
-

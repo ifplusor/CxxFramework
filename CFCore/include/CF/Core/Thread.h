@@ -56,7 +56,8 @@
 
 #define DEBUG_THREAD 1
 
-namespace CF::Core {
+namespace CF {
+namespace Core {
 
 class Thread {
 
@@ -192,6 +193,7 @@ class ThreadDataSetter {
   void *fFinalValue;
 };
 
-}
+} // namespace Core
+} // namespace CF
 
 #endif // __CF_CORE_THREAD_H__

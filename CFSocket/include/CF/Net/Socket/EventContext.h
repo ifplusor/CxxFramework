@@ -54,7 +54,8 @@
 //enable to trace event context execution and the task associated with the context
 #define DEBUG_EVENT_CONTEXT 1
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class EventThread;
 
@@ -189,6 +190,7 @@ class EventThread : public Core::Thread {
   friend class EventContext;
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __EVENT_CONTEXT_H__

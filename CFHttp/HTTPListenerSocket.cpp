@@ -5,7 +5,8 @@
 #include <CF/Net/Http/HTTPListenerSocket.h>
 #include <CF/Net/Http/HTTPSession.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 Thread::Task *HTTPListenerSocket::GetSessionTask(TCPSocket **outSocket) {
   Assert(outSocket != nullptr);
@@ -26,4 +27,5 @@ bool HTTPListenerSocket::OverMaxConnections(UInt32 buffer) {
   return false;
 }
 
-}
+} // namespace Net
+} // namespace CF

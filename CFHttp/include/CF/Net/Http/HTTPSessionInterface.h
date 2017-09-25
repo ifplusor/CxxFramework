@@ -14,7 +14,8 @@
 #include <CF/Net/Http/HTTPResponseStream.h>
 #include <CF/Net/Http/HTTPDispatcher.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class HTTPSessionInterface : public Thread::Task {
  public:
@@ -122,6 +123,7 @@ class HTTPSessionInterface : public Thread::Task {
   static void *SetupParams(HTTPSessionInterface *inSession, UInt32 *outLen);
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __HTTP_SESSION_INTERFACE_H__

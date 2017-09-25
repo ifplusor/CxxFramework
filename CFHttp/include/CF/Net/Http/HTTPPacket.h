@@ -31,7 +31,8 @@
 #include <CF/Net/Http/HTTPProtocol.h>
 #include <CF/Net/Http/QueryParamList.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class HTTPPacket {
  public:
@@ -200,6 +201,7 @@ class HTTPPacket {
   static UInt8 sURLStopConditions[];
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __HTTP_PACKET_H__

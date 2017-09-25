@@ -48,7 +48,8 @@
 #endif
 #endif
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class SocketUtils {
  public:
@@ -117,7 +118,8 @@ inline StrPtrLen *SocketUtils::GetDNSNameStr(UInt32 inDNSIndex) {
   return &sIPAddrInfoArray[inDNSIndex].fDNSNameStr;
 }
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __SOCKET_UTILS_H__
 

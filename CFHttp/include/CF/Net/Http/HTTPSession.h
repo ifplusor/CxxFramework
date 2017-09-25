@@ -3,7 +3,8 @@
 
 #include <CF/Net/Http/HTTPSessionInterface.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class HTTPSession : public HTTPSessionInterface {
  public:
@@ -45,6 +46,7 @@ class HTTPSession : public HTTPSessionInterface {
   } fState;
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __HTTP_SESSION_H__

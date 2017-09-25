@@ -37,7 +37,8 @@
 #include <CF/Types.h>
 #include <CF/StrPtrLen.h>
 
-namespace CF::Core {
+namespace CF {
+namespace Core {
 
 class DateBuffer;
 
@@ -58,7 +59,8 @@ class DateTranslator {
  private:
 
   static UInt32 convertCharToMonthTableIndex(int inChar) {
-    return (UInt32) (toupper(inChar) - 'A'); // Convert to a value between 0 - 25
+    return (UInt32) (toupper(inChar)
+        - 'A'); // Convert to a value between 0 - 25
   }
 };
 
@@ -106,6 +108,7 @@ class DateBuffer {
   friend class DateTranslator;
 };
 
-}
+} // namespace Core
+} // namespace CF
 
 #endif

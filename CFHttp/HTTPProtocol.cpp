@@ -25,7 +25,8 @@
 
 #include <CF/Net/Http/HTTPProtocol.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 CF::StrPtrLen HTTPProtocol::sMethods[] =
     {
@@ -373,4 +374,5 @@ EasyStreamType HTTPProtocol::GetStreamType(StrPtrLen *streamTypeStr) {
   return easyIllegalStreamType;
 }
 
-}
+} // namespace Net
+} // namespace CF

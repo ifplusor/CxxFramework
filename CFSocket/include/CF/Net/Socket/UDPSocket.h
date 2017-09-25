@@ -45,7 +45,8 @@
 
 #endif
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 /*
  * Socket 的继承类,Socket 是 EventContext 的继承类。注意在 Socket 的构建函数里,调用了
@@ -93,7 +94,7 @@ class UDPSocket : public Socket {
   struct sockaddr_in fMsgAddr;
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __UDPSOCKET_H__
-

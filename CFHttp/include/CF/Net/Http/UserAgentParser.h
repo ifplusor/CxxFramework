@@ -38,7 +38,8 @@
 #include <CF/StringFormatter.h>
 #include <CF/StrPtrLen.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class UserAgentParser {
  public:
@@ -87,6 +88,7 @@ class UserAgentParser {
 
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __USER_AGENT_PARSER_H__

@@ -37,7 +37,8 @@
 
 #define DEBUG_MUTEXRW 0
 
-namespace CF::Core {
+namespace CF {
+namespace Core {
 
 class RWMutex {
  public:
@@ -162,6 +163,7 @@ class MutexWriteLocker : public MutexReadWriteLocker {
   }
 };
 
-}
+} // namespace Core
+} // namespace CF
 
 #endif // __CF_RWMUTEX_H__

@@ -39,7 +39,8 @@
 #include <CF/Net/Socket/TCPSocket.h>
 #include <CF/Thread/IdleTask.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class TCPListenerSocket : public TCPSocket, public Thread::IdleTask {
  public:
@@ -95,7 +96,8 @@ class TCPListenerSocket : public TCPSocket, public Thread::IdleTask {
   bool fSleepBetweenAccepts;
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __TCP_LISTENER_SOCKET_H__
 

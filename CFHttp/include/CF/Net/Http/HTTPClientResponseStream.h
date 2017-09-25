@@ -23,7 +23,8 @@
 #include <CF/Net/Socket/ClientSocket.h>
 #include <CF/Thread/TimeoutTask.h>
 
-namespace CF::Net {
+namespace CF {
+namespace Net {
 
 class HTTPClientResponseStream : public ResizeableStringFormatter {
  public:
@@ -100,6 +101,7 @@ class HTTPClientResponseStream : public ResizeableStringFormatter {
   friend class HTTPPacket;
 };
 
-}
+} // namespace Net
+} // namespace CF
 
 #endif // __HTTPClient_RESPONSE_STREAM_H__
