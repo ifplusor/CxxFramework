@@ -29,7 +29,7 @@ using namespace CF;
 
 static AssertLogger *sLogger = nullptr;
 
-void SetAssertLogger(AssertLogger *theLogger) {
+void CF::SetAssertLogger(AssertLogger *theLogger) {
   sLogger = theLogger;
 }
 

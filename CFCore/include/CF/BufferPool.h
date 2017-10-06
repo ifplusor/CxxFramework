@@ -23,7 +23,7 @@
  *
  */
 /*
-    File:       OSBufferPool.cpp
+    File:       BufferPool.h
 
     Contains:   Fast access to fixed size buffers.
 
@@ -31,27 +31,50 @@
 
 */
 
-#include <new>
-#include "../include/os/OSBufferPool.h"
+#ifndef __OS_BUFFER_POOL_H__
+#define __OS_BUFFER_POOL_H__
 
-void *OSBufferPool::Get() {
-  OSMutexLocker locker(&fMutex);
-  if (fQueue.GetLength() == 0) {
-    fTotNumBuffers++;
-    char *theNewBuf = new char[fBufSize + sizeof(OSQueueElem)];
+#include <CF/Queue.h>
+#include <CF/Core/Mutex.h>
 
-    //
-    // We need to construct a Queue Element, but we don't actually need
-    // to use it in this function, so to avoid a compiler warning just
-    // don't assign the result to anything.
-    (void) new(theNewBuf) OSQueueElem(theNewBuf + sizeof(OSQueueElem));
+namespace CF {
 
-    return theNewBuf + sizeof(OSQueueElem);
-  }
-  return fQueue.DeQueue()->GetEnclosingObject();
+class BufferPool {
+ public:
+
+  BufferPool(UInt32 inBufferSize)
+      : fBufSize(inBufferSize), fTotNumBuffers(0) {}
+
+  //
+  // This object currently *does not* clean up for itself when
+  // you destruct it!
+  ~BufferPool() {}
+
+  //
+  // ACCESSORS
+  UInt32 GetTotalNumBuffers() { return fTotNumBuffers; }
+  UInt32 GetNumAvailableBuffers() { return fQueue.GetLength(); }
+
+  //
+  // All these functions are Thread-safe
+
+  //
+  // Gets a buffer out of the pool. This buffer must be replaced
+  // by calling Put when you are done with it.
+  void *Get();
+
+  //
+  // Returns a buffer retreived by Get back to the pool.
+  void Put(void *inBuffer);
+
+ private:
+
+  Core::Mutex fMutex;
+  Queue fQueue;
+  UInt32 fBufSize;
+  UInt32 fTotNumBuffers;
+};
+
 }
 
-void OSBufferPool::Put(void *inBuffer) {
-  OSMutexLocker locker(&fMutex);
-  fQueue.EnQueue((OSQueueElem *) ((char *) inBuffer - sizeof(OSQueueElem)));
-}
+#endif //__OS_BUFFER_POOL_H__

@@ -50,7 +50,7 @@ void SetAssertLogger(AssertLogger *theLogger);
 
 #include <CF/sstdlib.h>
 
-void MyAssert(char *s);
+void  MyAssert(char *s);
 
 #define kAssertBuffSize 256
 
@@ -105,7 +105,7 @@ void MyAssert(char *s);
     buffer[kAssertBuffSize -1] = 0;                             \
     s_printf("_WarnV: %s, %d (%s, %s [err=%d])\n",              \
                 __FILE__, __LINE__, msg,                        \
-                qtss_strerror(err, buffer, sizeof(buffer) - 1), \
+                s_strerror(err, buffer, sizeof(buffer) - 1), \
                 err );                                          \
   }                                                             \
 }

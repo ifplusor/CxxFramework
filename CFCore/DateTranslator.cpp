@@ -31,11 +31,11 @@
 
 */
 
-#include <CF/Core/DateTranslator.h>
+#include <CF/DateTranslator.h>
 #include <CF/StringParser.h>
 #include <CF/Core/Time.h>
 
-using namespace CF::Core;
+using namespace CF;
 
 // If you assign values of 0 - 25 for all the letters, and sum up the values
 // of the letters in each month, you get a table that looks like this. For
@@ -101,7 +101,7 @@ SInt64 DateTranslator::ParseDate(CF::StrPtrLen *inDateString) {
 
   // Now just grab hour, minute, second
   theDateStruct.tm_hour = theDateParser.ConsumeInteger(NULL);
-  theDateStruct.tm_hour += Time::GetGMTOffset();
+  theDateStruct.tm_hour += Core::Time::GetGMTOffset();
 
   theDateParser.ConsumeLength(NULL, 1); //skip over ':'
 
@@ -145,7 +145,7 @@ void DateTranslator::UpdateDateBuffer(DateBuffer *inDateBuffer,
 }
 
 void DateBuffer::InexactUpdate() {
-  SInt64 theCurTime = Time::Milliseconds();
+  SInt64 theCurTime = Core::Time::Milliseconds();
   if ((fLastDateUpdate == 0)
       || ((fLastDateUpdate + kUpdateInterval) < theCurTime)) {
     fLastDateUpdate = theCurTime;

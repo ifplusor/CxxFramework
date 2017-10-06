@@ -86,7 +86,7 @@ void RWMutex::LockWrite() {
 #if DEBUG_MUTEXRW
 
   if (active()) {
-    qtss_printf(
+    s_printf(
         "LockWrite(conflict) state = %d active readers = %d, waiting writers = %d, waiting readers=%d\n",
         fState,
         fActiveReaders,

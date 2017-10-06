@@ -3,6 +3,9 @@
 //
 
 #include <CF/CFEnv.h>
+#include <CF/StringFormatter.h>
+#include <CF/Queue.h>
+#include <CF/CFState.h>
 
 using namespace CF;
 
@@ -57,4 +60,9 @@ void CFEnv::makeServerHeader() {
 
 void CFEnv::Initialize() {
   makeServerHeader();
+}
+
+bool CFEnv::AddListenerSocket(Net::TCPListenerSocket *socket) {
+  CFState::sListenerSocket.EnQueue(new QueueElem(socket));
+  return true;
 }

@@ -2,8 +2,7 @@
 #include <CF/CFState.h>
 #include <CF/Net/Socket/Socket.h>
 #include <CF/Net/Socket/SocketUtils.h>
-#include <CF/Net/Http/HTTPListenerSocket.h>
-#include <CF/Net/Http/HTTPSessionInterface.h>
+#include <CF/CFConfigure.hpp>
 
 using namespace CF;
 
@@ -19,11 +18,13 @@ using namespace CF;
 std::atomic<UInt32> CFState::sState(0); /* 框架内部状态标识 */
 Queue CFState::sListenerSocket;
 
-int CFMain(CFConfigure *config) {
-  CF_Error theErr = CF_NoErr;
+CF_Error CFMain(CFConfigure *config) {
+  CF_Error theErr;
 
-  //
-  // Initialize utility classes
+  /*
+   * Initialize basic modules
+   */
+
   Core::Initialize();
 
   Net::Socket::Initialize();
@@ -34,21 +35,22 @@ int CFMain(CFConfigure *config) {
   ::select_startevents();
 #endif
 
-  Core::Utils::SetPersonality(config->GetPersonalityUser(),
-                     config->GetPersonalityGroup());
+  theErr = config->AfterInitBase();
+  if (theErr != CF_NoErr) return theErr;
 
   /*
-     切换用户和组，LinuxThread库实现的线程模型，setuid() 和 setgid() 可能会
-     出现不同线程中，uid 和 gid 不一致的问题
+   * Configure threads
    */
-  Core::Utils::SwitchPersonality();
+
+  Utils::SetPersonality(config->GetPersonalityUser(),
+                        config->GetPersonalityGroup());
 
   UInt32 numShortTaskThreads = config->GetShortTaskThreads();
   UInt32 numBlockingThreads = config->GetBlockingThreads();
 
-  if (Core::Utils::ThreadSafe()) {
+  if (Utils::ThreadSafe()) {
     if (numShortTaskThreads == 0) {
-      UInt32 numProcessors = Core::Utils::GetNumProcessors();
+      UInt32 numProcessors = Utils::GetNumProcessors();
       // 1 worker Thread per processor, up to 2 threads.
       // Note: Limiting the number of worker threads to 2 on a MacOS X system
       //     with > 2 cores results in better performance on those systems, as
@@ -71,16 +73,19 @@ int CFMain(CFConfigure *config) {
     numBlockingThreads = 1;
 
   UInt32 numThreads = numShortTaskThreads + numBlockingThreads;
-  s_printf("Add threads short_task=%" _U32BITARG_ " "
-               "blocking=%" _U32BITARG_ "\n",
+  s_printf("Add threads short_task=%" _U32BITARG_ " blocking=%" _U32BITARG_ "\n",
            numShortTaskThreads, numBlockingThreads);
 
   Thread::TaskThreadPool::SetNumShortTaskThreads(numShortTaskThreads);
   Thread::TaskThreadPool::SetNumBlockingTaskThreads(numBlockingThreads);
   Thread::TaskThreadPool::AddThreads(numThreads);
 
-  //
-  // Start up the server's global tasks, and start listening
+  theErr = config->AfterConfigThreads(numThreads);
+  if (theErr != CF_NoErr) return theErr;
+
+  /*
+   * Start up the server's global tasks
+   */
 
   Thread::IdleTask::Initialize();
 
@@ -96,26 +101,27 @@ int CFMain(CFConfigure *config) {
 
   Core::Thread::Sleep(1000);
 
-  // Http server configure;
-  UInt32 numHttpListens;
-  CF_NetAddr *httpListenAddrs = config->GetHttpListenAddr(&numHttpListens);
-  if (numHttpListens > 0) {
-    Net::HTTPSessionInterface::Initialize(config->GetHttpMapping());
-    for (UInt32 i = 0; i < numHttpListens; i++) {
-      auto *httpSocket = new Net::HTTPListenerSocket();
-      theErr = httpSocket->Initialize(Net::SocketUtils::ConvertStringToAddr(
-          httpListenAddrs[i].ip), httpListenAddrs[i].port);
-      if (theErr == CF_NoErr) {
-        CFState::sListenerSocket.EnQueue(new QueueElem(httpSocket));
-        httpSocket->RequestEvent(EV_RE);
-      } else {
-        delete httpSocket;
-      }
-    }
-  }
+  theErr = config->AfterConfigFramework();
+  if (theErr != CF_NoErr) return theErr;
 
-  //
-  // listen status loop
+  /*
+   * 切换用户和组，LinuxThread库实现的线程模型，setuid() 和 setgid() 可能会
+   * 出现不同线程中，uid 和 gid 不一致的问题
+   */
+
+  Utils::SwitchPersonality();
+
+  /*
+   * Start service
+   */
+
+  theErr = config->StartupCustomServices();
+  if (theErr != CF_NoErr) return theErr;
+
+  /*
+   * Listen status loop
+   */
+
   while (!CFEnv::WillExit()) {
 #ifdef __sgi__
     Core::Thread::Sleep(999);
@@ -124,8 +130,9 @@ int CFMain(CFConfigure *config) {
 #endif
   }
 
-  //
-  // exit, release resources
+  /*
+   * Exit, release resources
+   */
 
   // 1. stop Socket listen, refuse all new connect
   s_printf("release: step 1, stop listen...\n");
@@ -171,7 +178,7 @@ int CFMain(CFConfigure *config) {
 
   s_printf("all resources is released, the server will exit soon.\n");
 
-  return 0;
+  return theErr;
 }
 
 int main(int argc, char **argv) {

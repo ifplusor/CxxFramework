@@ -10,7 +10,7 @@
  * compliance with the License. Please obtain a copy of the License at
  * http://www.opensource.apple.com/apsl/ and read it before using this
  * file.
- * 
+ *
  * The Original Code and all software distributed under the License are
  * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
  * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
@@ -18,66 +18,54 @@
  * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
  * Please see the License for the specific language governing rights and
  * limitations under the License.
- * 
+ *
  * @APPLE_LICENSE_HEADER_END@
  *
  */
 /*
-    File:       OSArrayObjectDeleter.h
+    File:       OSDynamicLoader.h
 
-    Contains:   Auto object for deleting arrays.
+    Contains:   OS abstraction for loading code fragments.
 
 
 
 */
 
-#ifndef __OS_ARRAY_OBJECT_DELETER_H__
-#define __OS_ARRAY_OBJECT_DELETER_H__
+#ifndef _OS_CODEFRAGMENT_H_
+#define _OS_CODEFRAGMENT_H_
 
-#include "cf/MyAssert.h"
+#include <stdlib.h>
 
-template<class T>
-class OSArrayObjectDeleter {
+#include <CF/Types.h>
+
+#ifdef __OSX__
+#include <CoreFoundation/CFBundle.h>
+#endif
+
+namespace CF {
+
+class CodeFragment {
  public:
-  OSArrayObjectDeleter() : fT(NULL) {}
-  OSArrayObjectDeleter(T *victim) : fT(victim) {}
-  ~OSArrayObjectDeleter() { delete[] fT; }
 
-  void ClearObject() { fT = NULL; }
+  static void Initialize();
 
-  void SetObject(T *victim) {
-    Assert(fT == NULL);
-    fT = victim;
-  }
-  T *GetObject() { return fT; }
+  CodeFragment(const char *inPath);
+  ~CodeFragment();
 
-  operator T *() { return fT; }
+  bool IsValid() { return (fFragmentP != NULL); }
+  void *GetSymbol(const char *inSymbolName);
 
  private:
 
-  T *fT;
+#ifdef __Win32__
+  HMODULE fFragmentP;
+#elif __OSX__
+  CFBundleRef fFragmentP;
+#else
+  void *fFragmentP;
+#endif
 };
 
-template<class T>
-class OSPtrDeleter {
- public:
-  OSPtrDeleter() : fT(NULL) {}
-  OSPtrDeleter(T *victim) : fT(victim) {}
-  ~OSPtrDeleter() { delete fT; }
+}
 
-  void ClearObject() { fT = NULL; }
-
-  void SetObject(T *victim) {
-    Assert(fT == NULL);
-    fT = victim;
-  }
-
- private:
-
-  T *fT;
-};
-
-typedef OSArrayObjectDeleter<char *> OSCharPointerArrayDeleter;
-typedef OSArrayObjectDeleter<char> OSCharArrayDeleter;
-
-#endif //__OS_OBJECT_ARRAY_DELETER_H__
+#endif//_OS_CODEFRAGMENT_H_

@@ -30,6 +30,7 @@
 */
 
 #include <string.h>
+
 #include <CF/Net/Socket/SocketUtils.h>
 
 #if !__WinSock__

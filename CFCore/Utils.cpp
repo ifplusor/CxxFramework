@@ -31,8 +31,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#include <CF/Core/Utils.h>
-#include <CF/Core/Thread.h>
+#include <CF/Utils.h>
 
 #if (__solaris__ || __linux__ || __linuxppc__)
 #include <CF/StringParser.h>
@@ -60,7 +59,7 @@
 
 
 
-using namespace CF::Core;
+using namespace CF;
 
 double  Utils::sDivisor = 0;
 double  Utils::sMicroDivisor = 0;
@@ -110,7 +109,7 @@ OS_Error Utils::MakeDir(char *inPath) {
 #else
     if (::mkdir(inPath, 0777) == -1)
 #endif
-      return (OS_Error) Thread::GetErrno();
+      return (OS_Error) GetErrno();
   }
 #if __Win32__ || __MinGW__
   else if (!(theStatBuffer.st_mode & _S_IFDIR)) // MSVC++ doesn't define the S_ISDIR macro

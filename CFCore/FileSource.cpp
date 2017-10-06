@@ -39,11 +39,14 @@
 #include <unistd.h>
 #endif
 
-#include "../include/os/OSFileSource.h"
+#include "CF/Utils.h"
+#include "CF/FileSource.h"
 
 #define FILE_SOURCE_DEBUG 0
 #define FILE_SOURCE_BUFFTEST 0
 #define TEST_TIME 0
+
+using namespace CF;
 
 #if TEST_TIME
 static SInt64 startTime = 0;
@@ -56,7 +59,7 @@ static bool sMovie = false;
 
 #if READ_LOG
 extern UInt32 xTrackID;
-void OSFileSource::SetLog(const char *inPath)
+void FileSource::SetLog(const char *inPath)
 {
     fFilePath[0] = 0;
     ::strcpy(fFilePath, inPath);
@@ -68,19 +71,19 @@ void OSFileSource::SetLog(const char *inPath)
         fFileLog = ::fopen(fFilePath, "w+");
         if (fFileLog && IsValid())
         {
-            qtss_fprintf(fFileLog, "%s", "QTFILE_READ_LOG\n");
-            qtss_fprintf(fFileLog, "size: %qu\n", GetLength());
-            qtss_printf("OSFileSource::SetLog=%s\n", fFilePath);
+            s_fprintf(fFileLog, "%s", "QTFILE_READ_LOG\n");
+            s_fprintf(fFileLog, "size: %qu\n", GetLength());
+            s_printf("FileSource::SetLog=%s\n", fFilePath);
 
         }
         ::fclose(fFileLog);
     }
 }
 #else
-void OSFileSource::SetLog(const char *inPath) {
+void FileSource::SetLog(const char *inPath) {
 
 #if FILE_SOURCE_DEBUG
-  qtss_printf("OSFileSource::SetLog=%s\n", inPath);
+  s_printf("FileSource::SetLog=%s\n", inPath);
 #endif
 
 }
@@ -92,7 +95,7 @@ FileBlockBuffer::~FileBlockBuffer() {
 
 #if FILE_SOURCE_DEBUG
     ::memset((char *)fDataBuffer, 0, fBufferSize);
-    qtss_printf("FileBlockBuffer::~FileBlockBuffer delete %" _U32BITARG_ " this=%" _U32BITARG_ "\n", fDataBuffer, this);
+    s_printf("FileBlockBuffer::~FileBlockBuffer delete %" _U32BITARG_ " this=%" _U32BITARG_ "\n", fDataBuffer, this);
 #endif
     delete fDataBuffer;
     fDataBuffer = nullptr;
@@ -107,7 +110,7 @@ void FileBlockBuffer::AllocateBuffer(UInt32 buffSize) {
 
 #if FILE_SOURCE_DEBUG
   this->CleanBuffer();
-  qtss_printf("FileBlockBuffer::FileBlockBuffer allocate buff ptr =%" _U32BITARG_ " len=%" _U32BITARG_ " this=%"   _U32BITARG_   "\n", fDataBuffer, buffSize, this);
+  s_printf("FileBlockBuffer::FileBlockBuffer allocate buff ptr =%" _U32BITARG_ " len=%" _U32BITARG_ " this=%"   _U32BITARG_   "\n", fDataBuffer, buffSize, this);
 #endif
 
 }
@@ -137,7 +140,7 @@ FileBlockBuffer *FileBlockPool::GetBufferElement(UInt32 bufferSizeBytes) {
   FileBlockBuffer *theNewBuf = nullptr;
   if (fNumCurrentBuffers < fMaxBuffers) {
 #if FILE_SOURCE_DEBUG
-    qtss_printf("FileBlockPool::GetBufferElement new element fNumCurrentBuffers=%" _U32BITARG_ " fMaxBuffers=%"   _U32BITARG_   " fBufferUnitSizeBytes=%"   _U32BITARG_   " bufferSizeBytes=%"   _U32BITARG_   "\n", fNumCurrentBuffers, fMaxBuffers, fBufferUnitSizeBytes, bufferSizeBytes);
+    s_printf("FileBlockPool::GetBufferElement new element fNumCurrentBuffers=%" _U32BITARG_ " fMaxBuffers=%"   _U32BITARG_   " fBufferUnitSizeBytes=%"   _U32BITARG_   " bufferSizeBytes=%"   _U32BITARG_   "\n", fNumCurrentBuffers, fMaxBuffers, fBufferUnitSizeBytes, bufferSizeBytes);
 #endif
     theNewBuf = new FileBlockBuffer();
     theNewBuf->AllocateBuffer(bufferSizeBytes);
@@ -148,7 +151,7 @@ FileBlockBuffer *FileBlockPool::GetBufferElement(UInt32 bufferSizeBytes) {
     return theNewBuf;
   }
 
-  OSQueueElem *theElem = fQueue.DeQueue(); // get head
+  QueueElem *theElem = fQueue.DeQueue(); // get head
 
   Assert(theElem != nullptr);
 
@@ -157,7 +160,7 @@ FileBlockBuffer *FileBlockPool::GetBufferElement(UInt32 bufferSizeBytes) {
 
   theNewBuf = (FileBlockBuffer *) theElem->GetEnclosingObject();
   Assert(theNewBuf != nullptr);
-  //qtss_printf("FileBlockPool::GetBufferElement reuse buffer theNewBuf=%" _U32BITARG_ " fDataBuffer=%"   _U32BITARG_   " fArrayIndex=%" _S32BITARG_ "\n",theNewBuf,theNewBuf->fDataBuffer,theNewBuf->fArrayIndex);
+  //s_printf("FileBlockPool::GetBufferElement reuse buffer theNewBuf=%" _U32BITARG_ " fDataBuffer=%"   _U32BITARG_   " fArrayIndex=%" _S32BITARG_ "\n",theNewBuf,theNewBuf->fDataBuffer,theNewBuf->fArrayIndex);
 
   return theNewBuf;
 
@@ -166,7 +169,7 @@ FileBlockBuffer *FileBlockPool::GetBufferElement(UInt32 bufferSizeBytes) {
 void FileBlockPool::DeleteBlockPool() {
 
   FileBlockBuffer *buffer = nullptr;
-  OSQueueElem *theElem = fQueue.DeQueue();
+  QueueElem *theElem = fQueue.DeQueue();
   while (theElem != nullptr) {
     buffer = (FileBlockBuffer *) theElem->GetEnclosingObject();
     delete buffer;
@@ -230,7 +233,7 @@ void FileMap::AllocateBufferMap(UInt32 inUnitSizeInK,
 
   this->Clean(); // required because fFileMapArray's array is used to store buffer pointers.
 #if FILE_SOURCE_DEBUG
-  qtss_printf("FileMap::AllocateBufferMap shared buffers fFileMapArray=%" _U32BITARG_ " fDataBufferSize= %"   _U32BITARG_   " fMapArraySize=%"   _U32BITARG_   " fileLen=%qu \n", fFileMapArray, fDataBufferSize, fMapArraySize, fileLen);
+  s_printf("FileMap::AllocateBufferMap shared buffers fFileMapArray=%" _U32BITARG_ " fDataBufferSize= %"   _U32BITARG_   " fMapArraySize=%"   _U32BITARG_   " fileLen=%qu \n", fFileMapArray, fDataBufferSize, fMapArraySize, fileLen);
 #endif
 
 }
@@ -256,7 +259,7 @@ char *FileMap::GetBuffer(SInt64 buffIndex, bool *outFillBuff) {
   FileBlockBuffer *theElem = fFileMapArray[buffIndex];
   if (nullptr == theElem) {
 #if FILE_SOURCE_DEBUG
-    qtss_printf("FileMap::GetBuffer call fBlockPool.GetBufferElement(); buffIndex=%" _S32BITARG_ "\n", buffIndex);
+    s_printf("FileMap::GetBuffer call fBlockPool.GetBufferElement(); buffIndex=%" _S32BITARG_ "\n", buffIndex);
 #endif
 
     theElem = fBlockPool.GetBufferElement(fDataBufferSize);
@@ -269,7 +272,7 @@ char *FileMap::GetBuffer(SInt64 buffIndex, bool *outFillBuff) {
       == buffIndex) // found a pre-allocated and filled buffer
   {
 #if FILE_SOURCE_DEBUG
-    //qtss_printf("FileMap::GetBuffer pre-allocated buff buffIndex=%" _S32BITARG_ "\n",buffIndex);
+    //s_printf("FileMap::GetBuffer pre-allocated buff buffIndex=%" _S32BITARG_ "\n",buffIndex);
 #endif
 
     *outFillBuff = false;
@@ -302,7 +305,7 @@ void FileMap::DeleteMap() {
     return;
 
 #if FILE_SOURCE_DEBUG
-  qtss_printf("FileMap::DeleteMap fFileMapArray=%" _U32BITARG_ " fMapArraySize=%" _S32BITARG_ " \n", fFileMapArray, fMapArraySize);
+  s_printf("FileMap::DeleteMap fFileMapArray=%" _U32BITARG_ " fMapArraySize=%" _S32BITARG_ " \n", fFileMapArray, fMapArraySize);
   this->Clean();
 #endif
 
@@ -311,7 +314,7 @@ void FileMap::DeleteMap() {
 
 }
 
-void OSFileSource::Set(const char *inPath) {
+void FileSource::Set(const char *inPath) {
   Close();
 
 #if __Win32__
@@ -341,11 +344,11 @@ void OSFileSource::Set(const char *inPath) {
   }
 }
 
-void OSFileSource::Advise(UInt64, UInt32) {
+void FileSource::Advise(UInt64, UInt32) {
   // does nothing on platforms other than MacOSXServer
 }
 
-OS_Error OSFileSource::FillBuffer(char *ioBuffer,
+OS_Error FileSource::FillBuffer(char *ioBuffer,
                                   char *buffStart,
                                   SInt32 buffIndex) {
   UInt32 buffSize = fFileMap.GetMaxBufSize();
@@ -364,7 +367,7 @@ OS_Error OSFileSource::FillBuffer(char *ioBuffer,
 static SInt32 sBuffCount = 1;
 #endif
 
-OS_Error OSFileSource::Read(UInt64 inPosition,
+OS_Error FileSource::Read(UInt64 inPosition,
                             void *inBuffer,
                             UInt32 inLength,
                             UInt32 *outRcvLen) {
@@ -379,11 +382,11 @@ OS_Error OSFileSource::Read(UInt64 inPosition,
   return this->ReadFromCache(inPosition, inBuffer, inLength, outRcvLen);
 }
 
-OS_Error OSFileSource::ReadFromCache(UInt64 inPosition,
+OS_Error FileSource::ReadFromCache(UInt64 inPosition,
                                      void *inBuffer,
                                      UInt32 inLength,
                                      UInt32 *outRcvLen) {
-  OSMutexLocker locker(&fMutex);
+  Core::MutexLocker locker(&fMutex);
 
   if (!fFileMap.Initialized() || !fCacheEnabled) {
     Assert(0);
@@ -420,15 +423,15 @@ OS_Error OSFileSource::ReadFromCache(UInt64 inPosition,
   if (buffIndex > endIndex || endIndex > maxIndex) {
 #if FILE_SOURCE_DEBUG
 
-    qtss_printf("OSFileSource::ReadFromCache bad index: buffIndex=%" _S32BITARG_ " endIndex=%" _S32BITARG_ " maxIndex=%" _S32BITARG_ "\n", buffIndex, endIndex, maxIndex);
-    qtss_printf("OSFileSource::ReadFromCache inPosition =%qu buffSize = %"   _U32BITARG_   " index=%" _S32BITARG_ "\n", inPosition, fFileMap.GetMaxBufSize(), buffIndex);
+    s_printf("FileSource::ReadFromCache bad index: buffIndex=%" _S32BITARG_ " endIndex=%" _S32BITARG_ " maxIndex=%" _S32BITARG_ "\n", buffIndex, endIndex, maxIndex);
+    s_printf("FileSource::ReadFromCache inPosition =%qu buffSize = %"   _U32BITARG_   " index=%" _S32BITARG_ "\n", inPosition, fFileMap.GetMaxBufSize(), buffIndex);
 #endif
     Assert(0);
   }
 
   while (buffIndex <= endIndex && buffIndex <= maxIndex) {
 #if FILE_SOURCE_DEBUG
-    qtss_printf("OSFileSource::ReadFromCache inPosition =%qu buffSize = %" _U32BITARG_ " index=%" _S32BITARG_ "\n", inPosition, fFileMap.GetMaxBufSize(), buffIndex);
+    s_printf("FileSource::ReadFromCache inPosition =%qu buffSize = %" _U32BITARG_ " index=%" _S32BITARG_ "\n", inPosition, fFileMap.GetMaxBufSize(), buffIndex);
 #endif
 
     buffStart = fFileMap.GetBuffer(buffIndex, &fillBuff);
@@ -453,7 +456,7 @@ OS_Error OSFileSource::ReadFromCache(UInt64 inPosition,
     {
 
 #if FILE_SOURCE_DEBUG
-      qtss_printf("OSFileSource::ReadFromCache end of file reached buffIndex=%" _U32BITARG_ " buffSize = %" _S32BITARG_ " bytesToCopy=%"   _U32BITARG_   "\n", buffIndex, buffSize, bytesToCopy);
+      s_printf("FileSource::ReadFromCache end of file reached buffIndex=%" _U32BITARG_ " buffSize = %" _S32BITARG_ " bytesToCopy=%"   _U32BITARG_   "\n", buffIndex, buffSize, bytesToCopy);
 #endif
       Assert(buffSize <= (SInt64) kUInt32_Max);
       ::memcpy(buffOut, buffOffset, (UInt32) buffSize);
@@ -480,7 +483,7 @@ OS_Error OSFileSource::ReadFromCache(UInt64 inPosition,
   }
 
 #if FILE_SOURCE_DEBUG
-  //qtss_printf("OSFileSource::ReadFromCache inLength= %" _U32BITARG_ " *outRcvLen=%" _U32BITARG_ "\n",inLength, *outRcvLen);
+  //s_printf("FileSource::ReadFromCache inLength= %" _U32BITARG_ " *outRcvLen=%" _U32BITARG_ "\n",inLength, *outRcvLen);
 #endif
 
 #if FILE_SOURCE_BUFFTEST
@@ -489,13 +492,13 @@ OS_Error OSFileSource::ReadFromCache(UInt64 inPosition,
 
   Assert(*outRcvLen == outLen);
   if (*outRcvLen != outLen)
-      qtss_printf("OSFileSource::ReadFromCache *outRcvLen != outLen *outRcvLen=%" _U32BITARG_ " outLen=%" _U32BITARG_ "\n", *outRcvLen, outLen);
+      s_printf("FileSource::ReadFromCache *outRcvLen != outLen *outRcvLen=%" _U32BITARG_ " outLen=%" _U32BITARG_ "\n", *outRcvLen, outLen);
 
   for (int i = 0; i < inLength; i++)
   {
       if (((char*)inBuffer)[i] != testBuff[i])
       {
-          qtss_printf("OSFileSource::ReadFromCache byte pos %d of %" _U32BITARG_ " failed len=%" _U32BITARG_ " inPosition=%qu sBuffCount=%" _S32BITARG_ "\n", i, inLength, outLen, inPosition, sBuffCount);
+          s_printf("FileSource::ReadFromCache byte pos %d of %" _U32BITARG_ " failed len=%" _U32BITARG_ " inPosition=%qu sBuffCount=%" _S32BITARG_ "\n", i, inLength, outLen, inPosition, sBuffCount);
           break;
       }
   }
@@ -505,11 +508,11 @@ OS_Error OSFileSource::ReadFromCache(UInt64 inPosition,
   return OS_NoErr;
 }
 
-OS_Error OSFileSource::ReadFromDisk(void *inBuffer,
+OS_Error FileSource::ReadFromDisk(void *inBuffer,
                                     UInt32 inLength,
                                     UInt32 *outRcvLen) {
 #if FILE_SOURCE_BUFFTEST
-  qtss_printf("OSFileSource::Read inLength=%"   _U32BITARG_   " fFile=%d\n", inLength, fFile);
+  s_printf("FileSource::Read inLength=%"   _U32BITARG_   " fFile=%d\n", inLength, fFile);
 #endif
 
 #if __Win32__
@@ -517,12 +520,12 @@ OS_Error OSFileSource::ReadFromDisk(void *inBuffer,
       return OSThread::GetErrno();
 #else
   if (lseek(fFile, fPosition, SEEK_SET) == -1)
-    return (OS_Error) OSThread::GetErrno();
+    return (OS_Error) Utils::GetErrno();
 #endif
 
   int rcvLen = ::read(fFile, (char *) inBuffer, inLength);
   if (rcvLen == -1)
-    return (OS_Error) OSThread::GetErrno();
+    return (OS_Error) Utils::GetErrno();
 
   if (outRcvLen != nullptr)
     *outRcvLen = rcvLen;
@@ -533,7 +536,7 @@ OS_Error OSFileSource::ReadFromDisk(void *inBuffer,
   return OS_NoErr;
 }
 
-OS_Error OSFileSource::ReadFromPos(UInt64 inPosition,
+OS_Error FileSource::ReadFromPos(UInt64 inPosition,
                                    void *inBuffer,
                                    UInt32 inLength,
                                    UInt32 *outRcvLen) {
@@ -543,7 +546,7 @@ OS_Error OSFileSource::ReadFromPos(UInt64 inPosition,
       sReadCount++;
       if (outRcvLen)
           *outRcvLen = 0;
-      qtss_printf("OSFileSource::Read sReadCount = %" _S32BITARG_ " totalbytes=%" _S32BITARG_ " readsize=%"   _U32BITARG_   "\n", sReadCount, sByteCount, inLength);
+      s_printf("FileSource::Read sReadCount = %" _S32BITARG_ " totalbytes=%" _S32BITARG_ " readsize=%"   _U32BITARG_   "\n", sReadCount, sByteCount, inLength);
   }
 #endif
 
@@ -556,7 +559,7 @@ OS_Error OSFileSource::ReadFromPos(UInt64 inPosition,
       fFileLog = ::fopen(fFilePath, "a");
       if (fFileLog)
       {
-          qtss_fprintf(fFileLog, "read: %qu %"   _U32BITARG_   " %"   _U32BITARG_   "\n", inPosition, *outRcvLen, xTrackID);
+          s_fprintf(fFileLog, "read: %qu %"   _U32BITARG_   " %"   _U32BITARG_   "\n", inPosition, *outRcvLen, xTrackID);
           ::fclose(fFileLog);
       }
   }
@@ -572,14 +575,14 @@ OS_Error OSFileSource::ReadFromPos(UInt64 inPosition,
   return err;
 }
 
-void OSFileSource::SetTrackID(UInt32 trackID) {
+void FileSource::SetTrackID(UInt32 trackID) {
 #if READ_LOG
   fTrackID = trackID;
-  //  qtss_printf("OSFileSource::SetTrackID = %"   _U32BITARG_   " this=%"   _U32BITARG_   "\n",fTrackID,(UInt32) this);
+  //  s_printf("FileSource::SetTrackID = %"   _U32BITARG_   " this=%"   _U32BITARG_   "\n",fTrackID,(UInt32) this);
 #endif
 }
 
-void OSFileSource::Close() {
+void FileSource::Close() {
   if ((fFile != -1) && (fShouldClose)) {
     ::close(fFile);
 
@@ -603,8 +606,8 @@ void OSFileSource::Close() {
   if (fShouldClose)
   {
       sMovie = 0;
-      //      qtss_printf("OSFileSource::Close sReadCount = %" _S32BITARG_ " totalbytes=%" _S32BITARG_ "\n",sReadCount,sByteCount);
-      //      qtss_printf("OSFileSource::Close durationTime = %qd\n",durationTime);
+      //      s_printf("FileSource::Close sReadCount = %" _S32BITARG_ " totalbytes=%" _S32BITARG_ "\n",sReadCount,sByteCount);
+      //      s_printf("FileSource::Close durationTime = %qd\n",durationTime);
   }
 #endif
 

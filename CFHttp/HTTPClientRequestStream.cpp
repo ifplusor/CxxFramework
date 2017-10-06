@@ -160,14 +160,14 @@ CF_Error HTTPClientRequestStream::ReadRequest() {
     //              StrPtrLen* theLocalAddrStr = fSocket->GetLocalAddrStr();
     //              StrPtrLen* theRemoteAddrStr = fSocket->GetRemoteAddrStr();
     //              if (theLocalAddrStr != NULL)
-    //              {	qtss_printf("#server: ip="); theLocalAddrStr->PrintStr(); s_printf(" port=%u\n" , serverPort );
+    //              {	s_printf("#server: ip="); theLocalAddrStr->PrintStr(); s_printf(" port=%u\n" , serverPort );
     //              }
     //              else
     //            	{	s_printf("#server: ip=NULL port=%u\n" , serverPort );
     //            	}
     //
     //              if (theRemoteAddrStr != NULL)
-    //              {	s_printf("#client: ip="); theRemoteAddrStr->PrintStr(); qtss_printf(" port=%u\n" , clientPort );
+    //              {	s_printf("#client: ip="); theRemoteAddrStr->PrintStr(); s_printf(" port=%u\n" , clientPort );
     //              }
     //          	else
     //          	{	s_printf("#client: ip=NULL port=%u\n" , clientPort );

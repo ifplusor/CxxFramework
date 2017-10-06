@@ -81,11 +81,11 @@ typedef enum {
 
 // Flags for QTSS_Write when writing to a QTSS_ClientSessionObject.
 typedef enum {
-  qtssWriteFlagsNoFlags = 0x00000000,
-  qtssWriteFlagsIsRTP = 0x00000001,
-  qtssWriteFlagsIsRTCP = 0x00000002,
-  qtssWriteFlagsWriteBurstBegin = 0x00000004,
-  qtssWriteFlagsBufferData = 0x00000008
+  cfWriteFlagsNoFlags = 0x00000000,
+  cfWriteFlagsIsRTP = 0x00000001,
+  cfWriteFlagsIsRTCP = 0x00000002,
+  cfWriteFlagsWriteBurstBegin = 0x00000004,
+  cfWriteFlagsBufferData = 0x00000008
 } CF_WriteFlags;
 
 struct CF_NetAddr {

@@ -33,7 +33,7 @@
 #define __CF_CORE_THREAD_H__
 
 #include <CF/Types.h>
-#include <CF/Core/DateTranslator.h>
+#include <CF/DateTranslator.h>
 
 #ifndef __Win32__
 

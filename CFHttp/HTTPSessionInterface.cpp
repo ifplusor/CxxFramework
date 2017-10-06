@@ -98,7 +98,7 @@ CF_Error HTTPSessionInterface::Write(void *inBuffer,
                                      UInt32 *outLenWritten,
                                      CF_WriteFlags inFlags) {
   UInt32 sendType = HTTPResponseStream::kDontBuffer;
-  if ((inFlags & qtssWriteFlagsBufferData) != 0)
+  if ((inFlags & cfWriteFlagsBufferData) != 0)
     sendType = HTTPResponseStream::kAlwaysBuffer;
 
   iovec theVec[2];

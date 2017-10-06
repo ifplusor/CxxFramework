@@ -103,20 +103,20 @@ optiserr(int argc, char* const *argv, int oint, const char* optstr,
 {
     if (opterr)
     {
-        qtss_fprintf(stderr, "Error in argument %d, char %d: ", oint, optchr + 1);
+        s_fprintf(stderr, "Error in argument %d, char %d: ", oint, optchr + 1);
         switch (err)
         {
         case OPTERRCOLON:
-            qtss_fprintf(stderr, ": in flags\n");
+            s_fprintf(stderr, ": in flags\n");
             break;
         case OPTERRNF:
-            qtss_fprintf(stderr, "option not found %c\n", argv[oint][optchr]);
+            s_fprintf(stderr, "option not found %c\n", argv[oint][optchr]);
             break;
         case OPTERRARG:
-            qtss_fprintf(stderr, "no argument for option %c\n", argv[oint][optchr]);
+            s_fprintf(stderr, "no argument for option %c\n", argv[oint][optchr]);
             break;
         default:
-            qtss_fprintf(stderr, "unknown\n");
+            s_fprintf(stderr, "unknown\n");
             break;
         }
     }
@@ -235,18 +235,18 @@ main(int argc, char** argv)
             break;
         case 'o':
             ofile = optarg;
-            (void)qtss_printf("ofile = %s\n", ofile);
+            (void)s_printf("ofile = %s\n", ofile);
             break;
         case '?':
             errflg++;
         }
     if (errflg) {
-        (void)qtss_fprintf(stderr,
+        (void)s_fprintf(stderr,
             "usage: cmd [-a|-b] [-o <filename>] files...\n");
         exit(2);
     }
     for (; optind < argc; optind++)
-        (void)qtss_printf("%s\n", argv[optind]);
+        (void)s_printf("%s\n", argv[optind]);
     return 0;
 }
 

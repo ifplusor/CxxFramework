@@ -213,7 +213,7 @@ char *StrPtrLen::FindStringCase(char *queryCharStr,
     resultStr->Set(resultChar, queryStr.Len);
 
 #if STRPTRLEN_TESTING
-  qtss_printf("StrPtrLen::FindStringCase found string=%s\n", resultChar);
+  s_printf("StrPtrLen::FindStringCase found string=%s\n", resultChar);
 #endif
 
   return resultChar;

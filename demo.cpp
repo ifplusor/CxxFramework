@@ -3,11 +3,16 @@
 //
 
 #include <CF/CF.h>
+#include <CF/Net/Http/HTTPConfigure.hpp>
 
 using namespace CF;
 
-class MyConfig : public CFConfigure {
+class MyConfig : public CFConfigure, public Net::HTTPConfigure {
  public:
+  CF_Error StartupCustomServices() override {
+    return Net::HTTPConfigure::StartupHTTPService(this);
+  }
+
   HTTPMapping *GetHttpMapping() override {
     static HTTPMapping defaultHttpMapping[] = {
         {"/exit", (CF_CGIFunction) DefaultExitCGI},

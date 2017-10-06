@@ -33,12 +33,12 @@
 static bool SampleConfigSetter(const char *paramName,
                                const char *paramValue[],
                                void * /*userData*/) {
-  qtss_printf("param: %s", paramName);
+  s_printf("param: %s", paramName);
 
   int x = 0;
 
   while (paramValue[x]) {
-    qtss_printf(" value(%" _S32BITARG_ "): %s ",
+    s_printf(" value(%" _S32BITARG_ "): %s ",
                 (SInt32) x,
                 (char *) paramValue[x]);
     x++;

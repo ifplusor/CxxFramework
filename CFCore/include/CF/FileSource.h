@@ -37,10 +37,13 @@
 #include <stdio.h>
 
 #include "CF/Types.h"
-#include "cf/StrPtrLen.h"
+#include "CF/Core/Mutex.h"
+#include "CF/StrPtrLen.h"
 #include "CF/Queue.h"
 
 #define READ_LOG 0
+
+namespace CF {
 
 class FileBlockBuffer {
 
@@ -57,12 +60,12 @@ class FileBlockBuffer {
   void CleanBuffer() const { ::memset(fDataBuffer, 0, fBufferSize); }
   void SetFillSize(UInt32 fillSize) { fBufferFillSize = fillSize; }
   UInt32 GetFillSize() const { return fBufferFillSize; }
-  OSQueueElem *GetQElem() { return &fQElem; }
+  QueueElem *GetQElem() { return &fQElem; }
   SInt64 fArrayIndex;
   UInt32 fBufferSize;
   UInt32 fBufferFillSize;
   char *fDataBuffer;
-  OSQueueElem fQElem;
+  QueueElem fQElem;
   UInt32 fDummy;
 };
 
@@ -109,7 +112,7 @@ class FileBlockPool {
   void MarkUsed(FileBlockBuffer *inBuffPtr);
 
  private:
-  OSQueue fQueue;
+  Queue fQueue;
   UInt32 fMaxBuffers;
   UInt32 fNumCurrentBuffers;
   UInt32 fBufferInc;
@@ -176,10 +179,10 @@ class FileMap {
 
 };
 
-class OSFileSource {
+class FileSource {
  public:
 
-  OSFileSource()
+  FileSource()
       : fFile(-1),
         fLength(0),
         fPosition(0),
@@ -197,7 +200,7 @@ class OSFileSource {
 
   }
 
-  OSFileSource(const char *inPath)
+  FileSource(const char *inPath)
       : fFile(-1),
         fLength(0),
         fPosition(0),
@@ -215,7 +218,7 @@ class OSFileSource {
 
   }
 
-  ~OSFileSource() {
+  ~FileSource() {
     Close();
     fFileMap.DeleteMap();
   }
@@ -250,7 +253,7 @@ class OSFileSource {
                        UInt32 inLength,
                        UInt32 *outRcvLen = nullptr);
   void EnableFileCache(bool enabled) {
-    OSMutexLocker locker(&fMutex);
+    Core::MutexLocker locker(&fMutex);
     fCacheEnabled = enabled;
   }
   bool GetCacheEnabled() const { return fCacheEnabled; }
@@ -267,11 +270,11 @@ class OSFileSource {
                                inBitRate);
   }
   void IncMaxBuffers() {
-    OSMutexLocker locker(&fMutex);
+    Core::MutexLocker locker(&fMutex);
     fFileMap.IncMaxBuffers();
   }
   void DecMaxBuffers() {
-    OSMutexLocker locker(&fMutex);
+    Core::MutexLocker locker(&fMutex);
     fFileMap.DecMaxBuffers();
   }
 
@@ -303,7 +306,7 @@ class OSFileSource {
   bool fIsDir;
   time_t fModDate;
 
-  OSMutex fMutex;
+  Core::Mutex fMutex;
   FileMap fFileMap;
   bool fCacheEnabled;
 #if READ_LOG
@@ -313,5 +316,7 @@ class OSFileSource {
 #endif
 
 };
+
+}
 
 #endif //__OSFILE_H_

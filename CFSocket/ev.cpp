@@ -85,7 +85,7 @@ void select_startevents() {
   FD_ZERO(&sReturnedReadSet);
   FD_ZERO(&sReturnedWriteSet);
 
-  //qtss_printf("FD_SETSIZE=%d sizeof(fd_set) * 8 ==%ld\n", FD_SETSIZE, sizeof(fd_set) * 8);
+  //s_printf("FD_SETSIZE=%d sizeof(fd_set) * 8 ==%ld\n", FD_SETSIZE, sizeof(fd_set) * 8);
   //We need to associate cookies (void*)'s with our file descriptors.
   //We do so by storing cookies in this cookie array. Because an fd_set is
   //a big array of bits, we should have as many entries in the array as
@@ -134,7 +134,7 @@ int select_removeevent(int which) {
           &&
               (sMaxFDPos > 0)) {
 #if EV_DEBUGGING
-        qtss_printf("removeevent: reset MaxFDPos = %d to %d\n", sMaxFDPos , sMaxFDPos -1);
+        s_printf("removeevent: reset MaxFDPos = %d to %d\n", sMaxFDPos , sMaxFDPos -1);
 #endif
         sMaxFDPos--;
       }
@@ -152,7 +152,7 @@ int select_removeevent(int which) {
     Assert(sFDsToCloseArray[theIndex] == -1);
     sFDsToCloseArray[theIndex] = which;
 #if EV_DEBUGGING
-    qtss_printf("removeevent: Disabled %d \n", which);
+    s_printf("removeevent: Disabled %d \n", which);
 #endif
   }
 
@@ -176,23 +176,23 @@ int select_modwatch(struct eventreq *req, int which) {
     //Add or remove this fd from the specified sets
     if (which & EV_RE) {
 #if EV_DEBUGGING
-      qtss_printf("modwatch: Enabling %d in readset\n", req->er_handle);
+      s_printf("modwatch: Enabling %d in readset\n", req->er_handle);
 #endif
       FD_SET(req->er_handle, &sReadSet);
     } else {
 #if EV_DEBUGGING
-      qtss_printf("modwatch: Disbling %d in readset\n", req->er_handle);
+      s_printf("modwatch: Disbling %d in readset\n", req->er_handle);
 #endif
       FD_CLR(req->er_handle, &sReadSet);
     }
     if (which & EV_WR) {
 #if EV_DEBUGGING
-      qtss_printf("modwatch: Enabling %d in writeset\n", req->er_handle);
+      s_printf("modwatch: Enabling %d in writeset\n", req->er_handle);
 #endif
       FD_SET(req->er_handle, &sWriteSet);
     } else {
 #if EV_DEBUGGING
-      qtss_printf("modwatch: Disabling %d in writeset\n", req->er_handle);
+      s_printf("modwatch: Disabling %d in writeset\n", req->er_handle);
 #endif
       FD_CLR(req->er_handle, &sWriteSet);
     }
@@ -201,7 +201,7 @@ int select_modwatch(struct eventreq *req, int which) {
       sMaxFDPos = req->er_handle;
 
 #if EV_DEBUGGING
-      qtss_printf("modwatch: MaxFDPos=%d\n", sMaxFDPos);
+      s_printf("modwatch: MaxFDPos=%d\n", sMaxFDPos);
 #endif
     //
     // Also, modifying the cookie is not preemptive safe. This must be
@@ -231,7 +231,7 @@ int constructeventreq(struct eventreq *req, int fd, int event) {
   Assert(fd < (int) (sizeof(fd_set) * 8));
   if (fd >= (int) (sizeof(fd_set) * 8)) {
 #if EV_DEBUGGING
-    qtss_printf("constructeventreq: invalid fd=%d\n", fd);
+    s_printf("constructeventreq: invalid fd=%d\n", fd);
 #endif
     return 0;
   }
@@ -257,7 +257,7 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
     if (sInReadSet) {
       OSMutexLocker locker(&sMaxFDPosMutex);
 #if EV_DEBUGGING
-      qtss_printf("waitevent: Looping through readset starting at %d\n", sCurrentFDPos);
+      s_printf("waitevent: Looping through readset starting at %d\n", sCurrentFDPos);
 #endif
       while ((!(isSet = FD_ISSET(sCurrentFDPos, &sReturnedReadSet)))
           && (sCurrentFDPos < sMaxFDPos))
@@ -265,13 +265,13 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
 
       if (isSet) {
 #if EV_DEBUGGING
-        qtss_printf("waitevent: Found an fd: %d in readset max=%d\n", sCurrentFDPos, sMaxFDPos);
+        s_printf("waitevent: Found an fd: %d in readset max=%d\n", sCurrentFDPos, sMaxFDPos);
 #endif
         FD_CLR(sCurrentFDPos, &sReturnedReadSet);
         return constructeventreq(req, sCurrentFDPos, EV_RE);
       } else {
 #if EV_DEBUGGING
-        qtss_printf("waitevent: Stopping traverse of readset at %d\n", sCurrentFDPos);
+        s_printf("waitevent: Stopping traverse of readset at %d\n", sCurrentFDPos);
 #endif
         sInReadSet = false;
         sCurrentFDPos = 0;
@@ -280,7 +280,7 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
     if (!sInReadSet) {
       OSMutexLocker locker(&sMaxFDPosMutex);
 #if EV_DEBUGGING
-      qtss_printf("waitevent: Looping through writeset starting at %d\n", sCurrentFDPos);
+      s_printf("waitevent: Looping through writeset starting at %d\n", sCurrentFDPos);
 #endif
       while ((!(isSet = FD_ISSET(sCurrentFDPos, &sReturnedWriteSet)))
           && (sCurrentFDPos < sMaxFDPos))
@@ -288,7 +288,7 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
 
       if (isSet) {
 #if EV_DEBUGGING
-        qtss_printf("waitevent: Found an fd: %d in writeset\n", sCurrentFDPos);
+        s_printf("waitevent: Found an fd: %d in writeset\n", sCurrentFDPos);
 #endif
         FD_CLR(sCurrentFDPos, &sReturnedWriteSet);
         return constructeventreq(req, sCurrentFDPos, EV_WR);
@@ -320,7 +320,7 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
     //  Assert(!FD_ISSET(y, &sReturnedWriteSet));
 #endif
 #if EV_DEBUGGING
-    qtss_printf("waitevent: Finished with all fds in set. Stopped traverse of writeset at %d maxFD = %d\n", sCurrentFDPos,sMaxFDPos);
+    s_printf("waitevent: Finished with all fds in set. Stopped traverse of writeset at %d maxFD = %d\n", sCurrentFDPos,sMaxFDPos);
 #endif
     //We've just cycled through one select result. Re-init all the counting states
     sNumFDsProcessed = 0;
@@ -361,7 +361,7 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
 #endif
 
 #if EV_DEBUGGING
-    qtss_printf("waitevent: about to call select\n");
+    s_printf("waitevent: about to call select\n");
 #endif
 
     //       yieldStart = OS::Milliseconds();
@@ -373,7 +373,7 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
 
     if ( yieldDur > 1 )
     {
-        qtss_printf( "select_waitevent time in OSThread::Yield() %i, numZeroYields %i\n", (SInt32)yieldDur, (SInt32)numZeroYields );
+        s_printf( "select_waitevent time in OSThread::Yield() %i, numZeroYields %i\n", (SInt32)yieldDur, (SInt32)numZeroYields );
         numZeroYields = 0;
     }
     else
@@ -394,7 +394,7 @@ int select_waitevent(struct eventreq *req, void * /*onlyForMacOSX*/) {
            sNumFDsBackFromSelect);
 
 #if EV_DEBUGGING
-    qtss_printf("waitevent: back from select. Result = %d\n", sNumFDsBackFromSelect);
+    s_printf("waitevent: back from select. Result = %d\n", sNumFDsBackFromSelect);
 #endif
   }
 
@@ -411,7 +411,7 @@ bool selecthasdata() {
 #if EV_DEBUGGING
     if (err == ENOENT)
     {
-         qtss_printf("selectHasdata: found error ENOENT==2 \n");
+         s_printf("selectHasdata: found error ENOENT==2 \n");
     }
 #endif
 
@@ -432,7 +432,7 @@ bool selecthasdata() {
 
   if (FD_ISSET(sPipes[0], &sReturnedReadSet)) {
 #if EV_DEBUGGING
-    qtss_printf("selecthasdata: Got some data on the pipe fd\n");
+    s_printf("selecthasdata: Got some data on the pipe fd\n");
 #endif
     //we've gotten data on the pipe file descriptor. Clear the data.
     // increasing the select buffer fixes a hanging problem when the Darwin server is under heavy load

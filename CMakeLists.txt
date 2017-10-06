@@ -1,16 +1,19 @@
 cmake_minimum_required(VERSION 3.5)
 project(CxxFramework)
 
-LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-include(DetectTarget)
-
 # set language standard
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
 
 # detect Core and architecture
-target_platform(CONF_PLATFORM)
-target_architecture(CONF_ARCH)
+if ((NOT (DEFINED DetectTarget)) OR DetectTarget)
+    message("CxxFramework: Detecting target...")
+    LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+    include(DetectTarget)
+    target_platform(CONF_PLATFORM)
+    target_architecture(CONF_ARCH)
+    set(DetectTarget FALSE)
+endif ()
 
 # configure options
 # - follow options must be configure:
@@ -96,7 +99,7 @@ set(HEADER_FILES
         Include/CF/Revision.h
         Include/CF/CFDef.h
         Include/CF/CFEnv.h
-        Include/CF/CFConfigure.h
+        Include/CF/CFConfigure.hpp
         Include/CF/CF.h
         Include/CF/CFState.h)
 
@@ -104,7 +107,7 @@ set(SOURCE_FILES
         CFEnv.cpp
         CFMain.cpp)
 
-if ((DEFINED MAKE_STATIC)
+if ((DEFINED CxxFramework_USE_STATIC)
         OR (${CONF_PLATFORM} STREQUAL "Win32")
         OR (${CONF_PLATFORM} STREQUAL "MinGW"))
     add_library(CxxFramework STATIC

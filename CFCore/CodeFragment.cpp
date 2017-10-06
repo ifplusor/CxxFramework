@@ -23,14 +23,12 @@
  *
  */
 /*
-    File:       OSCodeFragment.cpp
+    File:       CodeFragment.cpp
 
-    Contains:   Implementation of object defined in OSCodeFragment.h
+    Contains:   Implementation of object defined in CodeFragment.h
 
 
 */
-
-#include "cf/sstdlib.h"
 
 #if __Win32__
 // Win32 includes here
@@ -41,13 +39,15 @@
 #include <dlfcn.h>
 #endif
 
-#include "../include/os/OSCodeFragment.h"
+#include <CF/CodeFragment.h>
 
-void OSCodeFragment::Initialize() {
+using namespace CF;
+
+void CodeFragment::Initialize() {
   // does nothing...should do any CFM initialization here
 }
 
-OSCodeFragment::OSCodeFragment(const char *inPath)
+CodeFragment::CodeFragment(const char *inPath)
     : fFragmentP(NULL) {
 #if defined(HPUX) || defined(HPUX10)
   shl_t handle;
@@ -96,7 +96,7 @@ OSCodeFragment::OSCodeFragment(const char *inPath)
 #endif
 }
 
-OSCodeFragment::~OSCodeFragment() {
+CodeFragment::~CodeFragment() {
   if (fFragmentP == NULL)
     return;
 
@@ -113,7 +113,7 @@ OSCodeFragment::~OSCodeFragment() {
 #endif
 }
 
-void *OSCodeFragment::GetSymbol(const char *inSymbolName) {
+void *CodeFragment::GetSymbol(const char *inSymbolName) {
   if (fFragmentP == NULL)
     return NULL;
 
@@ -129,7 +129,7 @@ void *OSCodeFragment::GetSymbol(const char *inSymbolName) {
 #elif defined(DLSYM_NEEDS_UNDERSCORE)
   char *symbol = (char*)malloc(sizeof(char)*(strlen(inSymbolName) + 2));
   void *retval;
-  qtss_sprintf(symbol, "_%s", inSymbolName);
+  s_sprintf(symbol, "_%s", inSymbolName);
   retval = dlsym(fFragmentP, symbol);
   free(symbol);
   return retval;

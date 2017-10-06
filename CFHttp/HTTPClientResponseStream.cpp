@@ -36,8 +36,8 @@ CF_Error HTTPClientResponseStream::WriteV(iovec *inVec,
     theErr = fSocket->GetSocket()->WriteV(inVec, inNumVectors, &theLengthSent);
 
     if (fPrintMsg) {
-      Core::DateBuffer theDate;
-      Core::DateTranslator::UpdateDateBuffer(&theDate,
+      DateBuffer theDate;
+      DateTranslator::UpdateDateBuffer(&theDate,
                                        0); // get the current GMT date and Time
 
       s_printf("\n#S->C:\n#Time: ms=%" _U32BITARG_ " date=%s\n",
@@ -145,8 +145,8 @@ CF_Error HTTPClientResponseStream::Flush() {
     if (amtInBuffer > 0) {
       fPrintMsg = false;
       if (fPrintMsg) {
-        Core::DateBuffer theDate;
-        Core::DateTranslator::UpdateDateBuffer(&theDate,
+        DateBuffer theDate;
+        DateTranslator::UpdateDateBuffer(&theDate,
                                          0); // get the current GMT date and Time
 
         s_printf("\n#S->C:\n#Time: ms=%"   _U32BITARG_   " date=%s\n",

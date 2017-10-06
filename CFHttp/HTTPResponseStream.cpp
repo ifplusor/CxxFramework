@@ -52,8 +52,8 @@ CF_Error HTTPResponseStream::WriteV(iovec *inVec,
     theErr = fSocket->WriteV(inVec, inNumVectors, &theLengthSent);
 
     if (fPrintRTSP) {
-      Core::DateBuffer theDate;
-      Core::DateTranslator::UpdateDateBuffer(&theDate, 0); // get the current GMT date and Time
+      DateBuffer theDate;
+      DateTranslator::UpdateDateBuffer(&theDate, 0); // get the current GMT date and Time
 
       s_printf("\n#S->C:\n#Time: ms=%"   _U32BITARG_   " date=%s\n",
                (UInt32) Core::Time::StartTimeMilli_Int(),
@@ -142,8 +142,8 @@ CF_Error HTTPResponseStream::Flush() {
   UInt32 amtInBuffer = this->GetCurrentOffset() - fBytesSentInBuffer;
   if (amtInBuffer > 0) {
     if (fPrintRTSP) {
-      Core::DateBuffer theDate;
-      Core::DateTranslator::UpdateDateBuffer(&theDate, 0); // get the current GMT date and Time
+      DateBuffer theDate;
+      DateTranslator::UpdateDateBuffer(&theDate, 0); // get the current GMT date and Time
 
       s_printf("\n#S->C:\n#Time: ms=%"   _U32BITARG_   " date=%s\n",
                (UInt32) Core::Time::StartTimeMilli_Int(),

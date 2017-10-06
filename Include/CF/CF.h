@@ -7,6 +7,7 @@
 
 #include <CF/CFDef.h>
 #include <CF/CFEnv.h>
+#include <CF/CFConfigure.hpp>
 #include <CF/Core.h>
 #include <CF/Thread.h>
 

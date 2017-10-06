@@ -11,7 +11,8 @@ set(HEADER_FILES
         include/CF/Net/Http/HTTPClientResponseStream.h
         include/CF/Net/Http/HTTPDispatcher.h
         include/CF/Net/Http/UserAgentParser.h
-        include/CF/Net/Http/QueryParamList.h)
+        include/CF/Net/Http/QueryParamList.h
+        include/CF/Net/Http/HTTPConfigure.hpp)
 
 set(SOURCE_FILES
         HTTPClientRequestStream.cpp

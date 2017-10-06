@@ -170,34 +170,21 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
   theTask = this->GetSessionTask(&theSocket);
   if (theTask == nullptr) { //this should be a disconnect. do an ioctl call?
     close(osSocket);
-    if (theSocket)
-      theSocket->fState &= ~kConnected; // turn off connected state
+    if (theSocket) theSocket->fState &= ~kConnected; // turn off connected state
   } else {
     Assert(osSocket != EventContext::kInvalidFileDesc);
     // set options on the Socket
 
     // we are a server, always disable nagle algorithm
     int one = 1;
-    int err = ::setsockopt(osSocket,
-                           IPPROTO_TCP,
-                           TCP_NODELAY,
-                           (char *) &one,
-                           sizeof(int));
+    int err = ::setsockopt(osSocket, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof(int));
     AssertV(err == 0, Core::Thread::GetErrno());
 
-    err = ::setsockopt(osSocket,
-                       SOL_SOCKET,
-                       SO_KEEPALIVE,
-                       (char *) &one,
-                       sizeof(int));
+    err = ::setsockopt(osSocket, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(int));
     AssertV(err == 0, Core::Thread::GetErrno());
 
     int sndBufSize = 96L * 1024L;
-    err = ::setsockopt(osSocket,
-                       SOL_SOCKET,
-                       SO_SNDBUF,
-                       (char *) &sndBufSize,
-                       sizeof(int));
+    err = ::setsockopt(osSocket, SOL_SOCKET, SO_SNDBUF, (char *) &sndBufSize, sizeof(int));
     AssertV(err == 0, Core::Thread::GetErrno());
 
     // setup the Socket. When there is data on the Socket,

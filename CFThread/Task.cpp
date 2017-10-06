@@ -452,7 +452,7 @@ void TaskThread::Entry() {
 
       if (yieldDur > 1) {
         if (DEBUG_TASK)
-          qtss_printf(
+          s_printf(
               "TaskThread::Entry Time in Yield %qd, numZeroYields %qd \n",
               yieldDur,
               numZeroYields);

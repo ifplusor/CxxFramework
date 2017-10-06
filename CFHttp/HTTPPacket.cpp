@@ -25,7 +25,7 @@
 
 #include <CF/Net/Http/HTTPPacket.h>
 #include <CF/StringTranslator.h>
-#include <CF/Core/DateTranslator.h>
+#include <CF/DateTranslator.h>
 #include <CF/Core/Thread.h>
 #include <CF/CFEnv.h>
 
@@ -485,11 +485,10 @@ void HTTPPacket::AppendConnectionKeepAliveHeader() const {
 
 void HTTPPacket::AppendDateAndExpiresFields() const {
   Assert(Core::Thread::GetCurrent() != NULL);
-  Core::DateBuffer *theDateBuffer = Core::Thread::GetCurrent()->GetDateBuffer();
+  DateBuffer *theDateBuffer = Core::Thread::GetCurrent()->GetDateBuffer();
   theDateBuffer
       ->InexactUpdate(); // Update the date buffer to the current date & Time
-  StrPtrLen theDate(theDateBuffer->GetDateBuffer(),
-                    Core::DateBuffer::kDateBufferLen);
+  StrPtrLen theDate(theDateBuffer->GetDateBuffer(), DateBuffer::kDateBufferLen);
 
   // Append dates, and have this response expire immediately
   this->AppendResponseHeader(httpDateHeader, &theDate);
@@ -498,11 +497,9 @@ void HTTPPacket::AppendDateAndExpiresFields() const {
 
 void HTTPPacket::AppendDateField() const {
   Assert(Core::Thread::GetCurrent() != NULL);
-  Core::DateBuffer *theDateBuffer = Core::Thread::GetCurrent()->GetDateBuffer();
-  theDateBuffer
-      ->InexactUpdate(); // Update the date buffer to the current date & Time
-  StrPtrLen theDate(theDateBuffer->GetDateBuffer(),
-                    Core::DateBuffer::kDateBufferLen);
+  DateBuffer *theDateBuffer = Core::Thread::GetCurrent()->GetDateBuffer();
+  theDateBuffer->InexactUpdate(); // Update the date buffer to the current date & Time
+  StrPtrLen theDate(theDateBuffer->GetDateBuffer(), DateBuffer::kDateBufferLen);
 
   // Append date
   this->AppendResponseHeader(httpDateHeader, &theDate);
@@ -510,7 +507,7 @@ void HTTPPacket::AppendDateField() const {
 
 time_t HTTPPacket::ParseIfModSinceHeader() {
   time_t theIfModSinceDate = static_cast<time_t>(
-      Core::DateTranslator::ParseDate(&fFieldValues[httpIfModifiedSinceHeader]));
+      DateTranslator::ParseDate(&fFieldValues[httpIfModifiedSinceHeader]));
   return theIfModSinceDate;
 }
 

@@ -38,7 +38,6 @@
 #include <CF/StrPtrLen.h>
 
 namespace CF {
-namespace Core {
 
 class DateBuffer;
 
@@ -108,7 +107,6 @@ class DateBuffer {
   friend class DateTranslator;
 };
 
-} // namespace Core
 } // namespace CF
 
 #endif

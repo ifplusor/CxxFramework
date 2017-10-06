@@ -34,12 +34,16 @@
 
 #include <string.h>
 #include <CF/Types.h>
+#include <CF/Core/Thread.h>
 
 namespace CF {
-namespace Core {
 
 class Utils {
  public:
+
+  static int GetErrno() {
+    Core::Thread::GetErrno();
+  }
 
   static SInt32 Min(SInt32 a, SInt32 b) {
     return a < b ? a : b;
@@ -114,7 +118,6 @@ inline UInt32 Utils::GetUInt32FromMemory(UInt32 *inP) {
 #endif
 }
 
-} // namespace Core
 } // namespace CF
 
 #endif // __OS_H__

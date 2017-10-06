@@ -176,8 +176,8 @@ CF_Error HTTPRequestStream::ReadRequest() {
     fIsDataPacket = false;
 
     if (fPrintRTSP) {
-      Core::DateBuffer theDate;
-      Core::DateTranslator::UpdateDateBuffer(&theDate,
+      DateBuffer theDate;
+      DateTranslator::UpdateDateBuffer(&theDate,
                                        0); // get the current GMT date and Time
       s_printf("\n\n#C->S:\n#Time: ms=%"   _U32BITARG_   " date=%s\n",
                (UInt32) Core::Time::StartTimeMilli_Int(),
@@ -289,7 +289,7 @@ CF_Error HTTPRequestStream::Read(void *ioBuffer,
     fRetreatBytes -= theLengthRead;
     fRetreatBytesRead += theLengthRead;
 #if READ_DEBUGGING
-    qtss_printf("In RTSPRequestStream::Read: Got %d Retreat Bytes\n", theLengthRead);
+    s_printf("In RTSPRequestStream::Read: Got %d Retreat Bytes\n", theLengthRead);
 #endif
   }
 
@@ -308,7 +308,7 @@ CF_Error HTTPRequestStream::Read(void *ioBuffer,
                                   inBufLen - theLengthRead,
                                   &theNewOffset);
 #if READ_DEBUGGING
-  qtss_printf("In RTSPRequestStream::Read: Got %d bytes off Socket\n", theNewOffset);
+  s_printf("In RTSPRequestStream::Read: Got %d bytes off Socket\n", theNewOffset);
 #endif
   if (outLengthRead != NULL)
     *outLengthRead = theNewOffset + theLengthRead;

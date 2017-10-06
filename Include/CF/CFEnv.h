@@ -7,12 +7,14 @@
 
 #include <CF/CFDef.h>
 #include <CF/StrPtrLen.h>
-#include <CF/Queue.h>
-#include <CF/Net/Socket/EventContext.h>
 
 namespace CF {
 
 class CFConfigure;
+
+namespace Net {
+class TCPListenerSocket;
+}
 
 class CFEnv {
  public:
@@ -32,6 +34,9 @@ class CFEnv {
 
   static bool WillExit() { return sExitCode != CF_NoErr; };
   static void Exit(UInt32 exitCode) { sExitCode = exitCode; }
+
+  static bool AddListenerSocket(Net::TCPListenerSocket *socket);
+
 
   // SERVER NAME & VERSION
   static StrPtrLen &GetServerName() { return sServerNameStr; }
@@ -64,12 +69,8 @@ class CFEnv {
   static StrPtrLen sServerBuildDateStr;
   static char sServerHeader[kMaxServerHeaderLen];
   static StrPtrLen sServerHeaderStr;
-
-  friend class CF::Net::EventThread;
 };
 
 }
-
-#include "CFConfigure.h"
 
 #endif //__CF_ENV_H__

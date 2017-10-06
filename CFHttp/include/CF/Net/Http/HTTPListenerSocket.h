@@ -13,7 +13,7 @@ namespace Net {
 class HTTPListenerSocket : public TCPListenerSocket {
  public:
 
-  HTTPListenerSocket() {}
+  HTTPListenerSocket() : TCPListenerSocket() {}
 
   virtual ~HTTPListenerSocket() {}
 

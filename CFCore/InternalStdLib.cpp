@@ -44,6 +44,9 @@ static int sMaxFileSizeReached = 0;
 
 static Mutex sStdLibOSMutex;
 
+CF::Core::Mutex *GetStdLibMutex() {
+  return &sStdLibOSMutex;
+}
 
 UInt32 s_getmaxprintfcharsinK() {
   MutexLocker locker(&sStdLibOSMutex);
