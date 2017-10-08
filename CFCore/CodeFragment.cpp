@@ -30,7 +30,9 @@
 
 */
 
-#if __Win32__
+#include <CF/CodeFragment.h>
+
+#if __Win32__ || __MinGW__
 // Win32 includes here
 #elif __MacOSX__
 #include <CoreFoundation/CFString.h>
@@ -38,8 +40,6 @@
 #else
 #include <dlfcn.h>
 #endif
-
-#include <CF/CodeFragment.h>
 
 using namespace CF;
 
@@ -59,7 +59,7 @@ CodeFragment::CodeFragment(const char *inPath)
   fFragmentP = dlopen(inPath, RTLD_NOW);
 #elif defined(__sgi__)
   fFragmentP = dlopen(inPath, RTLD_NOW); // not sure this should be either RTLD_NOW or RTLD_LAZY
-#elif defined(__Win32__)
+#elif defined(__Win32__) || defined(__MinGW__)
   fFragmentP = ::LoadLibrary(inPath);
 #elif defined(__MacOSX__)
   CFStringRef theString = CFStringCreateWithCString(kCFAllocatorDefault, inPath, kCFStringEncodingASCII);
@@ -102,7 +102,7 @@ CodeFragment::~CodeFragment() {
 
 #if defined(HPUX) || defined(HPUX10)
   shl_unload((shl_t)fFragmentP);
-#elif defined(__Win32__)
+#elif defined(__Win32__) || defined(__MinGW__)
   BOOL theErr = ::FreeLibrary(fFragmentP);
   Assert(theErr);
 #elif defined(__MacOSX__)
@@ -133,8 +133,8 @@ void *CodeFragment::GetSymbol(const char *inSymbolName) {
   retval = dlsym(fFragmentP, symbol);
   free(symbol);
   return retval;
-#elif defined(__Win32__)
-  return ::GetProcAddress(fFragmentP, inSymbolName);
+#elif defined(__Win32__) || defined(__MinGW__)
+  return (void*) ::GetProcAddress(fFragmentP, inSymbolName);
 #elif defined(__MacOSX__)
   CFStringRef theString = CFStringCreateWithCString(kCFAllocatorDefault, inSymbolName, kCFStringEncodingASCII);
   void* theSymbol = (void*)CFBundleGetFunctionPointerForName(fFragmentP, theString);

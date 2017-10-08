@@ -180,8 +180,13 @@ typedef UInt8               Bool8;
 #define kUInt64_Max (UInt64) ULONG_LONG_MAX
 
 /* Typedefs */
-typedef signed long PointerSizedInt;
-typedef unsigned long PointerSizedUInt;
+#ifdef __LP64__
+typedef signed long long    PointerSizedInt;
+typedef unsigned long long  PointerSizedUInt;
+#else
+typedef signed long         PointerSizedInt;
+typedef unsigned long       PointerSizedUInt;
+#endif
 typedef uint8_t UInt8;
 typedef int8_t SInt8;
 typedef uint16_t UInt16;
@@ -235,7 +240,7 @@ typedef FourCharCode OSType;
 #define kPathDelimiterChar '/'
 #define kPartialPathBeginsWithDelimiter 0
 
-#define crypt(buf, salt) ((char*)buf)
+#define crypt(buf, salt) ((char*) buf)
 
 /* Includes */
 #define WIN32_LEAN_AND_MEAN
@@ -274,8 +279,13 @@ typedef FourCharCode OSType;
 #define QT_PATH_SEPARATOR       '/'
 
 /* Typedefs */
+#ifdef _WIN64
+typedef signed long long    PointerSizedInt;
+typedef unsigned long long  PointerSizedUInt;
+#else
 typedef signed long         PointerSizedInt;
 typedef unsigned long       PointerSizedUInt;
+#endif
 typedef unsigned char       UInt8;
 typedef signed char         SInt8;
 typedef unsigned short      UInt16;

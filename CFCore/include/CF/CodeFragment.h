@@ -57,7 +57,7 @@ class CodeFragment {
 
  private:
 
-#ifdef __Win32__
+#if defined(__Win32__) || defined(__MinGW__)
   HMODULE fFragmentP;
 #elif __OSX__
   CFBundleRef fFragmentP;
