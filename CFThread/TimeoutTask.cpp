@@ -85,12 +85,11 @@ SInt64 TimeoutTaskThread::Run() {
   SInt64 taskInterval = intervalMilli;
 
   for (QueueIter iter(&fQueue); !iter.IsDone(); iter.Next()) {
-    TimeoutTask *theTimeoutTask =
-        (TimeoutTask *) iter.GetCurrent()->GetEnclosingObject();
+    auto *theTimeoutTask = (TimeoutTask *) iter.GetCurrent()->GetEnclosingObject();
 
     // if it's Time to Time this task out, signal it
-    if ((theTimeoutTask->fTimeoutAtThisTime > 0)
-        && (curTime >= theTimeoutTask->fTimeoutAtThisTime)) {
+    if ((theTimeoutTask->fTimeoutAtThisTime > 0) &&
+        (curTime >= theTimeoutTask->fTimeoutAtThisTime)) {
 #if DEBUG_TIMEOUT
       s_printf("TimeoutTask@%" _UPOINTERSIZEARG_ " timed out. "
                    "Curtime = %" _S64BITARG_ ", "
@@ -104,8 +103,8 @@ SInt64 TimeoutTaskThread::Run() {
     } else {
       taskInterval = theTimeoutTask->fTimeoutAtThisTime - curTime;
       /* 更新 TimeoutTaskThread 的唤醒时间 */
-      if ((taskInterval > 0) && (theTimeoutTask->fTimeoutInMilSecs > 0)
-          && (intervalMilli > taskInterval))
+      if ((taskInterval > 0) && (theTimeoutTask->fTimeoutInMilSecs > 0) &&
+          (intervalMilli > taskInterval))
         // set timeout to 1 second past this task's timeout
         intervalMilli = taskInterval + 1000;
 #if DEBUG_TIMEOUT
@@ -126,10 +125,9 @@ SInt64 TimeoutTaskThread::Run() {
            (SInt32) intervalMilli / 1000);
 #endif
 
-  /*
-     注意：在 TaskThread::Entry 将 TimeoutTaskThread 项从线程的 fTaskQueue 里
-     取出处理后，根据 Run 返回值，决定是否插入线程的 fHeap，而不会再次插入到
-     fTaskQueue 里。如果插入 fHeap，在 TaskThread::WaitForTask 里会被得到处理。
+  /* NOTE：在 TaskThread::Entry 将 TimeoutTaskThread 项从线程的 fTaskQueue 里
+   * 取出处理后，根据 Run 返回值，决定是否插入线程的 fHeap，而不会再次插入到
+   * fTaskQueue 里。如果插入 fHeap，在 TaskThread::WaitForTask 里会被得到处理。
    */
   return intervalMilli; // don't delete me!
 }

@@ -136,19 +136,17 @@ class UDPDemuxer {
  public:
 
   UDPDemuxer() : fHashTable(kMaxHashTableSize), fMutex() {}
-  ~UDPDemuxer() {}
+  ~UDPDemuxer() = default;
 
   //These functions grab the Mutex and are therefore premptive safe
 
   // Return values: OS_NoErr, or EPERM if there is already a task registered
   // with this address combination
-  OS_Error RegisterTask(UInt32 inRemoteAddr, UInt16 inRemotePort,
-                        UDPDemuxerTask *inTaskP);
+  OS_Error RegisterTask(UInt32 inRemoteAddr, UInt16 inRemotePort, UDPDemuxerTask *inTaskP);
 
   // Return values: OS_NoErr, or EPERM if this task / address combination
   // is not registered
-  OS_Error UnregisterTask(UInt32 inRemoteAddr, UInt16 inRemotePort,
-                          UDPDemuxerTask *inTaskP);
+  OS_Error UnregisterTask(UInt32 inRemoteAddr, UInt16 inRemotePort, UDPDemuxerTask *inTaskP);
 
   //Assumes that parent has grabbed the Mutex!
   UDPDemuxerTask *GetTask(UInt32 inRemoteAddr, UInt16 inRemotePort);

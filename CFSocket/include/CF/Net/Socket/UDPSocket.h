@@ -63,7 +63,7 @@ class UDPSocket : public Socket {
 
   UDPSocket(Thread::Task *inTask, UInt32 inSocketType);
 
-  virtual ~UDPSocket() { if (fDemuxer != NULL) delete fDemuxer; }
+  ~UDPSocket() override { delete fDemuxer; }
 
   //Open
   OS_Error Open() { return Socket::Open(SOCK_DGRAM); }

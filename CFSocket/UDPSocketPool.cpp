@@ -33,37 +33,36 @@
 
 using namespace CF::Net;
 
-UDPSocketPair *UDPSocketPool::GetUDPSocketPair(UInt32 inIPAddr,
-                                               UInt16 inPort,
-                                               UInt32 inSrcIPAddr,
-                                               UInt16 inSrcPort) {
+UDPSocketPair *UDPSocketPool::GetUDPSocketPair(UInt32 inIPAddr, UInt16 inPort, UInt32 inSrcIPAddr, UInt16 inSrcPort) {
   Core::MutexLocker locker(&fMutex);
   if ((inSrcIPAddr != 0) || (inSrcPort != 0)) {
     for (QueueIter qIter(&fUDPQueue); !qIter.IsDone(); qIter.Next()) {
-      //If we find a pair that is a) on the right IP address, and b) doesn't
-      //have this source IP & port in the demuxer already, we can return this pair
-      UDPSocketPair
-          *theElem = (UDPSocketPair *) qIter.GetCurrent()->GetEnclosingObject();
+      // If we find a pair that is
+      //   a) on the right IP address,
+      //   b) doesn't have this source IP & port in the demuxer already,
+      // we can return this pair
+      UDPSocketPair *theElem = (UDPSocketPair *) qIter.GetCurrent()->GetEnclosingObject();
       if ((theElem->fSocketA->GetLocalAddr() == inIPAddr) &&
           ((inPort == 0) || (theElem->fSocketA->GetLocalPort() == inPort))) {
-        //check to make sure this source IP & port is not already in the demuxer.
-        //If not, we can return this Socket pair.
+        // check to make sure this source IP & port is not already in the demuxer.
+        // If not, we can return this Socket pair.
         if ((theElem->fSocketB->GetDemuxer() == nullptr) ||
             ((!theElem->fSocketB->GetDemuxer()->AddrInMap(0, 0)) &&
-                (!theElem->fSocketB->GetDemuxer()->AddrInMap(inSrcIPAddr,
-                                                             inSrcPort)))) {
+                (!theElem->fSocketB->GetDemuxer()->AddrInMap(inSrcIPAddr, inSrcPort)))) {
           theElem->fRefCount++;
           return theElem;
         }
-          //If port is specified, there is NO WAY a Socket pair can exist that matches
-          //the criteria (because caller wants a specific ip & port combination)
-        else if (inPort != 0)
+
+        // If port is specified, there is NO WAY a Socket pair can exist that matches
+        // the criteria (because caller wants a specific ip & port combination)
+        if (inPort != 0)
           return nullptr;
       }
     }
   }
-  //if we get here, there is no pair already in the pool that matches the specified
-  //criteria, so we have to create a new pair.
+
+  // if we get here, there is no pair already in the pool that matches the specified
+  // criteria, so we have to create a new pair.
   return this->CreateUDPSocketPair(inIPAddr, inPort);
 }
 
@@ -76,76 +75,55 @@ void UDPSocketPool::ReleaseUDPSocketPair(UDPSocketPair *inPair) {
   }
 }
 
-UDPSocketPair *UDPSocketPool::CreateUDPSocketPair(UInt32 inAddr,
-                                                  UInt16 inPort) {
-  //try to find an open pair of ports to bind these suckers tooo
+UDPSocketPair *UDPSocketPool::CreateUDPSocketPair(UInt32 inAddr, UInt16 inPort) {
+  // try to find an open pair of ports to bind these suckers tooo
   Core::MutexLocker locker(&fMutex);
   UDPSocketPair *theElem = nullptr;
-  bool foundPair = false;
-  UInt16 curPort = kLowestUDPPort;
-  UInt16 stopPort =
-      kHighestUDPPort - 1; // prevent roll over when iterating over port nums
-  UInt16 socketBPort = kLowestUDPPort + 1;
+  UInt16 socketAPort = kLowestUDPPort;
+  UInt16 socketBPort;
 
-  //If port is 0, then the caller doesn't care what port # we bind this Socket to.
-  //Otherwise, ONLY attempt to bind this Socket to the specified port
-  if (inPort != 0)
-    curPort = inPort;
-  if (inPort != 0)
-    stopPort = inPort;
+  // If port is 0, then the caller doesn't care what port # we bind this Socket to.
+  // Otherwise, ONLY attempt to bind this Socket to the specified port
+  if (inPort != 0) socketAPort = inPort;
 
-  while ((!foundPair) && (curPort < kHighestUDPPort)) {
-    socketBPort = curPort + 1;  // make Socket pairs adjacent to one another
+  while (socketAPort < kHighestUDPPort) {
+    socketBPort = static_cast<UInt16>(socketAPort + 1);  // make Socket pairs adjacent to one another
 
     theElem = ConstructUDPSocketPair();  // 创建一个 udp Socket pair
     Assert(theElem != nullptr);
-    // 创建数据报 Socket 端口
-    if (theElem->fSocketA->Open() != OS_NoErr) {
-      this->DestructUDPSocketPair(theElem);
-      return nullptr;
-    }
-    if (theElem->fSocketB->Open() != OS_NoErr) {
-      this->DestructUDPSocketPair(theElem);
-      return nullptr;
-    }
 
-    // Set Socket options on these new sockets
-    // 主要是设置 Socket buf size
+    // 创建数据报 Socket 端口
+    if (theElem->fSocketA->Open() != OS_NoErr || theElem->fSocketB->Open() != OS_NoErr) break;
+
+    // Set Socket options on these new sockets. 主要是设置 Socket buf size
     this->SetUDPSocketOptions(theElem);
 
     // 在两个 Socket 端口上执行 bind 操作,两个 port 相差 1.
-    OS_Error theErr = theElem->fSocketA->Bind(inAddr, curPort);
-    if (theErr
-        == OS_NoErr) {   //s_printf("fSocketA->Bind ok on port%u\n", curPort);
+    OS_Error theErr = theElem->fSocketA->Bind(inAddr, socketAPort);
+    if (theErr == OS_NoErr) {
+      //s_printf("fSocketA->Bind ok on port%u\n", socketAPort);
       theErr = theElem->fSocketB->Bind(inAddr, socketBPort);
-      if (theErr
-          == OS_NoErr) {   //s_printf("fSocketB->Bind ok on port%u\n", socketBPort);
-        foundPair = true;
-        // 利用 UDPSocketPair 的 fElem 成员插入 fUDPQueue 队列。
+      if (theErr == OS_NoErr) {
+        //s_printf("fSocketB->Bind ok on port%u\n", socketBPort);
         fUDPQueue.EnQueue(&theElem->fElem);
         theElem->fRefCount++;
         return theElem;
       }
       //else s_printf("fSocketB->Bind failed on port%u\n", socketBPort);
     }
-    //else s_printf("fSocketA->Bind failed on port%u\n", curPort);
+    //else s_printf("fSocketA->Bind failed on port%u\n", socketAPort);
 
-    //If we are looking to bind to a specific port set, and we couldn't then
-    //just break here.
-    if (inPort != 0)
-      break;
+    // If we are looking to bind to a specific port set, and we couldn't then just break here.
+    if (inPort != 0) break;
 
-    if (curPort >= stopPort) //test for stop condition
-      break;
-
-    curPort += 2; //try a higher port pair
+    socketAPort += 2; //try a higher port pair
 
     this->DestructUDPSocketPair(theElem); //a bind failure
     theElem = nullptr;
   }
-  //if we couldn't find a pair of sockets, make sure to clean up our mess
-  if (theElem != nullptr)
-    this->DestructUDPSocketPair(theElem);
+
+  // if we couldn't find a pair of sockets, make sure to clean up our mess
+  if (theElem != nullptr) this->DestructUDPSocketPair(theElem);
 
   return nullptr;
 }

@@ -41,9 +41,10 @@ Queue::Queue() : fLength(0) {
 
 void Queue::EnQueue(QueueElem *elem) {
   Assert(elem != nullptr);
-  if (elem->fQueue == this)
-    return;
+
+  if (elem->fQueue == this) return;
   Assert(elem->fQueue == nullptr);
+
   elem->fNext = fSentinel.fNext;
   elem->fPrev = &fSentinel;
   elem->fQueue = this;
@@ -62,7 +63,6 @@ QueueElem *Queue::DeQueue() {
     fLength--;
     return elem;
   }
-
   return nullptr;
 }
 
@@ -215,8 +215,9 @@ QueueIter::QueueIter(Queue *inQueue, QueueElem *startElemP)
   if (startElemP) {
     Assert(startElemP->IsMember(*inQueue));
     fCurrentElemP = startElemP;
-  } else
+  } else {
     fCurrentElemP = nullptr;
+  }
 }
 
 void QueueIter::Next() {

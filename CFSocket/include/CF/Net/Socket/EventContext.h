@@ -22,14 +22,12 @@
  * @APPLE_LICENSE_HEADER_END@
  *
  */
-/*
-    File:       EventContext.h
-
-    Contains:   An event context provides the intelligence to take an event
-                generated from a UNIX file descriptor (usually EV_RE or EV_WR)
-                and signal a Task.
-
-*/
+/**
+ * @file EventContext.h
+ *
+ * An event context provides the intelligence to take an event generated from
+ * a UNIX file descriptor (usually EV_RE or EV_WR) and signal a Task.
+ */
 
 #ifndef __EVENT_CONTEXT_H__
 #define __EVENT_CONTEXT_H__
@@ -52,7 +50,9 @@
 #include <CF/Thread/Task.h>
 
 //enable to trace event context execution and the task associated with the context
-#define DEBUG_EVENT_CONTEXT 1
+#ifndef DEBUG_EVENT_CONTEXT
+#define DEBUG_EVENT_CONTEXT 0
+#endif
 
 namespace CF {
 namespace Net {
@@ -85,7 +85,7 @@ class EventContext {
 
   //
   // Arms this EventContext. Pass in the events you would like to receive
-  void RequestEvent(int theMask = EV_RE);
+  virtual void RequestEvent(int theMask);
 
   //
   // Provide the task you would like to be notified
@@ -97,9 +97,7 @@ class EventContext {
                  (void *) this);
       else
         s_printf("EventContext::SetTask context=%p task= %p name=%s\n",
-                 (void *) this,
-                 (void *) fTask,
-                 fTask->fTaskName);
+                 (void *) this, (void *) fTask, fTask->fTaskName);
     }
   }
 
@@ -135,11 +133,8 @@ class EventContext {
         s_printf("EventContext::ProcessEvent context=%p task=NULL\n",
                  (void *) this);
       else
-        s_printf(
-            "EventContext::ProcessEvent context=%p task=%p TaskName=%s\n",
-            (void *) this,
-            (void *) fTask,
-            fTask->fTaskName);
+        s_printf("EventContext::ProcessEvent context=%p task=%p TaskName=%s\n",
+                 (void *) this, (void *) fTask, fTask->fTaskName);
     }
 
     if (fTask != NULL)
@@ -150,6 +145,7 @@ class EventContext {
 
  private:
   struct eventreq fEventReq;
+  bool fUseETMode; // Edge Triggered Mode
 
   Ref fRef; /* 引用记录，用于 event 调度 */
   PointerSizedInt fUniqueID;
@@ -164,7 +160,7 @@ class EventContext {
   bool fModwatched;
 #endif
 
-  static std::atomic<unsigned int> sUniqueID;
+  static std::atomic<unsigned int> sUniqueID; // id 分配器
 
   friend class EventThread;
 };
@@ -178,12 +174,11 @@ class EventThread : public Core::Thread {
  public:
 
   EventThread() : Thread() {}
-
-  virtual ~EventThread() {}
+  ~EventThread() override = default;
 
  private:
 
-  virtual void Entry() override;
+  void Entry() override;
 
   RefTable fRefTable;
 

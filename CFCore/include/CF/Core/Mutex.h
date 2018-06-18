@@ -119,8 +119,8 @@ class Mutex {
 class MutexLocker {
  public:
 
-  MutexLocker(Mutex *inMutexP) : fMutex(inMutexP) {
-    if (fMutex != nullptr)fMutex->Lock();
+  explicit MutexLocker(Mutex *inMutexP) : fMutex(inMutexP) {
+    if (fMutex != nullptr) fMutex->Lock();
   }
 
   ~MutexLocker() { if (fMutex != nullptr) fMutex->Unlock(); }
@@ -131,7 +131,6 @@ class MutexLocker {
 
  private:
   Mutex *fMutex;
-
 };
 
 void Mutex::Lock() {

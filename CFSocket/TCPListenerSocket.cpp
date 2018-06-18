@@ -198,21 +198,20 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
     theTask->SetThreadPicker(Thread::Task::GetBlockingTaskThreadPicker());
   }
 
-  /*
-     如果 RTSPSession、HTTPSession 的连接数超过超过限制,则利用 IdleTaskThread 定时调用
-     Signal 函数,在 TCPListenerSocket::Run 函数里会调用 TCPListenerSocket::ProcessEvent 函数
-     执行 accept(接收下一个连接)和 RequestEvent(继续申请监听)。
-   */
+  /* 如果 RTSPSession、HTTPSession 的连接数超过超过限制,则利用 IdleTaskThread 定时调用
+   * Signal 函数,在 TCPListenerSocket::Run 函数里会调用 TCPListenerSocket::ProcessEvent 函数
+   * 执行 accept(接收下一个连接)和 RequestEvent(继续申请监听)。 */
   if (fSleepBetweenAccepts) {
     // We are at our maximum supported sockets
     // slow down so we have Time to process the active ones (we will respond with errors or service).
     // wake up and execute again after sleeping. The timer must be reset each Time through
     //s_printf("TCPListenerSocket slowing down\n");
+    this->RequestEvent(EV_RM);
     this->SetIdleTimer(kTimeBetweenAcceptsInMsec); //sleep 1 second
   } else {
     // sleep until there is a read event outstanding (another client wants to connect)
     //s_printf("TCPListenerSocket normal speed\n");
-    this->RequestEvent(EV_RE);
+    //this->RequestEvent(EV_RE);
   }
 
   fOutOfDescriptors = false; // always false for now we don't properly handle this elsewhere in the code
@@ -232,6 +231,7 @@ SInt64 TCPListenerSocket::Run() {
   // All we need to do is check the listen Queue to see if the situation has
   // cleared up.
   (void) this->GetEvents();
+  this->RequestEvent(EV_RE);
   this->ProcessEvent(Thread::Task::kReadEvent);
   return 0;
 }

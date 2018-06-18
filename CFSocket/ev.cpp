@@ -205,7 +205,7 @@ int select_modwatch(struct eventreq *req, int which) {
 #endif
     //
     // Also, modifying the cookie is not preemptive safe. This must be
-    // done atomically wrt setting the fd in the set. Otherwise, it is
+    // done atomically write setting the fd in the set. Otherwise, it is
     // possible to have a NULL cookie on a fd.
     Assert(req->er_handle < (int) (sizeof(fd_set) * 8));
     if (req->er_handle >= (int) (sizeof(fd_set) * 8)) {

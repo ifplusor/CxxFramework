@@ -22,23 +22,22 @@
  * @APPLE_LICENSE_HEADER_END@
  *
  */
-/*
-    File:       Task.cpp
-
-    Contains:   implements Task class
-
-*/
+/**
+ * @file Task.cpp
+ *
+ * Implements Task class
+ */
 
 #include <CF/Thread/Task.h>
 #include <CF/Core/Time.h>
 
 using namespace CF::Thread;
 
-unsigned int Task::sShortTaskThreadPicker = 0;
-unsigned int Task::sBlockingTaskThreadPicker = 0;
+std::atomic_uint Task::sShortTaskThreadPicker(0);
+std::atomic_uint Task::sBlockingTaskThreadPicker(0);
 
 CF::Core::RWMutex TaskThreadPool::sRWMutex;
-static char *sTaskStateStr = "live_"; // Alive
+static const char *sTaskStateStr = "live_"; // Alive
 
 Task::Task()
     : fEvents(0),
@@ -55,12 +54,10 @@ Task::Task()
 
   fTaskQueueElem.SetEnclosingObject(this);
   fTimerHeapElem.SetEnclosingObject(this);
-
 }
 
 void Task::SetTaskName(char *name) {
-  if (name == nullptr)
-    return;
+  if (name == nullptr) return;
 
   ::strncpy(fTaskName, sTaskStateStr, sizeof(fTaskName) - 1);
   ::strncat(fTaskName, name, sizeof(fTaskName) - strlen(fTaskName) - 1);
@@ -68,56 +65,46 @@ void Task::SetTaskName(char *name) {
 }
 
 bool Task::Valid() {
-  if ((this->fTaskName == nullptr)
-      || (0 != ::strncmp(sTaskStateStr, this->fTaskName, 5))) {
+  if ((this->fTaskName == nullptr) ||
+      (0 != ::strncmp(sTaskStateStr, this->fTaskName, 5))) {
     if (DEBUG_TASK)
-      s_printf("Task::Valid Found invalid task = %p\n",
-               (void *) this);
-
+      s_printf("Task::Valid Found invalid task = %p\n", (void *) this);
     return false;
   }
-
   return true;
 }
 
 void Task::Signal(EventFlags events) {
-  /*
-     如果该任务有指定处理的线程，则将该任务加入到指定线程的任务队列中。
-     如果没有指定的线程，则从线程池中随机选择一个任务线程，并将该任务加入到
-     这个任务线程的任务队列中。
-     或者干脆就没有线程运行，那么只是打印信息退出。
-   */
+  /* 如果该任务有指定处理的线程，则将该任务加入到指定线程的任务队列中。
+   * 如果没有指定的线程，则从线程池中随机选择一个任务线程，并将该任务加入到
+   * 这个任务线程的任务队列中。
+   * 或者干脆就没有线程运行，那么只是打印信息退出。*/
 
-  if (!this->Valid())
-    return;
+  if (!this->Valid()) return;
 
   // Fancy no Mutex implementation. We atomically mask the new events into
   // the event mask. Because atomic_or returns the old state of the mask,
   // we only schedule this task once.
-  /* check point!!! 激活新的 event */
+  /* check point!!! 激活新的 event
+   * 因为对 task 的“一次”调度会连续处理期间发生的“所有”事件，
+   * 已经处于 alive 状态的 task 不会被重复调度。 */
   events |= kAlive;
   auto oldEvents = fEvents.fetch_or(events);
   if ((!(oldEvents & kAlive)) && (TaskThreadPool::sNumTaskThreads > 0)) {
-    /*
-       因为对 task 的“一次”调度会连续处理期间发生的“所有”事件，
-       已经处于 alive 状态的 task 不会被重复调度。
-     */
     if (fDefaultThread != nullptr && fUseThisThread == nullptr)
       fUseThisThread = fDefaultThread;
 
-    if (fUseThisThread
-        != nullptr) { // Task needs to be placed on a particular Thread.
+    if (fUseThisThread != nullptr) {
+      // Task needs to be placed on a particular Thread.
+
       if (DEBUG_TASK) {
         if (fTaskName[0] == 0) ::strcpy(fTaskName, " _Corrupt_Task");
-        s_printf(
-            "Task::Signal EnQueue TaskName=%s "
-                "fUseThisThread=%p "
-                "q_elem=%p "
-                "enclosing=%p\n",
-            fTaskName,
-            (void *) fUseThisThread,
-            (void *) &fTaskQueueElem,
-            (void *) this);
+
+        s_printf("Task::Signal EnQueue TaskName=%s fUseThisThread=%p "
+                 "q_elem=%p enclosing=%p\n",
+                 fTaskName, (void *) fUseThisThread,
+                 (void *) &fTaskQueueElem, (void *) this);
+
         if (TaskThreadPool::sTaskThreadArray[0] == fUseThisThread)
           s_printf("Task::Signal  RTSP Thread running  TaskName=%s \n",
                    fTaskName);
@@ -126,48 +113,38 @@ void Task::Signal(EventFlags events) {
       fUseThisThread->fTaskQueue.EnQueue(&fTaskQueueElem);
     } else {
       // find a Thread to put this task on
-      // unsigned int theThreadIndex = atomic_add((unsigned int *)pickerToUse, 1);
-
-      unsigned int theThreadIndex = 0;
-      {
-        Core::MutexLocker locker(&fAtomicMutex);
-        theThreadIndex = ++(*pickerToUse);
-      }
+      unsigned int theThreadIndex = pickerToUse->fetch_add(1);
 
       if (&Task::sShortTaskThreadPicker == pickerToUse) {
         theThreadIndex %= TaskThreadPool::sNumShortTaskThreads;
 
         if (DEBUG_TASK)
-          s_printf(
-              "Task::Signal EnQueue TaskName=%s "
-                  "using Task::sShortTaskThreadPicker=%u "
-                  "numShortTaskThreads=%" _U32BITARG_ " "
-                  "short task range=[0-%" _U32BITARG_ "] "
-                  "Thread index =%u \n",
-              fTaskName,
-              Task::sShortTaskThreadPicker,
-              TaskThreadPool::sNumShortTaskThreads,
-              TaskThreadPool::sNumShortTaskThreads - 1,
-              theThreadIndex);
+          s_printf("Task::Signal EnQueue TaskName=%s "
+                   "using Task::sShortTaskThreadPicker=%u "
+                   "numShortTaskThreads=%" _U32BITARG_ " "
+                   "short task range=[0-%" _U32BITARG_ "] "
+                   "Thread index =%u \n",
+                   fTaskName, Task::sShortTaskThreadPicker.load(),
+                   TaskThreadPool::sNumShortTaskThreads,
+                   TaskThreadPool::sNumShortTaskThreads - 1,
+                   theThreadIndex);
       } else if (&Task::sBlockingTaskThreadPicker == pickerToUse) {
         theThreadIndex %= TaskThreadPool::sNumBlockingTaskThreads;
         theThreadIndex += TaskThreadPool::sNumShortTaskThreads;
         //don't pick from lower non-blocking (short task) threads.
 
         if (DEBUG_TASK)
-          s_printf(
-              "Task::Signal EnQueue TaskName=%s "
-                  "using Task::sBlockingTaskThreadPicker=%u "
-                  "numBlockingThreads=%" _U32BITARG_ " "
-                  "blocking Thread range=[%" _U32BITARG_ "-%" _U32BITARG_ "] "
-                  "Thread index =%u \n",
-              fTaskName,
-              Task::sBlockingTaskThreadPicker,
-              TaskThreadPool::sNumBlockingTaskThreads,
-              TaskThreadPool::sNumShortTaskThreads,
-              TaskThreadPool::sNumBlockingTaskThreads
-                  + TaskThreadPool::sNumShortTaskThreads - 1,
-              theThreadIndex);
+          s_printf( "Task::Signal EnQueue TaskName=%s "
+                    "using Task::sBlockingTaskThreadPicker=%u "
+                    "numBlockingThreads=%" _U32BITARG_ " "
+                    "blocking Thread range=[%" _U32BITARG_ "-%" _U32BITARG_ "] "
+                    "Thread index =%u \n",
+                    fTaskName, Task::sBlockingTaskThreadPicker.load(),
+                    TaskThreadPool::sNumBlockingTaskThreads,
+                    TaskThreadPool::sNumShortTaskThreads,
+                    TaskThreadPool::sNumBlockingTaskThreads
+                        + TaskThreadPool::sNumShortTaskThreads - 1,
+                    theThreadIndex);
       } else {
         if (DEBUG_TASK)
           if (fTaskName[0] == 0)
@@ -181,46 +158,32 @@ void Task::Signal(EventFlags events) {
           ::strcpy(fTaskName, " _Corrupt_Task");
 
       if (DEBUG_TASK)
-        s_printf(
-            "Task::Signal EnQueue B TaskName=%s "
-                "theThreadIndex=%u "
-                "Thread=%p "
-                "fTaskQueue.GetLength(%" _U32BITARG_ ") "
-                "q_elem=%p "
-                "enclosing=%p\n",
-            fTaskName,
-            theThreadIndex,
-            (void *) TaskThreadPool::sTaskThreadArray[theThreadIndex],
-            TaskThreadPool::sTaskThreadArray[theThreadIndex]->fTaskQueue
-                .GetQueue()->GetLength(),
-            (void *) &fTaskQueueElem,
-            (void *) this);
+        s_printf("Task::Signal EnQueue B TaskName=%s "
+                 "theThreadIndex=%u Thread=%p "
+                 "fTaskQueue.GetLength(%" _U32BITARG_ ") "
+                 "q_elem=%p enclosing=%p\n",
+                 fTaskName, theThreadIndex,
+                 (void *) TaskThreadPool::sTaskThreadArray[theThreadIndex],
+                 TaskThreadPool::sTaskThreadArray[theThreadIndex]->fTaskQueue
+                     .GetQueue()->GetLength(),
+                 (void *) &fTaskQueueElem, (void *) this);
       TaskThreadPool::sTaskThreadArray[theThreadIndex]->fTaskQueue.EnQueue(&fTaskQueueElem);
       if (DEBUG_TASK)
-        s_printf(
-            "Task::Signal EnQueue A TaskName=%s "
-                "theThreadIndex=%u "
-                "Thread=%p "
-                "fTaskQueue.GetLength(%" _U32BITARG_ ") "
-                "q_elem=%p "
-                "enclosing=%p\n",
-            fTaskName,
-            theThreadIndex,
-            (void *) TaskThreadPool::sTaskThreadArray[theThreadIndex],
-            TaskThreadPool::sTaskThreadArray[theThreadIndex]->fTaskQueue
-                .GetQueue()->GetLength(),
-            (void *) &fTaskQueueElem,
-            (void *) this);
-
+        s_printf( "Task::Signal EnQueue A TaskName=%s "
+                  "theThreadIndex=%u Thread=%p "
+                  "fTaskQueue.GetLength(%" _U32BITARG_ ") "
+                  "q_elem=%p enclosing=%p\n",
+                  fTaskName, theThreadIndex,
+                  (void *) TaskThreadPool::sTaskThreadArray[theThreadIndex],
+                  TaskThreadPool::sTaskThreadArray[theThreadIndex]->fTaskQueue
+                      .GetQueue()->GetLength(),
+                  (void *) &fTaskQueueElem, (void *) this);
     }
-  } else if (DEBUG_TASK)
-    s_printf(
-        "Task::Signal Sent to dead TaskName=%s "
-            "q_elem=%p "
-            "enclosing=%p\n",
-        fTaskName,
-        (void *) &fTaskQueueElem,
-        (void *) this);
+  } else {
+    if (DEBUG_TASK)
+      s_printf("Task::Signal Sent to dead TaskName=%s q_elem=%p enclosing=%p\n",
+               fTaskName, (void *) &fTaskQueueElem, (void *) this);
+  }
 }
 
 void Task::GlobalUnlock() {
@@ -230,7 +193,7 @@ void Task::GlobalUnlock() {
   }
 }
 
-void Task::SetThreadPicker(unsigned int *picker) {
+void Task::SetThreadPicker(std::atomic_uint *picker) {
   pickerToUse = picker;
   Assert(pickerToUse != nullptr);
   if (DEBUG_TASK) {
@@ -240,9 +203,8 @@ void Task::SetThreadPicker(unsigned int *picker) {
       s_printf("Task::SetThreadPicker sShortTaskThreadPicker for task=%s\n",
                fTaskName);
     } else if (&Task::sBlockingTaskThreadPicker == pickerToUse) {
-      s_printf(
-          "Task::SetThreadPicker sBlockingTaskThreadPicker for task=%s\n",
-          fTaskName);
+      s_printf("Task::SetThreadPicker sBlockingTaskThreadPicker for task=%s\n",
+               fTaskName);
     } else {
       s_printf("Task::SetThreadPicker ERROR unknown picker for task=%s\n",
                fTaskName);
@@ -255,37 +217,31 @@ void Task::ForceSameThread() {
   Assert(fUseThisThread != nullptr);
   if (DEBUG_TASK) if (fTaskName[0] == 0) ::strcpy(fTaskName, " corrupt task");
   if (DEBUG_TASK)
-    s_printf(
-        "Task::ForceSameThread fUseThisThread %p "
-            "task %s "
-            "enque elem=%p "
-            "enclosing %p\n",
-        (void *) fUseThisThread,
-        fTaskName,
-        (void *) &fTaskQueueElem,
-        (void *) this);
+    s_printf("Task::ForceSameThread fUseThisThread %p "
+             "task %s enqueue elem=%p enclosing %p\n",
+             (void *) fUseThisThread, fTaskName,
+             (void *) &fTaskQueueElem, (void *) this);
 }
 
+/**
+ * Task::Run 执行期间必须调用 GetEvents 获取已触发事件，同时清除已获得的事件标志。
+ * 但同样因为 GetEvents 会清除旧事件，返回的事件必须被同时处理，否则就会丢失
+ */
 Task::EventFlags Task::GetEvents() {
   // Mask off every event currently in the mask except for the alive bit,
   // of course, which should remain unaffected and unreported by this call.
-  EventFlags events = fEvents & kAliveOff;
-  //(void)atomic_sub(&fEvents, events);
-  fEvents.fetch_sub(events);
+  EventFlags events = fEvents.fetch_and(kAlive);
   return events;
 }
 
+/**
+ * 任务线程入口，由一个大循环构成
+ */
 void TaskThread::Entry() {
-  /* 这个函数是任务线程的入口函数,由一个大循环构成。 */
-
-  Task *theTask = nullptr;
-
   while (true) {
-    /*
-       等待任务的通知到达,或者因 stop 的请求而返回(目前,WaitForTask 只有在收到
-       stop 请求后 才返回 NULL)。
-     */
-    theTask = this->WaitForTask();
+    /* 等待任务的通知到达,或者因 stop 的请求而返回(目前,WaitForTask 只有在收到
+       stop 请求后 才返回 NULL)。 */
+    Task *theTask = this->WaitForTask();
 
     //
     // WaitForTask returns nullptr when it is Time to quit
@@ -294,13 +250,11 @@ void TaskThread::Entry() {
 
     bool doneProcessingEvent = false;
 
-    /*
-       下面也是一个循环,如果 doneProcessingEvent 为 true 则跳出循环。
-       OSMutexWriteLocker、OSMutexReadLocker 均基于 OSMutexReadWriteLocker 类,
-       在下面的使用中这两个类构建函数会调用 sMutexRW->LockRead 或
-       sMutexRW->LockWrite 进行互斥的读写操作。 OSMutexRW 类对象 sMutexRW 为
-       TaskThreadPool 类的成员,所以是对所有的线程互斥。
-     */
+    /* 下面也是一个循环,如果 doneProcessingEvent 为 true 则跳出循环。
+     * OSMutexWriteLocker、OSMutexReadLocker 均基于 OSMutexReadWriteLocker 类,
+     * 在下面的使用中这两个类构建函数会调用 sMutexRW->LockRead 或
+     * sMutexRW->LockWrite 进行互斥的读写操作。 OSMutexRW 类对象 sMutexRW 为
+     * TaskThreadPool 类的成员,所以是对所有的线程互斥。 */
     while (!doneProcessingEvent) {
       // If a task holds locks when it returns from its Run function,
       // that would be catastrophic and certainly lead to a deadlock
@@ -309,38 +263,27 @@ void TaskThread::Entry() {
       Assert(theTask->fInRunCount == 0);
       theTask->fInRunCount++;
 #endif
-      theTask->fUseThisThread =
-          nullptr; // Each invocation of Run must independently
+      theTask->fUseThisThread = nullptr; // Each invocation of Run must independently
       // request a specific Thread.
       SInt64 theTimeout = 0;
 
       if (theTask->fWriteLock) {
         Core::MutexWriteLocker mutexLocker(&TaskThreadPool::sRWMutex);
         if (DEBUG_TASK)
-          s_printf(
-              "TaskThread::Entry run global locked TaskName=%s "
-                  "CurMSec=%.3f "
-                  "Thread=%p "
-                  "task=%p\n",
-              theTask->fTaskName,
-              Core::Time::StartTimeMilli_Float(),
-              (void *) this,
-              (void *) theTask);
+          s_printf("TaskThread::Entry run global locked TaskName=%s "
+                   "CurMSec=%.3f Thread=%p task=%p\n",
+                   theTask->fTaskName, Core::Time::StartTimeMilli_Float(),
+                   (void *) this, (void *) theTask);
 
         theTimeout = theTask->Run();
         theTask->fWriteLock = false;
       } else {
         Core::MutexReadLocker mutexLocker(&TaskThreadPool::sRWMutex);
         if (DEBUG_TASK)
-          s_printf(
-              "TaskThread::Entry run TaskName=%s "
-                  "CurMSec=%.3f "
-                  "Thread=%p "
-                  "task=%p\n",
-              theTask->fTaskName,
-              Core::Time::StartTimeMilli_Float(),
-              (void *) this,
-              (void *) theTask);
+          s_printf("TaskThread::Entry run TaskName=%s CurMSec=%.3f "
+                   "Thread=%p task=%p\n",
+                   theTask->fTaskName, Core::Time::StartTimeMilli_Float(),
+                   (void *) this, (void *) theTask);
 
         theTimeout = theTask->Run();
       }
@@ -350,23 +293,16 @@ void TaskThread::Entry() {
       Assert(theTask->fInRunCount == 0);
 #endif
       if (theTimeout < 0) {
-        /*
-           如果 theTimeout < 0,
-            则说明任务结束，任务对象被销毁，doneProcessingEvent 设为 true，
-            在后面调用 ThreadYield 后，跳出这个循环。再调用 WaitForTask，
-            等待下个处理。
-         */
+        /* 如果 theTimeout < 0,
+         *  则说明任务结束，任务对象被销毁，doneProcessingEvent 设为 true，
+         *  在后面调用 ThreadYield 后，跳出这个循环。再调用 WaitForTask，
+         *  等待下个处理。 */
 
         if (DEBUG_TASK) {
-          s_printf(
-              "TaskThread::Entry delete TaskName=%s "
-                  "CurMSec=%.3f "
-                  "Thread=%p "
-                  "task=%p\n",
-              theTask->fTaskName,
-              Core::Time::StartTimeMilli_Float(),
-              (void *) this,
-              (void *) theTask);
+          s_printf("TaskThread::Entry delete TaskName=%s CurMSec=%.3f "
+                   "Thread=%p task=%p\n",
+                   theTask->fTaskName, Core::Time::StartTimeMilli_Float(),
+                   (void *) this, (void *) theTask);
 
           theTask->fUseThisThread = nullptr;
 
@@ -381,38 +317,35 @@ void TaskThread::Entry() {
           if (theTask->fEvents & ~Task::kAlive)
             s_printf("TaskThread::Entry flags still set  before delete\n");
 
-          //(void)atomic_sub(&theTask->fEvents, 0);
-          theTask->fEvents.fetch_sub(0);
+          theTask->fEvents.fetch_sub(0); // ?
 
           ::strncat(theTask->fTaskName, " deleted",
                     sizeof(theTask->fTaskName) - 1);
         }
-        theTask->fTaskName[0] = 'D'; // mark as dead
+
+        /* check point!!! Mark as dead, then delete it.
+         * 在该点，task 仍具有 alive 标记，即使其它线程调用 Signal，
+         * task 也不会重复进入调度器 */
+        theTask->fTaskName[0] = 'D';
         delete theTask;
-        theTask = nullptr;
         doneProcessingEvent = true;
       } else if (theTimeout == 0) {
-        /*
-           如果 theTimeout == 0,
-            将 theTask->fEvents 和 Task::kAlive 比较，如果返回 1，则说明该任务
-            已经没有事件处理，反之则在 ThreadYield 返回后继续在循环里处理这个
-            任务的事件。
-         */
+        /* 如果 theTimeout == 0,
+         *  将 theTask->fEvents 和 Task::kAlive 比较，如果返回 1，则说明该任务
+         *  已经没有事件处理，反之则在 ThreadYield 返回后继续在循环里处理这个
+         *  任务的事件。 */
 
         // We want to make sure that 100% definitely the task's Run function WILL
         // be invoked when another Thread calls Signal. We also want to make sure
         // that if an event sneaks in right as the task is returning from Run()
         // (via Signal) that the Run function will be invoked again.
-        /* check point!!! task 处理期间未激活新的 event，则撤销 alive 状态 */
+        /* check point!!! Task 处理期间未激活新的 event，则撤销 alive 状态 */
         static unsigned int val = Task::kAlive;
         doneProcessingEvent = theTask->fEvents.compare_exchange_weak(val, 0);
         /* 虽然该任务目前没有事件处理，但是并不表示要销毁，所以没有 delete。 */
-        if (doneProcessingEvent) theTask = nullptr;
       } else {
-        /*
-           如果 theTimeout > 0,
-           则说明任务希望等待 theTimeout 时间后得到处理。
-         */
+        /* 如果 theTimeout > 0,
+         *  则说明任务希望等待 theTimeout 时间后得到处理。*/
 
         if (theTimeout < kMinWaitTimeInMilSecs)
           theTimeout = kMinWaitTimeInMilSecs;
@@ -420,17 +353,12 @@ void TaskThread::Entry() {
         // note that if we get here, we don't reset theTask, so it will get
         // passed into WaitForTask
         if (DEBUG_TASK)
-          s_printf(
-              "TaskThread::Entry insert TaskName=%s "
-                  "in timer Heap Thread=%p "
-                  "elem=%p "
-                  "task=%p "
-                  "timeout=%.2f\n",
-              theTask->fTaskName,
-              (void *) this,
-              (void *) &theTask->fTimerHeapElem,
-              (void *) theTask,
-              (float) theTimeout / (float) 1000);
+          s_printf("TaskThread::Entry insert TaskName=%s "
+                   "in timer Heap Thread=%p "
+                   "elem=%p task=%p timeout=%.2f\n",
+                   theTask->fTaskName,
+                   (void *) this, (void *) &theTask->fTimerHeapElem,
+                   (void *) theTask, (float) theTimeout / (float) 1000);
         theTask->fTimerHeapElem.SetValue(
             Core::Time::Milliseconds() + theTimeout);
         fHeap.Insert(&theTask->fTimerHeapElem);
@@ -444,7 +372,7 @@ void TaskThread::Entry() {
 #endif
 
       /* 对于 linux 系统来说，ThreadYield 实际上没有做什么工作 */
-      this->ThreadYield();
+      ThreadYield();
 
 #if DEBUG_TASK
       SInt64 yieldDur = Core::Time::Milliseconds() - yieldStart;
@@ -470,26 +398,19 @@ Task *TaskThread::WaitForTask() {
   while (true) {
     SInt64 theCurrentTime = Core::Time::Milliseconds();
 
-    /*
-       如果堆里有时间记录，并且这个时间<=系统当前时间（说明任务的运行时间已
-       经到了），则返回该记录所对应的任务对象
-     */
+    /* 如果堆里有时间记录，并且这个时间<=系统当前时间（说明任务的运行时间已
+     * 经到了），则返回该记录所对应的任务对象 */
 
     /* PeekMin 获得堆中的第一个元素（但并不取出） */
-    if ((fHeap.PeekMin() != nullptr)
-        && (fHeap.PeekMin()->GetValue() <= theCurrentTime)) {
+    if ((fHeap.PeekMin() != nullptr) &&
+        (fHeap.PeekMin()->GetValue() <= theCurrentTime)) {
       if (DEBUG_TASK)
-        s_printf(
-            "TaskThread::WaitForTask found timer-task=%s "
-                "Thread %p "
-                "fHeap.CurrentHeapSize(%" _U32BITARG_ ") "
-                "taskElem=%p "
-                "enclose=%p\n",
-            ((Task *) fHeap.PeekMin()->GetEnclosingObject())->fTaskName,
-            (void *) this,
-            fHeap.CurrentHeapSize(),
-            (void *) fHeap.PeekMin(),
-            (void *) fHeap.PeekMin()->GetEnclosingObject());
+        s_printf("TaskThread::WaitForTask found timer-task=%s Thread %p "
+                 "fHeap.CurrentHeapSize(%" _U32BITARG_ ") "
+                 "taskElem=%p enclose=%p\n",
+                 ((Task *) fHeap.PeekMin()->GetEnclosingObject())->fTaskName,
+                 (void *) this, fHeap.CurrentHeapSize(),
+                 (void *) fHeap.PeekMin(), fHeap.PeekMin()->GetEnclosingObject());
       return (Task *) fHeap.ExtractMin()->GetEnclosingObject();
     }
 
@@ -510,26 +431,18 @@ Task *TaskThread::WaitForTask() {
       theTimeout = 10;
 
     // wait...
-    /*
-       TaskThread 类有一个 OSQueue_Blocking 类的私有成员 fTaskQueue。
-       等待队列里有任务插入并将其取出返回。
-       如果返回非空,则返回该队列项所对应的任务对象。
-     */
-    QueueElem
-        *theElem = fTaskQueue.DeQueueBlocking(this, (SInt32) theTimeout);
+    /* TaskThread 类有一个 OSQueue_Blocking 类的私有成员 fTaskQueue。
+     * 等待队列里有任务插入并将其取出返回。
+     * 如果返回非空,则返回该队列项所对应的任务对象。 */
+    QueueElem *theElem = fTaskQueue.DeQueueBlocking(this, (SInt32) theTimeout);
     if (theElem != nullptr) {
       if (DEBUG_TASK)
-        s_printf(
-            "TaskThread::WaitForTask found signal-task=%s "
-                "Thread=%p "
-                "fTaskQueue.GetLength(%" _U32BITARG_ ") "
-                "taskElem=%p "
-                "enclose=%p\n",
-            ((Task *) theElem->GetEnclosingObject())->fTaskName,
-            (void *) this,
-            fTaskQueue.GetQueue()->GetLength(),
-            (void *) theElem,
-            (void *) theElem->GetEnclosingObject());
+        s_printf("TaskThread::WaitForTask found signal-task=%s Thread=%p "
+                 "fTaskQueue.GetLength(%" _U32BITARG_ ") "
+                 "taskElem=%p enclose=%p\n",
+                 ((Task *) theElem->GetEnclosingObject())->fTaskName,
+                 (void *) this, fTaskQueue.GetQueue()->GetLength(),
+                 (void *) theElem, theElem->GetEnclosingObject());
       return (Task *) theElem->GetEnclosingObject();
     }
 
@@ -545,10 +458,8 @@ UInt32       TaskThreadPool::sNumShortTaskThreads = 0;
 UInt32       TaskThreadPool::sNumBlockingTaskThreads = 0;
 
 bool TaskThreadPool::AddThreads(UInt32 numToAdd) {
-  /*
-     根据 numToAdd 参数创建 TaskThread 类对象,并调用该类的 Start 成员函数。
-     将该类对象指针保存到 sTaskThreadArray 数组。
-   */
+  /* 根据 numToAdd 参数创建 TaskThread 类对象,并调用该类的 Start 成员函数。
+   * 将该类对象指针保存到 sTaskThreadArray 数组。 */
 
   Assert(sTaskThreadArray == nullptr);
   sTaskThreadArray = new TaskThread *[numToAdd];
@@ -558,9 +469,8 @@ bool TaskThreadPool::AddThreads(UInt32 numToAdd) {
     sTaskThreadArray[x]->Start();
     if (DEBUG_TASK)
       s_printf("TaskThreadPool::AddThreads "
-                   "sTaskThreadArray[%" _U32BITARG_ "]=%p\n",
-               x,
-               sTaskThreadArray[x]);
+               "sTaskThreadArray[%" _U32BITARG_ "]=%p\n",
+               x, sTaskThreadArray[x]);
   }
   sNumTaskThreads = numToAdd;
 
@@ -571,11 +481,8 @@ bool TaskThreadPool::AddThreads(UInt32 numToAdd) {
 }
 
 TaskThread *TaskThreadPool::GetThread(UInt32 index) {
-
   Assert(sTaskThreadArray != nullptr);
-  if (index >= sNumTaskThreads)
-    return nullptr;
-
+  if (index >= sNumTaskThreads) return nullptr;
   return sTaskThreadArray[index];
 }
 

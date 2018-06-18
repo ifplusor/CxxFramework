@@ -57,6 +57,12 @@ class Utils {
   // because the OS doesn't seem to have these functions
   static SInt64 HostToNetworkSInt64(SInt64 hostOrdered);
   static SInt64 NetworkToHostSInt64(SInt64 networkOrdered);
+  static UInt64 HostToNetworkUInt64(UInt64 hostOrdered) {
+    return static_cast<UInt64>(HostToNetworkSInt64(hostOrdered));
+  }
+  static UInt64 NetworkToHostUInt64(UInt64 networkOrdered) {
+    return static_cast<UInt64>(NetworkToHostSInt64(networkOrdered));
+  }
 
   // Both these functions return QTSS_NoErr, QTSS_FileExists, or POSIX errorcode
   // Makes whatever directories in this path that don't exist yet

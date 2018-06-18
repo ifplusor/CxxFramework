@@ -132,8 +132,8 @@ class StrPtrLen {
     Len = (inPtr) ? ::strlen(inPtr) : 0;
   }
 
-  // This is a non-encapsulating interface. The class allows you to access its
-  // data.
+  // This is a non-encapsulating interface.
+  // The class allows you to access its data.
   char *Ptr;
   UInt32 Len;
 
@@ -143,8 +143,8 @@ class StrPtrLen {
   void PrintStr(char *appendStr);
   void PrintStr(char *prependStr, char *appendStr);
 
-  void PrintStrEOL(char *stopStr = nullptr,
-                   char *appendStr = nullptr); //replace chars x0A and x0D with \r and \n
+  // replace chars x0A and x0D with \r and \n
+  void PrintStrEOL(char *stopStr = nullptr, char *appendStr = nullptr);
 
   //Utility function
   UInt32 TrimTrailingWhitespace();

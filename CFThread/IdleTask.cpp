@@ -49,8 +49,7 @@ IdleTaskThread::~IdleTaskThread() {
 void IdleTaskThread::SetIdleTimer(IdleTask *activeObj, SInt64 msec) {
   // note: OSHeap doesn't support a random remove, so this function
   // won't change the timeout value if there is already one set
-  if (activeObj->fIdleElem.IsMemberOfAnyHeap())
-    return;
+  if (activeObj->fIdleElem.IsMemberOfAnyHeap()) return;
 
   activeObj->fIdleElem.SetValue(Core::Time::Milliseconds() + msec);
 
@@ -83,8 +82,8 @@ void IdleTaskThread::Entry() {
     SInt64 msec = Core::Time::Milliseconds();
 
     // pop elements out of the Heap as long as their timeout Time has arrived
-    while ((fIdleHeap.CurrentHeapSize() > 0)
-        && (fIdleHeap.PeekMin()->GetValue() <= msec)) {
+    while ((fIdleHeap.CurrentHeapSize() > 0) &&
+        (fIdleHeap.PeekMin()->GetValue() <= msec)) {
       IdleTask *elem = (IdleTask *) fIdleHeap.ExtractMin()->GetEnclosingObject();
       Assert(elem != nullptr);
       elem->Signal(Task::kIdleEvent);

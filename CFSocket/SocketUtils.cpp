@@ -599,5 +599,7 @@ UInt32 SocketUtils::ConvertStringToAddr(const char *inAddrStr) {
   if (inAddrStr == nullptr)
     return 0;
 
+  // inet_addr returns numeric IP addr in network byte order,
+  // make sure to convert to host order.
   return ntohl(::inet_addr(inAddrStr));
 }

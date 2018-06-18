@@ -141,7 +141,7 @@ Ref *RefTable::Resolve(StrPtrLen *inUniqueID) {
   Assert(inUniqueID != nullptr);
   RefKey key(inUniqueID);
 
-  //this must be done atomically wrt the table
+  // this must be done atomically write the table
   Core::MutexLocker locker(&fMutex);
   Ref *ref = fTable.Map(&key);
   if (ref != nullptr) {

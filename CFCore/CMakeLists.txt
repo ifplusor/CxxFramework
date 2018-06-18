@@ -4,6 +4,7 @@ set(HEADER_FILES
         include/CF/Core/Mutex.h
         include/CF/Core/Cond.h
         include/CF/Core/RWMutex.h
+        include/CF/Core/SpinLock.h
         include/CF/Core/Time.h
         include/CF/Core/Thread.h
         include/CF/Utils.h

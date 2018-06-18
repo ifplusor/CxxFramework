@@ -113,12 +113,12 @@ class Queue {
 
 class QueueIter {
  public:
-  QueueIter(Queue *inQueue)
+  explicit QueueIter(Queue *inQueue)
       : fQueueP(inQueue), fCurrentElemP(inQueue->GetHead()) {}
 
   QueueIter(Queue *inQueue, QueueElem *startElemP);
 
-  ~QueueIter() {}
+  ~QueueIter() = default;
 
   void Reset() { fCurrentElemP = fQueueP->GetHead(); }
 

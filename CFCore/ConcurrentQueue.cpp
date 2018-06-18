@@ -6,13 +6,11 @@
 
 using namespace CF;
 
-CF::QueueElem *BlockingQueue::DeQueueBlocking(Core::Thread *inCurThread,
-                                              SInt32 inTimeoutInMilSecs) {
+CF::QueueElem *BlockingQueue::
+DeQueueBlocking(Core::Thread *inCurThread, SInt32 inTimeoutInMilSecs) {
   Core::MutexLocker theLocker(&fMutex);
-  /*
-   * 如果 fQueue.GetLength() == 0,则调用 fCond.Wait 即调用 pthread_cond_timedwait
-   * 等待条件变量有效
-   */
+  /* 如果 fQueue.GetLength() == 0,则调用 fCond.Wait 即调用 pthread_cond_timedwait
+   * 等待条件变量有效 */
 #ifdef __Win32_
   if (fQueue.GetLength() == 0) {
       fCond.Wait(&fMutex, inTimeoutInMilSecs);

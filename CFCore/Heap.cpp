@@ -121,14 +121,14 @@ HeapElem *Heap::extract(UInt32 inIndex) {
     // which is smaller? parent or left child?
     UInt32 greatest = parent;
     UInt32 leftChild = parent * 2;
-    if ((leftChild < fFreeIndex)
-        && (fHeap[leftChild]->fValue < fHeap[parent]->fValue))
+    if ((leftChild < fFreeIndex) &&
+        (fHeap[leftChild]->fValue < fHeap[parent]->fValue))
       greatest = leftChild;
 
     // which is smaller? the biggest so far or the right child?
     UInt32 rightChild = (parent * 2) + 1;
-    if ((rightChild < fFreeIndex)
-        && (fHeap[rightChild]->fValue < fHeap[greatest]->fValue))
+    if ((rightChild < fFreeIndex) &&
+        (fHeap[rightChild]->fValue < fHeap[greatest]->fValue))
       greatest = rightChild;
 
     // if the parent is in fact smaller than its two children, we have bubbled

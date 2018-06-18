@@ -313,8 +313,9 @@ void StringParser::ConsumeLength(StrPtrLen *spl, SInt32 inLength) {
   if (inLength > 0) {
     for (short i = 0; i < inLength; i++)
       advanceMark();
-  } else
+  } else {
     fStartGet += inLength;  // ***may mess up line number if we back up too much
+  }
 }
 
 UInt32 StringParser::ConsumeInteger(StrPtrLen *outString) {
@@ -406,6 +407,7 @@ bool StringParser::Expect(char stopChar) {
     return true;
   }
 }
+
 bool StringParser::ExpectEOL() {
   if (this->ParserIsEmpty(nullptr))
     return false;
@@ -504,8 +506,8 @@ void StringParser::advanceMark() {
   if (this->ParserIsEmpty(nullptr))
     return;
 
-  if ((*fStartGet == '\n')
-      || ((*fStartGet == '\r') && (fStartGet[1] != '\n'))) {
+  if ((*fStartGet == '\n') ||
+      ((*fStartGet == '\r') && (fStartGet[1] != '\n'))) {
     // we are progressing beyond a line boundary (don't count \r\n twice)
     fCurLineNumber++;
   }

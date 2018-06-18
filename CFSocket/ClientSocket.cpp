@@ -319,8 +319,7 @@ OS_Error HTTPClientSocket::SendV(iovec *inVec, UInt32 inNumVecs) {
 #endif
     s_sprintf(fSendBuffer.Ptr,
               "POST %s HTTP/1.0\r\nX-SessionCookie: %"   _U32BITARG_   "\r\nAccept: application/x-rtsp-rtp-interleaved\r\nUser-Agent: QTSS/2.0\r\n\r\n",
-              fURL.Ptr,
-              fCookie);
+              fURL.Ptr, fCookie);
     fSendBuffer.Len = ::strlen(fSendBuffer.Ptr);
     this->encodeVec(inVec, inNumVecs);
   }

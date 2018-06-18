@@ -190,7 +190,7 @@ class RefTable {
   //in here, ie., setup the string and object pointers
   //This function will succeed unless the string identifier is not unique,
   //in which case it will return QTSS_DupName
-  //This function is atomic wrt this Ref table.
+  //This function is atomic write this Ref table.
   OS_Error Register(Ref *ref);
 
   // RegisterOrResolve
@@ -204,7 +204,7 @@ class RefTable {
   //when the refCount drops to the level specified. If several threads have
   //the Ref currently, the calling Thread will wait until the other threads
   //stop using the Ref (by calling Release, below)
-  //This function is atomic wrt this Ref table.
+  //This function is atomic write this Ref table.
   void UnRegister(Ref *ref, UInt32 refCount = 0);
 
   // Same as UnRegister, but guarenteed not to block. Will return
@@ -216,7 +216,7 @@ class RefTable {
   //(it cannot be removed from the Ref table) until you call Release. Because
   //of that, you MUST call release in a timely manner, and be aware of potential
   //deadlocks because you now own a resource being contended over.
-  //This function is atomic wrt this Ref table.
+  //This function is atomic write this Ref table.
   Ref *Resolve(StrPtrLen *inString);
 
   //Release. Release a Ref, and drops its refCount. After calling this, the

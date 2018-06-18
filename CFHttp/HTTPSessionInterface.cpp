@@ -39,8 +39,7 @@
 namespace CF {
 namespace Net {
 
-std::atomic_uint
-    HTTPSessionInterface::sSessionIndexCounter{kFirstHTTPSessionID};
+std::atomic_uint HTTPSessionInterface::sSessionIndexCounter{kFirstHTTPSessionID};
 
 HTTPDispatcher *HTTPSessionInterface::sDispatcher = nullptr;
 
@@ -148,7 +147,6 @@ CF_Error HTTPSessionInterface::RequestEvent(CF_EventType inEventMask) {
     fInputSocketP->RequestEvent(EV_RE);
   if (inEventMask & CF_WriteableEvent)
     fOutputSocketP->RequestEvent(EV_WR);
-
   return CF_NoErr;
 }
 

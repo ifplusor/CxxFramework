@@ -120,23 +120,19 @@ class Socket : public EventContext {
    * Send
    * @return CF_FileNotOpen, CF_NoErr, or POSIX error code.
    */
-  OS_Error Send(const char *inData,
-                const UInt32 inLength,
-                UInt32 *outLengthSent);
+  OS_Error Send(const char *inData, UInt32 inLength, UInt32 *outLengthSent);
 
   /**
    * Read - reads some data.
    * @return CF_FileNotOpen, CF_NoErr, or POSIX error code.
    */
-  OS_Error Read(void *buffer, const UInt32 length, UInt32 *rcvLen);
+  OS_Error Read(void *buffer, UInt32 length, UInt32 *rcvLen);
 
   /**
    * WriteV - same as Send, but takes an iovec
    * @return CF_FileNotOpen, CF_NoErr, or POSIX error code.
    */
-  OS_Error WriteV(const struct iovec *iov,
-                  const UInt32 numIOvecs,
-                  UInt32 *outLengthSent);
+  OS_Error WriteV(const struct iovec *iov, UInt32 numVecs, UInt32 *outLengthSent);
 
   // You can query for the Socket's state
 
@@ -167,9 +163,9 @@ class Socket : public EventContext {
 
  protected:
 
-  Socket(Thread::Task *notifytask, UInt32 inSocketType);
+  Socket(Thread::Task *inNotifyTask, UInt32 inSocketType);
 
-  virtual ~Socket() {}
+  ~Socket() override = default;
 
   /**
    * @return returns QTSS_NoErr, or appropriate posix error

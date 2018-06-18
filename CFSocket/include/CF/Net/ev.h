@@ -36,19 +36,30 @@
 #include <sys/ev.h>
 #else
 
+enum EREQ_TYPE {
+  EV_FD = 1,
+#define EV_FD 1   /* file descriptor */
+};
+
+enum EREQ_EVENTS {
+  EV_RE = 0x01,
+#define EV_RE EV_RE
+  EV_WR = 0x02,
+#define EV_WR  0x2
+  EV_EX = 0x04,
+#define EV_ET  0x4  /* Edge Triggered */
+  EV_RM = 0x08,
+#define EV_RM  0x8  /* inner use */
+};
+
 struct eventreq {
   int er_type;
-#define EV_FD 1   /* file descriptor */
   int er_handle;
   void *er_data;
   int er_rcnt;
   int er_wcnt;
   int er_ecnt;
   int er_eventbits;
-#define EV_RE  0x1
-#define EV_WR  0x2
-#define EV_EX  0x4  /* not used */
-#define EV_RM  0x8  /* inner use */
 };
 
 typedef struct eventreq *er_t;

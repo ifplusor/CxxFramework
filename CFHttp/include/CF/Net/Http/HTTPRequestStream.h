@@ -48,7 +48,7 @@ class HTTPRequestStream {
 
   // CONSTRUCTOR / DESTRUCTOR
 
-  HTTPRequestStream(TCPSocket *sock);
+  explicit HTTPRequestStream(TCPSocket *sock);
 
   // We may have to delete this memory if it was allocated due to base64 decoding
   ~HTTPRequestStream() {
@@ -57,22 +57,19 @@ class HTTPRequestStream {
   }
 
   /**
-   * ReadRequest - read request header
+   * @brief ReadRequest - read request header
    *
    * Attempts to read data into the stream, stopping when we hit the EOL - EOL
    * that ends an HTTP header.
    *
-   * <b>NOTE:</b> This function will not block.
+   * @note This function will not block.
    *
-   * @return
-   * <ul>
-   * <li> CF_NoErr          - Out of data, haven't hit EOL - EOL yet </li>
-   * <li> CF_RequestArrived - full request has arrived </li>
-   * <li> CF_RequestFailed  - if the client has disconnected </li>
-   * <li> CF_OutOfState </li>
-   * <li> E2BIG             - ran out of buffer space </li>
-   * <li> EINVAL            - if we are base64 decoding and the stream is corrupt
-   * </li><ul>
+   * @returns CF_NoErr          - Out of data, haven't hit EOL - EOL yet
+   * @returns CF_RequestArrived - full request has arrived
+   * @returns CF_RequestFailed  - if the client has disconnected
+   * @returns CF_OutOfState
+   * @returns E2BIG             - ran out of buffer space
+   * @returns EINVAL            - if we are base64 decoding and the stream is corrupt
    */
   CF_Error ReadRequest();
 

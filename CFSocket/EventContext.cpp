@@ -58,16 +58,18 @@ std::atomic<unsigned int> EventContext::sUniqueID(1);
 
 EventContext::EventContext(int inFileDesc, EventThread *inThread)
     : fFileDesc(inFileDesc),
+      fUseETMode(false),
       fUniqueID(0),
       fUniqueIDStr((char *) &fUniqueID, sizeof(fUniqueID)),
       fEventThread(inThread),
       fWatchEventCalled(false),
       fEventBits(0),
       fAutoCleanup(true),
-      fTask(NULL) {}
+      fTask(nullptr) {}
 
 void EventContext::InitNonBlocking(int inFileDesc) {
   fFileDesc = inFileDesc;
+  fUseETMode = true;
 
 #if __WinSock__
   u_long one = 1;
@@ -82,42 +84,36 @@ void EventContext::InitNonBlocking(int inFileDesc) {
 void EventContext::Cleanup() {
   int err = 0;
 
-  if (fFileDesc != kInvalidFileDesc) {
-    //if this object is registered in the table, unregister it now
+  // 屏蔽 RequestEvent 调用
+  int fd = fFileDesc;
+  fFileDesc = kInvalidFileDesc;
+  fWatchEventCalled = false;
+
+  // 关闭 Socket
+  if (fd != kInvalidFileDesc) {
+    // if this object is registered in the table, unregister it now
     if (fUniqueID > 0) {
-      fEventThread->fRefTable.UnRegister(&fRef);
-
 #if !MACOSXEVENTQUEUE
-      select_removeevent(fFileDesc);//The eventqueue / select shim requires this
-#if __WinSock__
-      err = ::closesocket(fFileDesc);
-#else
-      err = close(fFileDesc);
+      select_removeevent(fFileDesc);  // 先取消 event 监听
 #endif
+      fEventThread->fRefTable.UnRegister(&fRef);  // 从 EventThread 注销
+    }
 
-#else
-      // On Linux (possibly other UNIX implementations) you MUST NOT close the
-      // fd before removing the fd from the select mask, and having the select
-      // function wake up to register this fact. If you close the fd first,
-      // bad things may happen, like the Socket not getting unbound from the
-      // port & IP addr.
-      //
-      // So, what we do is have the select Thread itself call close. This is
-      // triggered by calling removeevent.
-      err = close(fFileDesc);
-#endif
-
-      fUniqueID = 0;
-      fWatchEventCalled = false;
-    } else /* 未分配 id == 未注册 Ref */
+    // On Linux (possibly other UNIX implementations) you MUST NOT close the
+    // fd before removing the fd from the select mask, and having the select
+    // function wake up to register this fact. If you close the fd first,
+    // bad things may happen, like the Socket not getting unbound from the
+    // port & IP addr.
+    //
+    // So, what we do is have the select Thread itself call close. This is
+    // triggered by calling removeevent.
 #if __WinSock__
-      err = ::closesocket(fFileDesc);
+    err = ::closesocket(fFileDesc);
 #else
-      err = close(fFileDesc);
-#endif
+    err = close(fFileDesc);
+#endif // __WinSock__
   }
 
-  fFileDesc = kInvalidFileDesc;
   fUniqueID = 0;
 
   // we don't really care if there was an error, but it's nice to know
@@ -160,10 +156,19 @@ void EventContext::RequestEvent(int theMask) {
 
   if (CFState::sState & CFState::kDisableEvent) return;
 
+  if (theMask & EV_RM) { // 处理删除事件
+    if (fWatchEventCalled) {
+      select_removeevent(fFileDesc);
+    }
+    return;
+  }
+
   //
   // The first Time this function gets called, we're supposed to
   // call watchevent. Each subsequent Time, call modwatch. That's
   // the way the MacOS X event Queue works.
+
+  if (fUseETMode) theMask |= EV_ET; // ET Mode
 
   if (fWatchEventCalled) {
     fEventReq.er_eventbits = theMask;
@@ -178,9 +183,9 @@ void EventContext::RequestEvent(int theMask) {
       AssertV(false, Core::Thread::GetErrno());
 #endif
   } else {
-    // allocate a Unique ID for this Socket, and add it to the Ref table
+    if (fFileDesc == kInvalidFileDesc) return;
 
-    //johnson find the bug
+    // allocate a Unique ID for this Socket, and add it to the Ref table
     bool bFindValid = false;
 #if __WinSock__
     //
@@ -207,13 +212,13 @@ void EventContext::RequestEvent(int theMask) {
     do {
       static unsigned int topVal = 10000000;
       if (!sUniqueID.compare_exchange_weak(topVal, 1))  // Fix 2466667: message IDs above a
-        fUniqueID = ++sUniqueID;         // level are ignored, so wrap at 8192
+        fUniqueID = ++sUniqueID;  // level are ignored, so wrap at 8192
       else
         fUniqueID = 1;
 
       // If the fUniqueID is used, find a new one until it's free
       Ref *Ref = fEventThread->fRefTable.Resolve(&fUniqueIDStr);
-      if (Ref != NULL) {
+      if (Ref != nullptr) {
         fEventThread->fRefTable.Release(Ref);
       } else {
         bFindValid = true; // ok, it's free
@@ -244,10 +249,13 @@ void EventContext::RequestEvent(int theMask) {
   }
 }
 
+/**
+ * 网络事件线程入口，由一个大循环组成
+ */
 void EventThread::Entry() {
-  int theErrno;
+  int theErr = 0;
   struct eventreq theCurrentEvent;
-  ::memset(&theCurrentEvent, '\0', sizeof(theCurrentEvent));
+  ::memset(&theCurrentEvent, 0, sizeof(theCurrentEvent));
 
   while (true) {
     do {
@@ -257,7 +265,7 @@ void EventThread::Entry() {
 #if MACOSXEVENTQUEUE
       int theReturnValue = waitevent(&theCurrentEvent, NULL);
 #else
-      int theReturnValue = select_waitevent(&theCurrentEvent, NULL);
+      int theReturnValue = select_waitevent(&theCurrentEvent, nullptr);
 #endif
 
       if (CFState::sState & (CFState::kKillListener | CFState::kCleanEvent)) {
@@ -266,8 +274,7 @@ void EventThread::Entry() {
           while (true) {
             QueueElem *elem = CFState::sListenerSocket.DeQueue();
             if (elem == nullptr) break;
-            TCPListenerSocket *listener = (TCPListenerSocket *)
-                elem->GetEnclosingObject();
+            auto *listener = (TCPListenerSocket *) elem->GetEnclosingObject();
             listener->RequestEvent(EV_RM);
             listener->Signal(CF::Thread::Task::kKillEvent);
             delete elem;
@@ -280,7 +287,7 @@ void EventThread::Entry() {
           RefHashTableIter iter(fRefTable.GetHashTable());
           while (!iter.IsDone()) {
             Ref *ref = iter.GetCurrent();
-            EventContext *theContext = (EventContext *) ref->GetObject();
+            auto *theContext = (EventContext *) ref->GetObject();
             iter.Next();
             theContext->Cleanup();
           }
@@ -293,20 +300,20 @@ void EventThread::Entry() {
       // Sort of a hack. In the POSIX version of the server, waitevent can
       // return an actual POSIX error code.
       if (theReturnValue >= 0)
-        theErrno = theReturnValue;
+        theErr = theReturnValue;
       else
-        theErrno = Core::Thread::GetErrno();
-    } while (theErrno == EINTR);
-    AssertV(theErrno == 0, theErrno);
+        theErr = Core::Thread::GetErrno();
+    } while (theErr == EINTR);
+    AssertV(theErr == 0, theErr);
 
     // ok, there's data waiting on this Socket. Send a wakeup.
-    if (theCurrentEvent.er_data != NULL) {
+    if (theCurrentEvent.er_data != nullptr) {
       // The cookie in this event is an ObjectID. Resolve that objectID into
       // a pointer.
       StrPtrLen idStr((char *) &theCurrentEvent.er_data, sizeof(PointerSizedInt));
       Ref *ref = fRefTable.Resolve(&idStr);
-      if (ref != NULL) {
-        EventContext *theContext = (EventContext *) ref->GetObject();
+      if (ref != nullptr) {
+        auto *theContext = (EventContext *) ref->GetObject();
 #if DEBUG_EVENT_CONTEXT
         theContext->fModwatched = false;
 #endif
@@ -322,20 +329,20 @@ void EventThread::Entry() {
 #if 0//defined(__linux__) && !defined(EASY_DEVICE)
 
 #else
-    this->ThreadYield();
+    Thread::ThreadYield();
 #endif
 
 #if DEBUG_EVENT_CONTEXT
     SInt64  yieldDur = Core::Time::Milliseconds() - yieldStart;
-    static SInt64   numZeroYields;
+    static SInt64 numZeroYields;
 
     if (yieldDur > 1) {
       s_printf("EventThread Time in OSThread::Yield %i, numZeroYields %i\n",
-               (SInt32) yieldDur,
-               (SInt32) numZeroYields);
+               (SInt32) yieldDur, (SInt32) numZeroYields);
         numZeroYields = 0;
-    } else
-        numZeroYields++;
+    } else {
+      numZeroYields++;
+    }
 #endif
   }
 }

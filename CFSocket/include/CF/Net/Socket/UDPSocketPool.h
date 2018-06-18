@@ -96,7 +96,7 @@ class UDPSocketPair {
       : fSocketA(inSocketA), fSocketB(inSocketB), fRefCount(0), fElem() {
     fElem.SetEnclosingObject(this);
   }
-  ~UDPSocketPair() {}
+  ~UDPSocketPair() = default;
 
   UDPSocket *GetSocketA() { return fSocketA; }
   UDPSocket *GetSocketB() { return fSocketB; }

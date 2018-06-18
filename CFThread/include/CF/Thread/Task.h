@@ -48,40 +48,50 @@
 #include <CF/ConcurrentQueue.h>
 #include <CF/Core/RWMutex.h>
 
+#ifndef DEBUG_TASK
 #define DEBUG_TASK 0
+#endif
 
 namespace CF {
 namespace Thread {
 
 class TaskThread;
 
+/**
+ * Task 实例是可执行对象，是 CxxFramework 线程模型下的基本调度单元。
+ * Task 具有事件驱动模型，可以被重复调度，但在同一时刻不会存在多个并发执行流。
+ *
+ * @note  删除一个 Task 的最佳方式是，通过 Signal 发送 kKillEvent 信号，
+ *        在 Run 处理中检测到 kKillEvent 信号后，返回 -1，将清理职责交给调度器。
+ */
 class Task {
  public:
 
-  typedef unsigned int EventFlags;
-
-  // EVENTS
-  // here are all the events that can be sent to a task
+  /**
+   * EVENTS
+   * here are all the events that can be sent to a task
+   */
   enum {
     // these are all of type "EventFlags"
-    kKillEvent = 0x1 << 0x0,
-    kIdleEvent = 0x1 << 0x1,
-    kStartEvent = 0x1 << 0x2,
-    kTimeoutEvent = 0x1 << 0x3,
+    kKillEvent    = 0x01U << 0U,
+    kIdleEvent    = 0x01U << 1U,
+    kStartEvent   = 0x01U << 2U,
+    kTimeoutEvent = 0x01U << 3U,
 
     /* Socket events */
-    kReadEvent = 0x1 << 0x4,
-    kWriteEvent = 0x1 << 0x5,
+    kReadEvent    = 0x01U << 4U,
+    kWriteEvent   = 0x01U << 5U,
 
     /* update event */
-    kUpdateEvent = 0x1 << 0x6
+    kUpdateEvent  = 0x01U << 6U,
   };
+
+  typedef unsigned int EventFlags;
 
   // CONSTRUCTOR / DESTRUCTOR
   // You must assign priority at create Time.
   Task();
-
-  virtual ~Task() {}
+  virtual ~Task() = default;
 
   /**
    * @return >0 invoke me after this number of MilSecs with a kIdleEvent
@@ -110,9 +120,9 @@ class Task {
     fDefaultThread = defaultThread;
   }
 
-  void SetThreadPicker(unsigned int *picker);
+  void SetThreadPicker(std::atomic_uint *picker);
 
-  static unsigned int *GetBlockingTaskThreadPicker() {
+  static std::atomic_uint *GetBlockingTaskThreadPicker() {
     return &sBlockingTaskThreadPicker;
   }
 
@@ -143,13 +153,13 @@ class Task {
     kAliveOff = 0x7fffffff
   };
 
-  void SetTaskThread(TaskThread *thread);
+  void SetTaskThread(TaskThread *thread) {
+    fUseThisThread = thread;
+  }
 
-  /*
-     当事件发生时，Task 进入调度队列，并设置相应的 event flag。
-     Task 进入调度队列时设置 alive 标志位，执行完毕后撤销 alive 标志位。
-     Task 在某一时刻，只会处于唯一调度队列。
-   */
+  /* 当事件发生时，Task 进入调度队列，并设置相应的 event flag。
+   * Task 进入调度队列时设置 alive 标志位，执行完毕后撤销 alive 标志位。
+   * Task 在某一时刻，只会处于唯一调度队列。 */
   std::atomic<EventFlags> fEvents;
 
   TaskThread *fUseThisThread; /* 强制执行线程 */
@@ -167,19 +177,17 @@ class Task {
   HeapElem fTimerHeapElem;
   QueueElem fTaskQueueElem;
 
-  unsigned int *pickerToUse;
-
-  Core::Mutex fAtomicMutex;
+  std::atomic_uint *pickerToUse;
 
   // Variable used for assigning tasks to threads in a round-robin fashion
-  static unsigned int sShortTaskThreadPicker; // default picker
-  static unsigned int sBlockingTaskThreadPicker;
+  static std::atomic_uint sShortTaskThreadPicker; // default picker
+  static std::atomic_uint sBlockingTaskThreadPicker;
 
   friend class TaskThread;
 };
 
 /**
- * @brief 任务执行线程，非抢占式任务调度
+ * 任务执行线程，非抢占式任务调度器
  */
 class TaskThread : public Core::Thread {
  public:
@@ -190,7 +198,7 @@ class TaskThread : public Core::Thread {
     fTaskThreadPoolElem.SetEnclosingObject(this);
   }
 
-  virtual ~TaskThread() { this->StopAndWaitForThread(); }
+  ~TaskThread() override { this->StopAndWaitForThread(); }
 
  private:
 
@@ -198,14 +206,14 @@ class TaskThread : public Core::Thread {
     kMinWaitTimeInMilSecs = 10  //UInt32
   };
 
-  virtual void Entry();
+  void Entry() override;
 
   Task *WaitForTask();
 
   QueueElem fTaskThreadPoolElem;
 
   // use heap for time-sequence task, only in TaskThread, not concurrent.
-  Heap fHeap;                     /* 时序-优先队列 */
+  Heap fHeap;               /* 时序-优先队列 */
   BlockingQueue fTaskQueue; /* 事件-触发队列 */
 
   friend class Task;

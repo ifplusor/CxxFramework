@@ -39,7 +39,9 @@
 #include <CF/Thread/IdleTask.h>
 
 //messages to help debugging timeouts
-#define DEBUG_TIMEOUT 1
+#ifndef DEBUG_TIMEOUT
+#define DEBUG_TIMEOUT 0
+#endif
 
 namespace CF {
 namespace Thread {
@@ -54,7 +56,7 @@ namespace Thread {
 class TimeoutTaskThread : public IdleTask {
  public:
 
-  //All timeout tasks get timed out from this Thread
+  // All timeout tasks get timed out from this Thread
   TimeoutTaskThread() : IdleTask(), fMutex() {
     this->SetTaskName("TimeoutTask");
   }
