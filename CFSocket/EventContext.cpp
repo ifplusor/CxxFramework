@@ -85,7 +85,7 @@ void EventContext::Cleanup() {
   int err = 0;
 
   // 屏蔽 RequestEvent 调用
-  int fd = fFileDesc;
+  SOCKET fd = fFileDesc;
   fFileDesc = kInvalidFileDesc;
   fWatchEventCalled = false;
 
@@ -108,9 +108,9 @@ void EventContext::Cleanup() {
     // So, what we do is have the select Thread itself call close. This is
     // triggered by calling removeevent.
 #if __WinSock__
-    err = ::closesocket(fFileDesc);
+    err = ::closesocket(fd);
 #else
-    err = close(fFileDesc);
+    err = close(fd);
 #endif // __WinSock__
   }
 
