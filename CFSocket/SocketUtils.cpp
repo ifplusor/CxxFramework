@@ -314,8 +314,7 @@ void SocketUtils::Initialize(bool lookupDNSName) {
   char buffer[kMaxAddrBufferSize];
 
   int tempSocket = ::socket(AF_INET, SOCK_DGRAM, 0);
-  if (tempSocket == -1)
-    return;
+  if (INVALID_SOCKET == tempSocket) return;
 
   ifc.ifc_len = kMaxAddrBufferSize;
   ifc.ifc_buf = buffer;
@@ -342,11 +341,8 @@ void SocketUtils::Initialize(bool lookupDNSName) {
   }
 #endif
 
-  close(tempSocket);
-  tempSocket = -1;
-
-  //walk through the list of IP addrs twice. Once to find out how many,
-  //the second Time to actually grab their information
+  // walk through the list of IP addrs twice. Once to find out how many,
+  // the second Time to actually grab their information
   char *ifReqIter = nullptr;
   sNumIPAddrs = 0;
 
@@ -360,10 +356,24 @@ void SocketUtils::Initialize(bool lookupDNSName) {
     //if (::strncmp(ifr->ifr_name, "lo", 2) == 0)
     //  Assert(sNumIPAddrs > 0); // If the loopback interface is interface 0, we've got problems
 
-    //Only count interfaces in the AF_INET family.
-    if (ifr->ifr_addr.sa_family == AF_INET)
-      sNumIPAddrs++;
+    struct ifreq ifr2 = *ifr;
+    if (ioctl(tempSocket, SIOCGIFFLAGS, &ifr2) != 0)
+      continue;
+
+    // Only UP interfaces we can use.
+    if (ifr2.ifr_flags & IFF_UP) {
+
+      // Only count interfaces in the AF_INET family.
+      if (ifr->ifr_addr.sa_family == AF_INET)
+        sNumIPAddrs++;
+
+    } else {
+      ifr->ifr_name[0] = '\0';
+    }
   }
+
+  close(tempSocket);
+  tempSocket = INVALID_SOCKET;
 
 #ifdef TRUCLUSTER
 
@@ -396,7 +406,7 @@ void SocketUtils::Initialize(bool lookupDNSName) {
 
   //allocate the IPAddrInfo array. Unfortunately we can't allocate this
   //array the proper way due to a GCC bug
-  UInt8 *addrInfoMem = new UInt8[sizeof(IPAddrInfo) * sNumIPAddrs];
+  auto *addrInfoMem = new UInt8[sizeof(IPAddrInfo) * sNumIPAddrs];
   ::memset(addrInfoMem, 0, sizeof(IPAddrInfo) * sNumIPAddrs);
   sIPAddrInfoArray = (IPAddrInfo *) addrInfoMem;
 
@@ -453,9 +463,9 @@ void SocketUtils::Initialize(bool lookupDNSName) {
       return;
     }
 
-    //Only count interfaces in the AF_INET family
-    if (ifr->ifr_addr.sa_family == AF_INET) {
-      struct sockaddr_in *addrPtr = (struct sockaddr_in *) &ifr->ifr_addr;
+    // Only count interfaces in the AF_INET family
+    if (ifr->ifr_name[0] != '\0' && ifr->ifr_addr.sa_family == AF_INET) {
+      auto *addrPtr = (struct sockaddr_in *) &ifr->ifr_addr;
       char *theAddrStr = ::inet_ntoa(addrPtr->sin_addr);
 
       //store the IP addr
@@ -485,8 +495,8 @@ void SocketUtils::Initialize(bool lookupDNSName) {
         //if we failed to look up the DNS name, just store the IP addr as a string
         sIPAddrInfoArray[currentIndex].fDNSNameStr.Len =
             sIPAddrInfoArray[currentIndex].fIPAddrStr.Len;
-        sIPAddrInfoArray[currentIndex].fDNSNameStr.Ptr = new char[
-        sIPAddrInfoArray[currentIndex].fDNSNameStr.Len + 2];
+        sIPAddrInfoArray[currentIndex].fDNSNameStr.Ptr =
+            new char[sIPAddrInfoArray[currentIndex].fDNSNameStr.Len + 2];
         ::strcpy(sIPAddrInfoArray[currentIndex].fDNSNameStr.Ptr,
                  sIPAddrInfoArray[currentIndex].fIPAddrStr.Ptr);
       }
@@ -503,8 +513,8 @@ void SocketUtils::Initialize(bool lookupDNSName) {
   // If LocalHost is the first element in the array, switch it to be the second.
   // The first element is supposed to be the "default" interface on the machine,
   // which should really always be en0.
-  if ((sNumIPAddrs > 1)
-      && (::strcmp(sIPAddrInfoArray[0].fIPAddrStr.Ptr, "127.0.0.1") == 0)) {
+  if ((sNumIPAddrs > 1) &&
+      (::strcmp(sIPAddrInfoArray[0].fIPAddrStr.Ptr, "127.0.0.1") == 0)) {
     UInt32 tempIP = sIPAddrInfoArray[1].fIPAddr;
     sIPAddrInfoArray[1].fIPAddr = sIPAddrInfoArray[0].fIPAddr;
     sIPAddrInfoArray[0].fIPAddr = tempIP;
@@ -553,7 +563,7 @@ bool SocketUtils::IncrementIfReqIter(char **inIfReqIter, ifreq *ifr) {
 
 bool SocketUtils::IsMulticastIPAddr(UInt32 inAddress) {
   // multicast addresses == "class D" == 0xExxxxxxx == 1,1,1,0,<28 bits>
-  return ((inAddress >> 8) & 0x00f00000) == 0x00e00000; // why right shift?
+  return ((inAddress >> 8U) & 0x00f00000U) == 0x00e00000U; // why right shift?
 }
 
 bool SocketUtils::IsLocalIPAddr(UInt32 inAddress) {
