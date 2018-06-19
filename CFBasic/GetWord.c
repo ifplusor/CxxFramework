@@ -27,6 +27,7 @@
 
 /**
  * @brief get a word from a string, copy result into toWordPtr
+ *
  * @return one past end of the word, limit is max for toWordPtr
  */
 char *GetWord(char *toWordPtr, char *fromStrPtr, SInt32 limit) {

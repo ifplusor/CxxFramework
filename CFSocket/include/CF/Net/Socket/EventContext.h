@@ -71,6 +71,7 @@ class EventContext {
 
   /**
    * @brief Sets inFileDesc to be non-blocking.
+   *
    * @note DON'T CALL CLOSE ON THE FD ONCE THIS IS CALLED!!!!
    *
    * Once this is called, the EventContext object "owns" the file descriptor,

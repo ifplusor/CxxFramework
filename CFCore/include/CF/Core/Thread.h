@@ -176,6 +176,7 @@ class Thread {
 
 /**
  * @brief 设置线程数据，并在对象销毁后自动设置终值
+ *
  * @note 当线程为非抢占调度模型时，可用于实现自动恢复
  */
 class ThreadDataSetter {

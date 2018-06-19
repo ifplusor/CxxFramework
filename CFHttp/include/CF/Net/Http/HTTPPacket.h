@@ -39,12 +39,14 @@ class HTTPPacket {
 
   /**
    * @brief construct object for parse http packet header.
+   *
    * @param packetPtr - http packet data
    */
   HTTPPacket(StrPtrLen *packetPtr);
 
   /**
    * @brief construct object for build http packet
+   *
    * @param httpType - http packet type
    */
   HTTPPacket(HTTPType httpType = httpResponseType);
@@ -56,6 +58,7 @@ class HTTPPacket {
 
   /**
    * @brief parse http request header
+   *
    * @note Should be called before accessing anything in the request header
    *
    * Calls ParseRequestLine and ParseHeaders

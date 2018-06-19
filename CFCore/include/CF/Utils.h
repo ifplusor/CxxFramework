@@ -95,6 +95,7 @@ class Utils {
 
   /**
    * @brief switch user and group
+   *
    * @note only super-user can switch real user and group, others merely
    *       switch effective user and group between real user/group ID and
    *       saved set-user-ID/set-group-ID

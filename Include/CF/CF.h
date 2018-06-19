@@ -17,6 +17,7 @@ extern "C" {
 
 /**
  * @brief give user a chance to initialize
+ *
  * @param argc - arguments count
  * @param argv - arguments vector
  */

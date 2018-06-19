@@ -46,6 +46,7 @@ namespace CF {
 template<class T, class K>
 /**
  * @brief 哈希表
+ *
  * @note 不管理对象内存
  */
 class HashTable {

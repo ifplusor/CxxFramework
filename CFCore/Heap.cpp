@@ -22,61 +22,28 @@
  * @APPLE_LICENSE_HEADER_END@
  *
  */
-/*
-    File:       OSHeap.cpp
-
-    Contains:   Implements a Heap
-
-*/
+/**
+ * @file Heap.cpp
+ *
+ * Implements a Heap
+ */
 
 #include <string.h>
 #include <CF/Heap.h>
 
 using namespace CF;
 
-Heap::Heap(UInt32 inStartSize)
-    : fFreeIndex(1) {
-  if (inStartSize < 2)
-    fArraySize = 2;
-  else
-    fArraySize = inStartSize;
-
+Heap::Heap(UInt32 inStartSize) : fFreeIndex(1) {
+  fArraySize = inStartSize < 2 ? 2 : inStartSize;
   fHeap = new HeapElem *[fArraySize];
 }
 
-void Heap::Insert(HeapElem *inElem) {
-  Assert(inElem != nullptr);
-
-  // extend memory
-  if ((fHeap == nullptr) || (fFreeIndex == fArraySize)) {
-    fArraySize *= 2;
-    HeapElem **tempArray = new HeapElem *[fArraySize];
-    if ((fHeap != nullptr) && (fFreeIndex > 1))
-      ::memcpy(tempArray, fHeap, sizeof(HeapElem *) * fFreeIndex);
-
-    delete[] fHeap;
-    fHeap = tempArray;
-  }
-
-  Assert(fHeap != nullptr);
-  Assert(inElem->fCurrentHeap == nullptr);
-  Assert(fArraySize > fFreeIndex);
-
-#if CF_HEAP_TESTING
-  sanityCheck(1);
-#endif
-
-  // insert the element into the last leaf of the tree
-  fHeap[fFreeIndex] = inElem;
-
-  // bubble the new element up to its proper place in the Heap
-
-  // start at the last leaf of the tree
-  UInt32 swapPos = fFreeIndex;
+void Heap::ShiftUp(UInt32 inIndex) {
+  UInt32 swapPos = inIndex;
   while (swapPos > 1) {
     // move up the chain until we get to the root, bubbling this new element
     // to its proper place in the tree
-    UInt32 nextSwapPos = swapPos >> 1;
+    UInt32 nextSwapPos = swapPos >> 1U;
 
     // if this child is greater than it's parent, we need to do the old
     // switcheroo
@@ -85,37 +52,14 @@ void Heap::Insert(HeapElem *inElem) {
       fHeap[swapPos] = fHeap[nextSwapPos];
       fHeap[nextSwapPos] = temp;
       swapPos = nextSwapPos;
-    } else
+    } else {
       // if not, we are done!
       break;
+    }
   }
-  inElem->fCurrentHeap = this;
-  fFreeIndex++;
 }
 
-HeapElem *Heap::extract(UInt32 inIndex) {
-  if ((fHeap == nullptr) || (fFreeIndex <= inIndex))
-    return nullptr;
-
-#if CF_HEAP_TESTING
-  sanityCheck(1);
-#endif
-
-  // store a reference to the element we want to extract
-  HeapElem *victim = fHeap[inIndex];
-  Assert(victim->fCurrentHeap == this);
-  victim->fCurrentHeap = nullptr;
-
-  // but now we need to preserve this heuristic. We do this by taking
-  // the last leaf, putting it at the empty position, then heapifying that chain
-  fHeap[inIndex] = fHeap[fFreeIndex - 1];
-  fFreeIndex--;
-
-  // The following is an implementation of the Heapify algorithm (CLR 7.1 pp
-  // 143) The gist is that this new item at the top of the Heap needs to be
-  // bubbled down until it is smaller than its two children, therefore
-  // maintaining the Heap property.
-
+void Heap::ShiftDown(UInt32 inIndex) {
   UInt32 parent = inIndex;
   while (parent < fFreeIndex) {
     // which is smaller? parent or left child?
@@ -145,29 +89,110 @@ HeapElem *Heap::extract(UInt32 inIndex) {
     // now heapify the remaining chain
     parent = greatest;
   }
-
-  return victim;
 }
 
-HeapElem *Heap::Remove(HeapElem *elem) {
-  if ((fHeap == nullptr) || (fFreeIndex == 1))
+void Heap::Insert(HeapElem *inElem) {
+  Assert(inElem != nullptr);
+
+  // extend memory
+  if ((fHeap == nullptr) || (fFreeIndex >= fArraySize)) {
+    fArraySize *= 2;
+    auto **tempArray = new HeapElem *[fArraySize];
+    if ((fHeap != nullptr) && (fFreeIndex > 1))
+      ::memcpy(tempArray, fHeap, sizeof(HeapElem *) * fFreeIndex);
+
+    delete[] fHeap;
+    fHeap = tempArray;
+  }
+
+  Assert(fHeap != nullptr);
+  Assert(inElem->fCurrentHeap == nullptr);
+  Assert(fArraySize > fFreeIndex);
+
+#if CF_HEAP_TESTING
+  sanityCheck(1);
+#endif
+
+  // insert the element into the last leaf of the tree
+  fHeap[fFreeIndex] = inElem;
+
+  // bubble the new element up to its proper place in the Heap
+  this->ShiftUp(fFreeIndex);  // start at the last leaf of the tree
+
+  inElem->fCurrentHeap = this;
+  fFreeIndex++;
+}
+
+HeapElem *Heap::Extract(UInt32 inIndex) {
+  if ((fHeap == nullptr) || (fFreeIndex <= inIndex))
     return nullptr;
 
 #if CF_HEAP_TESTING
   sanityCheck(1);
 #endif
 
+  // store a reference to the element we want to extract
+  HeapElem *victim = fHeap[inIndex];
+  Assert(victim->fCurrentHeap == this);
+  victim->fCurrentHeap = nullptr;
+
+  // but now we need to preserve this heuristic. We do this by taking
+  // the last leaf, putting it at the empty position, then heapifying that chain
+  fHeap[inIndex] = fHeap[fFreeIndex - 1];
+  fFreeIndex--;
+
+  // The following is an implementation of the Heapify algorithm (CLR 7.1 pp
+  // 143) The gist is that this new item at the top of the Heap needs to be
+  // bubbled down until it is smaller than its two children, therefore
+  // maintaining the Heap property.
+  this->ShiftDown(inIndex);
+
+  return victim;
+}
+
+HeapElem *Heap::Remove(HeapElem *inElem) {
+  if ((fHeap == nullptr) || (fFreeIndex <= 1) || inElem == nullptr)
+    return nullptr;
+
+#if CF_HEAP_TESTING
+  sanityCheck(1);
+#endif
+
+  // elem 是自由的，不是任何堆的成员
+  if (!inElem->IsMemberOfAnyHeap()) return nullptr;
+
   // first attempt to locate this element in the Heap
   UInt32 theIndex = 1;
   for (; theIndex < fFreeIndex; theIndex++)
-    if (elem == fHeap[theIndex])
-      break;
+    if (inElem == fHeap[theIndex]) break;
 
   // either we've found it, or this is a bogus element
-  if (theIndex == fFreeIndex)
-    return nullptr;
+  if (theIndex == fFreeIndex) return nullptr;
 
-  return extract(theIndex);
+  return Extract(theIndex);
+}
+
+void Heap::Update(HeapElem *inElem, SInt64 inValue, UInt32 inFlag) {
+  if ((fHeap == nullptr) || (fFreeIndex <= 1) || inElem == nullptr)
+    return;
+
+  // first attempt to locate this element in the Heap
+  UInt32 theIndex = 1;
+  for (; theIndex < fFreeIndex; theIndex++)
+    if (inElem == fHeap[theIndex]) break;
+
+  // either we've found it, or this is a bogus element
+  if (theIndex == fFreeIndex) return;
+
+  if (inValue < fHeap[theIndex]->fValue) {
+    if (heapUpdateFlagExpectDown & inFlag) return;
+    fHeap[theIndex]->fValue = inValue;
+    this->ShiftUp(theIndex);
+  } else if (inValue > fHeap[theIndex]->fValue) {
+    if (heapUpdateFlagExpectUp & inFlag) return;
+    fHeap[theIndex]->fValue = inValue;
+    this->ShiftDown(theIndex);
+  }
 }
 
 #if CF_HEAP_TESTING

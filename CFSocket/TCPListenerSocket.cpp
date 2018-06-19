@@ -128,7 +128,7 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
     if (acceptError == EAGAIN) {
       // If it's EAGAIN, there's nothing on the listen Queue right now,
       // so modwatch and return
-      this->RequestEvent(EV_RE);
+//      this->RequestEvent(EV_RE);
       return;
     }
 
@@ -145,11 +145,9 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
     } else {
       char errStr[256];
       errStr[sizeof(errStr) - 1] = 0;
-      s_snprintf(errStr,
-                 sizeof(errStr) - 1,
+      s_snprintf(errStr, sizeof(errStr) - 1,
                  "accept error = %d '%s' on Socket. Clean up and continue.",
-                 acceptError,
-                 strerror(acceptError));
+                 acceptError, strerror(acceptError));
       WarnV((acceptError == 0), errStr);
 
       // TODO(james): there have some questions.

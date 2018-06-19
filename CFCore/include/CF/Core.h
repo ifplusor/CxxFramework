@@ -21,6 +21,7 @@ namespace Core {
 
 /**
  * @brief set global variables about time.
+ *
  * @note call this before calling anything else
  */
 static void Initialize() {

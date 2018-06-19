@@ -225,12 +225,14 @@ void Thread::Sleep(UInt32 inMsec) {
 #ifdef __Win32__
 /**
  * @brief 操作系统线程入口
+ *
  * @param inTread - 持有该线程的 OSThread 对象指针
  */
 unsigned int WINAPI Thread::_Entry(LPVOID inThread) {
 #else
 /**
  * @brief 操作系统线程入口
+ *
  * @param inTread - 持有该线程的 OSThread 对象指针
  */
 void *Thread::_Entry(void *inThread) {

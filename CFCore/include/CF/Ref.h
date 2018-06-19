@@ -165,6 +165,7 @@ typedef HashTableIter<Ref, RefKey> RefHashTableIter;
 
 /**
  * @brief 引用字典，使用哈希表存储
+ *
  * @note 维护引用计数，但不管理对象内存
  */
 class RefTable {

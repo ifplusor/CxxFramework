@@ -22,17 +22,15 @@
  * @APPLE_LICENSE_HEADER_END@
  *
  */
-/*
-    File:       IdleTask.cpp
-
-    Contains:   IdleTasks are identical to normal tasks (see task.h) with one
-                exception:
-
-                You can schedule them for timeouts. If you call SetIdleTimer
-                on one, after the Time has elapsed the task object will receive
-                an OS_IDLE event.
-
-*/
+/**
+ * @file IdleTask.cpp
+ *
+ * IdleTasks are identical to normal tasks (see task.h) with one
+ * exception:
+ *   You can schedule them for timeouts. If you call SetIdleTimer
+ *   on one, after the Time has elapsed the task object will receive
+ *   an OS_IDLE event.
+ */
 
 #include <CF/Thread/IdleTask.h>
 #include <CF/Core/Time.h>
@@ -46,15 +44,19 @@ IdleTaskThread::~IdleTaskThread() {
   Assert(fIdleHeap.CurrentHeapSize() == 0);
 }
 
+/**
+ * @brief 设置 IDLE 唤醒定时器
+ *
+ * @note 更灵活的 IdleTimer 调度，支持提前唤醒
+ */
 void IdleTaskThread::SetIdleTimer(IdleTask *activeObj, SInt64 msec) {
-  // note: OSHeap doesn't support a random remove, so this function
-  // won't change the timeout value if there is already one set
-  if (activeObj->fIdleElem.IsMemberOfAnyHeap()) return;
+  Core::MutexLocker locker(&fHeapMutex);
 
-  activeObj->fIdleElem.SetValue(Core::Time::Milliseconds() + msec);
-
-  {
-    Core::MutexLocker locker(&fHeapMutex);
+  SInt64 theMsec = Core::Time::Milliseconds() + msec;
+  if (activeObj->fIdleElem.IsMemberOfAnyHeap()) {
+    fIdleHeap.Update(&activeObj->fIdleElem, theMsec, Heap::heapUpdateFlagExpectUp);
+  } else {
+    activeObj->fIdleElem.SetValue(theMsec);
     fIdleHeap.Insert(&activeObj->fIdleElem);
   }
 
@@ -63,6 +65,7 @@ void IdleTaskThread::SetIdleTimer(IdleTask *activeObj, SInt64 msec) {
 
 void IdleTaskThread::CancelTimeout(IdleTask *idleObj) {
   Assert(idleObj != nullptr);
+  if (nullptr == idleObj) return;
   Core::MutexLocker locker(&fHeapMutex);
   fIdleHeap.Remove(&idleObj->fIdleElem);
 }
@@ -84,7 +87,7 @@ void IdleTaskThread::Entry() {
     // pop elements out of the Heap as long as their timeout Time has arrived
     while ((fIdleHeap.CurrentHeapSize() > 0) &&
         (fIdleHeap.PeekMin()->GetValue() <= msec)) {
-      IdleTask *elem = (IdleTask *) fIdleHeap.ExtractMin()->GetEnclosingObject();
+      auto *elem = (IdleTask *) fIdleHeap.ExtractMin()->GetEnclosingObject();
       Assert(elem != nullptr);
       elem->Signal(Task::kIdleEvent);
     }
@@ -96,7 +99,7 @@ void IdleTaskThread::Entry() {
       // because sleep takes a 32 bit number
       timeoutTime -= msec;
       Assert(timeoutTime > 0);
-      UInt32 smallTime = (UInt32) timeoutTime;
+      auto smallTime = (UInt32) timeoutTime;
       fHeapCond.Wait(&fHeapMutex, smallTime);
     }
   }
@@ -120,6 +123,3 @@ IdleTask::~IdleTask() {
   if (fIdleElem.IsMemberOfAnyHeap())
     sIdleThread->CancelTimeout(this);
 }
-
-
-

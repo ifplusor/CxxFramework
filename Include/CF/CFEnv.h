@@ -21,6 +21,7 @@ class CFEnv {
 
   /**
    * @brief initialize environment information
+   *
    * @note this function is the first executor when program start
    */
   static void Initialize();

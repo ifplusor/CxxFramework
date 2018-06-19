@@ -46,7 +46,7 @@ class UDPSocketPool {
  public:
 
   UDPSocketPool() : fMutex() {}
-  virtual ~UDPSocketPool() {}
+  virtual ~UDPSocketPool() = default;
 
   //Skanky access to member data
   Core::Mutex *GetMutex() { return &fMutex; }

@@ -61,7 +61,7 @@ class TimeoutTaskThread : public IdleTask {
     this->SetTaskName("TimeoutTask");
   }
 
-  virtual ~TimeoutTaskThread() {}
+  ~TimeoutTaskThread() override = default;
 
  private:
 
@@ -89,6 +89,7 @@ class TimeoutTask {
 
   /**
    * @brief construct TimeoutTaskThread.
+   *
    * @note Call Initialize before using this class
    */
   static void Initialize();
@@ -110,7 +111,7 @@ class TimeoutTask {
   // Pass in the task you'd like to send timeouts to.
   // Also pass in the timeout you'd like to use. By default,
   // the timeout is 0 (NEVER).
-  TimeoutTask(Task *inTask, SInt64 inTimeoutInMilSecs = 15);
+  explicit TimeoutTask(Task *inTask, SInt64 inTimeoutInMilSecs = 15);
 
   ~TimeoutTask();
 

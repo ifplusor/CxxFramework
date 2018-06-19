@@ -42,7 +42,8 @@ class HeapElem;
 
 /**
  * @brief 小顶堆，使用数组实现
- * @note 只保存 OSHeapElem 对象指针，不管理对象内存
+ *
+ * @note 只保存 HeapElem 对象指针，不管理对象内存
  */
 class Heap {
  public:
@@ -70,10 +71,17 @@ class Heap {
   // abstract data type. both run in log(n) Time.
 
   void Insert(HeapElem *inElem);
-  HeapElem *ExtractMin() { return extract(1); }
+  HeapElem *ExtractMin() { return Extract(1); }
 
   // removes specified element from the Heap
-  HeapElem *Remove(HeapElem *elem);
+  HeapElem *Remove(HeapElem *inElem);
+
+  enum {
+    heapUpdateFlagNone = 0x00,
+    heapUpdateFlagExpectUp = 0x01,
+    heapUpdateFlagExpectDown = 0x02
+  };
+  void Update(HeapElem *inElem, SInt64 inValue, UInt32 inFlag=heapUpdateFlagNone);
 
 #if CF_HEAP_TESTING
   //returns true if it passed the test, false otherwise
@@ -82,7 +90,10 @@ class Heap {
 
  private:
 
-  HeapElem *extract(UInt32 index);
+  void ShiftUp(UInt32 inIndex);
+  void ShiftDown(UInt32 inIndex);
+
+  HeapElem *Extract(UInt32 inIndex);
 
 #if CF_HEAP_TESTING
   //verifies that the Heap is in fact a Heap
@@ -96,9 +107,9 @@ class Heap {
 
 class HeapElem {
  public:
-  HeapElem(void *enclosingObject = nullptr)
+  explicit HeapElem(void *enclosingObject = nullptr)
       : fValue(0), fEnclosingObject(enclosingObject), fCurrentHeap(nullptr) {}
-  ~HeapElem() {}
+  ~HeapElem() = default;
 
   //This data structure emphasizes performance over extensibility
   //If it were properly object-oriented, the compare routine would

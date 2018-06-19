@@ -76,6 +76,7 @@ class QueueElem {
 
 /**
  * @brief 队列，使用带哨兵的链表实现
+ *
  * @note 只保存 OSQueueElem 对象指针，不管理对象内存
  */
 class Queue {

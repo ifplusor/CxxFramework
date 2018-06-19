@@ -64,12 +64,12 @@ class HTTPRequestStream {
    *
    * @note This function will not block.
    *
-   * @returns CF_NoErr          - Out of data, haven't hit EOL - EOL yet
-   * @returns CF_RequestArrived - full request has arrived
-   * @returns CF_RequestFailed  - if the client has disconnected
-   * @returns CF_OutOfState
-   * @returns E2BIG             - ran out of buffer space
-   * @returns EINVAL            - if we are base64 decoding and the stream is corrupt
+   * @return CF_NoErr          - Out of data, haven't hit EOL - EOL yet
+   * @return CF_RequestArrived - full request has arrived
+   * @return CF_RequestFailed  - if the client has disconnected
+   * @return CF_OutOfState
+   * @return E2BIG             - ran out of buffer space
+   * @return EINVAL            - if we are base64 decoding and the stream is corrupt
    */
   CF_Error ReadRequest();
 

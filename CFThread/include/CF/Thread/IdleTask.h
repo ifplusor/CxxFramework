@@ -55,12 +55,12 @@ class IdleTaskThread : private Core::Thread {
  private:
 
   IdleTaskThread() : Thread(), fHeapMutex() {}
-  virtual ~IdleTaskThread();
+  ~IdleTaskThread() override;
 
   void SetIdleTimer(IdleTask *idleObj, SInt64 msec);
   void CancelTimeout(IdleTask *idleObj);
 
-  virtual void Entry();
+  void Entry() override;
 
   Heap fIdleHeap; /* 时序-优先队列 */
   Core::Mutex fHeapMutex;
@@ -99,7 +99,7 @@ class IdleTask : public Task {
    * up. But callers must ensure that SetIdleTimer isn't called at the same
    * time as the destructor, or all hell will break loose.
    */
-  virtual ~IdleTask();
+  ~IdleTask() override;
 
   /**
    * This object will receive an OS_IDLE event in the following number of
@@ -119,8 +119,6 @@ class IdleTask : public Task {
   HeapElem fIdleElem;
 
   //there is only one idle Thread shared by all idle tasks.
-  //static IdleTaskThread*  sIdleThread;
-
   static IdleTaskThread *sIdleThread;
 
   friend class IdleTaskThread;
