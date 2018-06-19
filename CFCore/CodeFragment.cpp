@@ -47,8 +47,7 @@ void CodeFragment::Initialize() {
   // does nothing...should do any CFM initialization here
 }
 
-CodeFragment::CodeFragment(const char *inPath)
-    : fFragmentP(NULL) {
+CodeFragment::CodeFragment(const char *inPath) : fFragmentP(NULL) {
 #if defined(HPUX) || defined(HPUX10)
   shl_t handle;
   fFragmentP = shl_load(inPath, BIND_IMMEDIATE | BIND_VERBOSE | BIND_NOSTART, 0L);

@@ -84,8 +84,9 @@ void TCPSocket::Set(int inSocket, struct sockaddr_in *remoteaddr) {
     AssertV(err == 0, Core::Thread::GetErrno());
     fState |= kBound;
     fState |= kConnected;
-  } else
+  } else {
     fState = 0;
+  }
 }
 
 CF::StrPtrLen *TCPSocket::GetRemoteAddrStr() {

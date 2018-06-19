@@ -94,8 +94,8 @@ OS_Error TCPListenerSocket::Initialize(UInt32 addr, UInt16 port) {
  * 在 fListeners 申请监听流套接字端口后，一旦 Socket 端口有数据,该函数会被调用。
  * 这个函数的流程是这样的:
  *   1.首先通过 accept 获得客户端的地址以及服务器端新创建的 Socket 端口。
- *   2.通过 GetSessionTask 创建一个 RTSPSession 的类对象<每个 RTSPSession
- *     对象对应一个 RTSP 连接>，并将新创建的 Socket 端口描述符、sockaddr
+ *   2.通过 GetSessionTask 创建一个 RTSPSession 的类对象(每个 RTSPSession
+ *     对象对应一个 RTSP 连接)，并将新创建的 Socket 端口描述符、sockaddr
  *     信息保存到 RTSPSession 的 TCPSocket 类型成员 fSocket。
  *   3.同时调用 fSocket::SetTask 和 RequestEvent(EV_RE)，这样 EventThread
  *     在监听到这个 Socket 端口有数据时，会调用 EventContext::processEvent

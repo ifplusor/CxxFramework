@@ -287,8 +287,7 @@ void StringParser::ConsumeUntil(StrPtrLen *outString, UInt8 *inMask) {
 
   char *originalStartGet = fStartGet;
 
-  while ((fStartGet < fEndGet)
-      && (!inMask[(unsigned char) (*fStartGet)]))//make sure inMask is indexed with an unsigned char
+  while ((fStartGet < fEndGet) && (!inMask[(unsigned char) (*fStartGet)])) //make sure inMask is indexed with an unsigned char
     advanceMark();
 
   if (outString != nullptr) {
@@ -412,13 +411,13 @@ bool StringParser::ExpectEOL() {
   if (this->ParserIsEmpty(nullptr))
     return false;
 
-  //This function processes all legal forms of HTTP / RTSP eols.
-  //They are: \r (alone), \n (alone), \r\n
+  // This function processes all legal forms of HTTP / RTSP eols.
+  // They are: \r (alone), \n (alone), \r\n
   bool retVal = false;
   if ((fStartGet < fEndGet) && ((*fStartGet == '\r') || (*fStartGet == '\n'))) {
     retVal = true;
     advanceMark();
-    //check for a \r\n, which is the most common EOL sequence.
+    // check for a \r\n, which is the most common EOL sequence.
     if ((fStartGet < fEndGet)
         && ((*(fStartGet - 1) == '\r') && (*fStartGet == '\n')))
       advanceMark();
@@ -507,7 +506,7 @@ void StringParser::advanceMark() {
     return;
 
   if ((*fStartGet == '\n') ||
-      ((*fStartGet == '\r') && (fStartGet[1] != '\n'))) {
+      ((*fStartGet == '\r') && (fStartGet[1] != '\n'))) { // only \r
     // we are progressing beyond a line boundary (don't count \r\n twice)
     fCurLineNumber++;
   }

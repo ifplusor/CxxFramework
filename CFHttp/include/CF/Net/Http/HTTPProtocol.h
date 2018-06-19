@@ -116,7 +116,7 @@ typedef enum {
   httpUserAgentHeader = 31,
 
   // Other response headers
-      httpAcceptRangesHeader = 32,
+  httpAcceptRangesHeader = 32,
   httpAgeHeader = 33,
   httpETagHeader = 34,
   httpLocationHeader = 35,

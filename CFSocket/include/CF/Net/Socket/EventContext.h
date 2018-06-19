@@ -65,7 +65,7 @@ class EventContext {
   //
   // Constructor. Pass in the EventThread you would like to receive
   // events for this context, and the fd that this context applies to
-  EventContext(int inFileDesc, EventThread *inThread);
+  EventContext(SOCKET inFileDesc, EventThread *inThread);
 
   virtual ~EventContext() { if (fAutoCleanup) this->Cleanup(); }
 
@@ -78,7 +78,7 @@ class EventContext {
    * and will close it when Cleanup is called. This is necessary because of
    * some weird select() behavior.
    */
-  void InitNonBlocking(int inFileDesc);
+  void InitNonBlocking(SOCKET inFileDesc);
 
   //
   // Cleanup. Will be called by the destructor, but can be called earlier
@@ -111,11 +111,9 @@ class EventContext {
 
   // Direct access to the FD is not recommended, but is needed for modules
   // that want to use the Socket classes and need to request events on the fd.
-  int GetSocketFD() { return fFileDesc; }
+  SOCKET GetSocketFD() { return fFileDesc; }
 
-  enum {
-    kInvalidFileDesc = -1   //int
-  };
+  static const SOCKET kInvalidFileDesc = INVALID_SOCKET;
 
  protected:
 
@@ -142,7 +140,7 @@ class EventContext {
       fTask->Signal(Thread::Task::kReadEvent);
   }
 
-  int fFileDesc;
+  SOCKET fFileDesc;
 
  private:
   struct eventreq fEventReq;

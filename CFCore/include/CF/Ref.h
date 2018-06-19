@@ -177,9 +177,8 @@ class RefTable {
 
   //tableSize doesn't indicate the max number of Refs that can be added
   //(it's unlimited), but is rather just how big to make the hash table
-  RefTable(UInt32 tableSize = kDefaultTableSize)
-      : fTable(tableSize), fMutex() {}
-  ~RefTable() {}
+  RefTable(UInt32 tableSize = kDefaultTableSize) : fTable(tableSize), fMutex() {}
+  ~RefTable() = default;
 
   //Allows access to the Mutex in case you need to lock the table down
   //between operations

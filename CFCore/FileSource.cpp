@@ -367,25 +367,17 @@ OS_Error FileSource::FillBuffer(char *ioBuffer,
 static SInt32 sBuffCount = 1;
 #endif
 
-OS_Error FileSource::Read(UInt64 inPosition,
-                            void *inBuffer,
-                            UInt32 inLength,
-                            UInt32 *outRcvLen) {
+OS_Error FileSource::Read(UInt64 inPosition, void *inBuffer, UInt32 inLength, UInt32 *outRcvLen) {
 
-  if ((!fFileMap.Initialized())
-      || (!fCacheEnabled)
-      || (fFileMap.GetBuffIndex(inPosition + inLength)
-          > fFileMap.GetMaxBuffIndex())
-      )
+  if ((!fFileMap.Initialized()) || (!fCacheEnabled) ||
+      (fFileMap.GetBuffIndex(inPosition + inLength) > fFileMap.GetMaxBuffIndex())) {
     return this->ReadFromPos(inPosition, inBuffer, inLength, outRcvLen);
+  }
 
   return this->ReadFromCache(inPosition, inBuffer, inLength, outRcvLen);
 }
 
-OS_Error FileSource::ReadFromCache(UInt64 inPosition,
-                                     void *inBuffer,
-                                     UInt32 inLength,
-                                     UInt32 *outRcvLen) {
+OS_Error FileSource::ReadFromCache(UInt64 inPosition, void *inBuffer, UInt32 inLength, UInt32 *outRcvLen) {
   Core::MutexLocker locker(&fMutex);
 
   if (!fFileMap.Initialized() || !fCacheEnabled) {
@@ -449,11 +441,7 @@ OS_Error FileSource::ReadFromCache(UInt64 inPosition,
     buffSize = fFileMap.GetBuffSize(buffIndex);
     buffOffset = &buffStart[buffPos];
 
-    if ((buffPos == 0) &&
-        (bytesToCopy <= maxBuffSize) &&
-        (buffSize < bytesToCopy)
-        ) // that's all there is in the file
-    {
+    if ((buffPos == 0) && (bytesToCopy <= maxBuffSize) && (buffSize < bytesToCopy)) { // that's all there is in the file
 
 #if FILE_SOURCE_DEBUG
       s_printf("FileSource::ReadFromCache end of file reached buffIndex=%" _U32BITARG_ " buffSize = %" _S32BITARG_ " bytesToCopy=%"   _U32BITARG_   "\n", buffIndex, buffSize, bytesToCopy);
@@ -508,9 +496,7 @@ OS_Error FileSource::ReadFromCache(UInt64 inPosition,
   return OS_NoErr;
 }
 
-OS_Error FileSource::ReadFromDisk(void *inBuffer,
-                                    UInt32 inLength,
-                                    UInt32 *outRcvLen) {
+OS_Error FileSource::ReadFromDisk(void *inBuffer, UInt32 inLength, UInt32 *outRcvLen) {
 #if FILE_SOURCE_BUFFTEST
   s_printf("FileSource::Read inLength=%"   _U32BITARG_   " fFile=%d\n", inLength, fFile);
 #endif
@@ -536,10 +522,7 @@ OS_Error FileSource::ReadFromDisk(void *inBuffer,
   return OS_NoErr;
 }
 
-OS_Error FileSource::ReadFromPos(UInt64 inPosition,
-                                   void *inBuffer,
-                                   UInt32 inLength,
-                                   UInt32 *outRcvLen) {
+OS_Error FileSource::ReadFromPos(UInt64 inPosition, void *inBuffer, UInt32 inLength, UInt32 *outRcvLen) {
 #if TEST_TIME
   {
       startTime = OS::Milliseconds();
@@ -603,8 +586,7 @@ void FileSource::Close() {
   fReadPos = 0;
 
 #if TEST_TIME
-  if (fShouldClose)
-  {
+  if (fShouldClose) {
       sMovie = 0;
       //      s_printf("FileSource::Close sReadCount = %" _S32BITARG_ " totalbytes=%" _S32BITARG_ "\n",sReadCount,sByteCount);
       //      s_printf("FileSource::Close durationTime = %qd\n",durationTime);

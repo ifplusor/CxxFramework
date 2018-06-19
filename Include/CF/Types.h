@@ -54,6 +54,11 @@ struct iovec {
 	char FAR *iov_base; // equivalent to a WSABUF for easy integration into Win32
 };
 
+#else
+
+typedef int SOCKET;
+#define INVALID_SOCKET (SOCKET)(-1)
+
 #endif
 
 /* Platform-specific components */

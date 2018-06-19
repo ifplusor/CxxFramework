@@ -65,6 +65,7 @@ class Utils {
   }
 
   // Both these functions return QTSS_NoErr, QTSS_FileExists, or POSIX errorcode
+
   // Makes whatever directories in this path that don't exist yet
   static OS_Error RecursiveMakeDir(char *inPath);
   // Makes the directory at the end of this path

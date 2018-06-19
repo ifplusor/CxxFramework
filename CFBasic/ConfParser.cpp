@@ -75,10 +75,7 @@ static void DisplayConfigErr(const char *fname,
     s_printf("  reason: %s\n", errMessage); // lineBuff already includes a \n
 }
 
-int ParseConfigFile(bool allowNullValues,
-                    const char *fname,
-                    CFConfigSetter setter,
-                    void *userData) {
+int ParseConfigFile(bool allowNullValues, const char *fname, CFConfigSetter setter, void *userData) {
   int error = -1;
 
   Assert(fname);
@@ -170,21 +167,14 @@ int ParseConfigFile(bool allowNullValues,
               }
             }
 
-            if ((maxValues > 0 || allowNullValues)
-                && !(*setter)(param, values, userData))
+            if ((maxValues > 0 || allowNullValues) && !(*setter)(param, values, userData)) {
               error = 0;
-            else {
+            } else {
               error = -1;
               if (maxValues > 0)
-                DisplayConfigErr(fname,
-                                 lineCount,
-                                 lineBuff,
-                                 "Parameter could not be set.");
+                DisplayConfigErr(fname, lineCount, lineBuff, "Parameter could not be set.");
               else
-                DisplayConfigErr(fname,
-                                 lineCount,
-                                 lineBuff,
-                                 "No value to set.");
+                DisplayConfigErr(fname, lineCount, lineBuff, "No value to set.");
             }
 
             delete[] param;

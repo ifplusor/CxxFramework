@@ -76,9 +76,7 @@ CF_Error CFMain(CFConfigure *config) {
   s_printf("Add threads short_task=%" _U32BITARG_ " blocking=%" _U32BITARG_ "\n",
            numShortTaskThreads, numBlockingThreads);
 
-  Thread::TaskThreadPool::SetNumShortTaskThreads(numShortTaskThreads);
-  Thread::TaskThreadPool::SetNumBlockingTaskThreads(numBlockingThreads);
-  Thread::TaskThreadPool::AddThreads(numThreads);
+  Thread::TaskThreadPool::CreateThreads(numShortTaskThreads, numBlockingThreads);
 
   theErr = config->AfterConfigThreads(numThreads);
   if (theErr != CF_NoErr) return theErr;
@@ -128,6 +126,9 @@ CF_Error CFMain(CFConfigure *config) {
 #else
     Core::Thread::Sleep(1000);
 #endif
+
+    // do some statistics
+    theErr = config->DoIdle();
   }
 
   /*

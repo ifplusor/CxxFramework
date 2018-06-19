@@ -65,6 +65,10 @@ enum {
   CF_AttrNameExists = -19,
   CF_InstanceAttrsNotAllowed = -20,
   CF_UnknowAudioCoder = -21,
+
+  // server state error
+  CF_ShuttingDown = -22,
+  CF_FatalError = -23,
 #if USE_ENUM
   } CF_Error;
 #else

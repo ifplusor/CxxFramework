@@ -160,13 +160,13 @@ void SocketUtils::Initialize(bool lookupDNSName)
 
 #else // !__FreeBSD__
 
-//Version for all non-FreeBSD platforms.
+// Version for all non-FreeBSD platforms.
 
 void SocketUtils::Initialize(bool lookupDNSName) {
 #if __WinSock__ || defined(USE_SIOCGIFNUM)
 
-  int tempSocket = ::socket(AF_INET, SOCK_DGRAM, 0);
-  if (tempSocket == -1)
+  SOCKET tempSocket = ::socket(AF_INET, SOCK_DGRAM, 0);
+  if (INVALID_SOCKET == tempSocket)
       return;
 
 #if __WinSock__
@@ -219,92 +219,77 @@ void SocketUtils::Initialize(bool lookupDNSName) {
   struct ifreq* ifr = (struct ifreq*)ifc.ifc_buf;
 #endif
 
-  //allocate the IPAddrInfo array. Unfortunately we can't allocate this
-  //array the proper way due to a GCC bug
+  // allocate the IPAddrInfo array. Unfortunately we can't allocate this
+  // array the proper way due to a GCC bug
   UInt8* addrInfoMem = new UInt8[sizeof(IPAddrInfo) * sNumIPAddrs];
   ::memset(addrInfoMem, 0, sizeof(IPAddrInfo) * sNumIPAddrs);
   sIPAddrInfoArray = (IPAddrInfo*)addrInfoMem;
 
-  //for (UInt32 addrCount = 0; addrCount < sNumIPAddrs; addrCount++)
   UInt32 currentIndex = 0;
   for (UInt32 theIfCount = sNumIPAddrs, addrCount = 0;
-      addrCount < theIfCount; addrCount++) {
+       addrCount < theIfCount; addrCount++) {
 #if __WinSock__
-      // We *should* count the loopback interface as a valid interface.
-      //if (addrListP[addrCount].iiFlags & IFF_LOOPBACK)
-      //{
-          // Don't count loopback addrs
-      //  sNumIPAddrs--;
-      //  continue;
-      //}
-      //if (addrListP[addrCount].iiFlags & IFF_LOOPBACK)
-      //  if (lookupDNSName) // The playlist broadcaster doesn't care
-      //      Assert(addrCount > 0); // If the loopback interface is interface 0, we've got problems
-
-      struct sockaddr_in* theAddr = (struct sockaddr_in*)&addrListP[addrCount].iiAddress;
+    struct sockaddr_in *theAddr = (struct sockaddr_in *) &addrListP[addrCount].iiAddress;
 #elif defined(USE_SIOCGIFNUM)
-      if (ifr[addrCount].ifr_addr.sa_family != AF_INET)
-      {
-          sNumIPAddrs--;
-          continue;
-      }
-      struct ifreq ifrf;
-      ::memset(&ifrf, 0, sizeof(ifrf));
-      ::strncpy(ifrf.ifr_name, ifr[addrCount].ifr_name, sizeof(ifrf.ifr_name));
-      theErr = ::ioctl(tempSocket, SIOCGIFFLAGS, (char *)&ifrf);
-      Assert(theErr != -1);
+    if (ifr[addrCount].ifr_addr.sa_family != AF_INET) {
+      sNumIPAddrs--;
+      continue;
+    }
+    struct ifreq ifrf;
+    ::memset(&ifrf, 0, sizeof(ifrf));
+    ::strncpy(ifrf.ifr_name, ifr[addrCount].ifr_name, sizeof(ifrf.ifr_name));
+    theErr = ::ioctl(tempSocket, SIOCGIFFLAGS, (char *)&ifrf);
+    Assert(theErr != -1);
 
 #ifndef __solaris__
-      /* Skip things which aren't interesting */
-      if ((ifrf.ifr_flags & IFF_UP) == 0 ||
-          (ifrf.ifr_flags & (IFF_BROADCAST | IFF_POINTOPOINT)) == 0)
-      {
-          sNumIPAddrs--;
-          continue;
-      }
-      if (ifrf.ifr_flags & IFF_LOOPBACK)
-      {
-          Assert(addrCount > 0); // If the loopback interface is interface 0, we've got problems
-      }
+    /* Skip things which aren't interesting */
+    if ((ifrf.ifr_flags & IFF_UP) == 0 ||
+        (ifrf.ifr_flags & (IFF_BROADCAST | IFF_POINTOPOINT)) == 0) {
+      sNumIPAddrs--;
+      continue;
+    }
+    if (ifrf.ifr_flags & IFF_LOOPBACK) {
+      Assert(addrCount > 0); // If the loopback interface is interface 0, we've got problems
+    }
 #endif
 
-      struct sockaddr_in* theAddr = (struct sockaddr_in*)&ifr[addrCount].ifr_addr;
+    struct sockaddr_in* theAddr = (struct sockaddr_in*)&ifr[addrCount].ifr_addr;
 #if 0
-      puts(ifr[addrCount].ifr_name);
+    puts(ifr[addrCount].ifr_name);
 #endif
 #else
 #error
 #endif
 
-      char* theAddrStr = ::inet_ntoa(theAddr->sin_addr);
 
-      //store the IP addr
-      sIPAddrInfoArray[currentIndex].fIPAddr = ntohl(theAddr->sin_addr.s_addr);
+    // store the IP addr
+    sIPAddrInfoArray[currentIndex].fIPAddr = ntohl(theAddr->sin_addr.s_addr);
 
-      //store the IP addr as a string
-      sIPAddrInfoArray[currentIndex].fIPAddrStr.Len = ::strlen(theAddrStr);
-      sIPAddrInfoArray[currentIndex].fIPAddrStr.Ptr = new char[sIPAddrInfoArray[currentIndex].fIPAddrStr.Len + 2];
-      ::strcpy(sIPAddrInfoArray[currentIndex].fIPAddrStr.Ptr, theAddrStr);
+    // store the IP addr as a string
+    char *theAddrStr = ::inet_ntoa(theAddr->sin_addr);
 
+    sIPAddrInfoArray[currentIndex].fIPAddrStr.Len = ::strlen(theAddrStr);
+    sIPAddrInfoArray[currentIndex].fIPAddrStr.Ptr = new char[sIPAddrInfoArray[currentIndex].fIPAddrStr.Len + 2];
+    ::strcpy(sIPAddrInfoArray[currentIndex].fIPAddrStr.Ptr, theAddrStr);
 
-      struct hostent* theDNSName = nullptr;
-      if (lookupDNSName) { // convert this addr to a dns name, and store it
-          theDNSName = ::gethostbyaddr((char *)&theAddr->sin_addr, sizeof(theAddr->sin_addr), AF_INET);
-      }
+    struct hostent *theDNSName = nullptr;
+    if (lookupDNSName) { // convert this addr to a dns name, and store it
+      theDNSName = ::gethostbyaddr((char *) &theAddr->sin_addr, sizeof(theAddr->sin_addr), AF_INET);
+    }
 
-      if (theDNSName != nullptr) {
-          sIPAddrInfoArray[currentIndex].fDNSNameStr.Len = ::strlen(theDNSName->h_name);
-          sIPAddrInfoArray[currentIndex].fDNSNameStr.Ptr = new char[sIPAddrInfoArray[currentIndex].fDNSNameStr.Len + 2];
-          ::strcpy(sIPAddrInfoArray[currentIndex].fDNSNameStr.Ptr, theDNSName->h_name);
-      } else {
-          //if we failed to look up the DNS name, just store the IP addr as a string
-          sIPAddrInfoArray[currentIndex].fDNSNameStr.Len = sIPAddrInfoArray[currentIndex].fIPAddrStr.Len;
-          sIPAddrInfoArray[currentIndex].fDNSNameStr.Ptr = new char[sIPAddrInfoArray[currentIndex].fDNSNameStr.Len + 2];
-          ::strcpy(sIPAddrInfoArray[currentIndex].fDNSNameStr.Ptr, sIPAddrInfoArray[currentIndex].fIPAddrStr.Ptr);
-      }
-      //move onto the next array index
-      currentIndex++;
+    if (theDNSName != nullptr) {
+      sIPAddrInfoArray[currentIndex].fDNSNameStr.Len = ::strlen(theDNSName->h_name);
+      sIPAddrInfoArray[currentIndex].fDNSNameStr.Ptr = new char[sIPAddrInfoArray[currentIndex].fDNSNameStr.Len + 2];
+      ::strcpy(sIPAddrInfoArray[currentIndex].fDNSNameStr.Ptr, theDNSName->h_name);
+    } else {
+      //if we failed to look up the DNS name, just store the IP addr as a string
+      sIPAddrInfoArray[currentIndex].fDNSNameStr.Len = sIPAddrInfoArray[currentIndex].fIPAddrStr.Len;
+      sIPAddrInfoArray[currentIndex].fDNSNameStr.Ptr = new char[sIPAddrInfoArray[currentIndex].fDNSNameStr.Len + 2];
+      ::strcpy(sIPAddrInfoArray[currentIndex].fDNSNameStr.Ptr, sIPAddrInfoArray[currentIndex].fIPAddrStr.Ptr);
+    }
 
+    // move onto the next array index
+    currentIndex++;
   }
 #if __WinSock__
   ::closesocket(tempSocket);
@@ -573,8 +558,7 @@ bool SocketUtils::IsMulticastIPAddr(UInt32 inAddress) {
 
 bool SocketUtils::IsLocalIPAddr(UInt32 inAddress) {
   /*
-     NOTE: 本地 IP 是通过 SIOCGIFCONF 获取的网卡信息，如果服务隐藏在 NAT 后面，
-       则不能支持
+     NOTE: 本地 IP 是通过 SIOCGIFCONF 获取的网卡信息，如果服务隐藏在 NAT 后面，则不能支持
    */
   for (UInt32 x = 0; x < sNumIPAddrs; x++)
     if (sIPAddrInfoArray[x].fIPAddr == inAddress)

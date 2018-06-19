@@ -27,6 +27,7 @@ class CFConfigure {
   virtual CF_Error AfterConfigThreads(UInt32 numThreads) { return CF_NoErr; }
   virtual CF_Error AfterConfigFramework() { return CF_NoErr; }
   virtual CF_Error StartupCustomServices() { return CF_NoErr; }
+  virtual CF_Error DoIdle() { return CF_NoErr; }
 
   //
   // User Settings

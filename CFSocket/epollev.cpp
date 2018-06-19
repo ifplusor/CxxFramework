@@ -7,19 +7,23 @@
 #include <CF/Core/Thread.h>
 #include <CF/Net/ev.h>
 
+/* epoll pool size */
+#ifndef MAX_EPOLL_FD
 #define MAX_EPOLL_FD 20000
+#endif
 
 using namespace CF::Core;
 
-static int epoll_fd = -1;            // epoll 描述符
-static epoll_event *_events = NULL;  // epoll 事件接收数组
-static int m_curEventReadPos = 0;    // 当前读事件位置，在epoll事件数组中的位置
-static int m_curTotalEvents = 0;     // 总的事件个数，每次epoll_wait之后更新
-static std::map<int, void *> epollFDMap;  // 映射 fd和对应的RTSPSession对象
-static SpinLock sMapLock;            // epollFDMap 自旋锁
-static SpinLock sArrayLock;          // _events 自旋锁
+static int gEpollFD = -1;                // epoll 描述符
+static epoll_event *gEpollEvents = NULL; // epoll 事件接收数组
+static int gCurEventReadPos = 0;         // 当前读事件位置，在epoll事件数组中的位置
+static int gCurTotalEvents = 0;          // 总的事件个数，每次epoll_wait之后更新
+static std::map<int, void *> gDataMap;   // 映射 fd和对应的RTSPSession对象
+static SpinLock sMapLock;                // epollFDMap 自旋锁
+static SpinLock sArrayLock;              // _events 自旋锁
 
-/* epoll event:
+/*
+ * epoll event:
  *
  * EPOLLIN ：表示对应的文件描述符可以读（包括对端SOCKET正常关闭）；
  * EPOLLOUT：表示对应的文件描述符可以写；
@@ -33,34 +37,34 @@ static SpinLock sArrayLock;          // _events 自旋锁
  */
 
 void select_startevents() {
-  if (epoll_fd == -1) {
-    epoll_fd = epoll_create(MAX_EPOLL_FD);
-    if (epoll_fd == -1) {
-      perror("create epoll fd error: ");
+  if (gEpollFD == -1) {
+    gEpollFD = epoll_create(MAX_EPOLL_FD);
+    if (gEpollFD == -1) {
+      perror("create gEpollFD error: ");
       exit(-1);
     }
   }
 
-  if (_events == NULL) {
-    _events = new epoll_event[MAX_EPOLL_FD];  // we only listen the read event
-    if (_events == NULL) {
-      perror("new epoll_event error: ");
+  if (gEpollEvents == NULL) {
+    gEpollEvents = new epoll_event[MAX_EPOLL_FD];  // we only listen the read event
+    if (gEpollEvents == NULL) {
+      perror("new gEpollEvents error: ");
       exit(-1);
     }
   }
 
-  m_curEventReadPos = 0;
-  m_curTotalEvents = 0;
+  gCurEventReadPos = 0;
+  gCurTotalEvents = 0;
 }
 
 void select_stopevents() {
-  if (epoll_fd != -1) {
-    ::close(epoll_fd); /* 关闭文件描述符 */
-    epoll_fd = -1;
+  if (gEpollFD != -1) {
+    ::close(gEpollFD); /* 关闭文件描述符 */
+    gEpollFD = -1;
   }
 
-  delete[] _events;
-  _events = NULL;
+  delete[] gEpollEvents;
+  gEpollEvents = NULL;
 }
 
 int select_modwatch0(struct eventreq *req, int which, bool isAdd) {
@@ -85,16 +89,16 @@ int select_modwatch0(struct eventreq *req, int which, bool isAdd) {
   int ret = -1;
   if (isAdd) {
     do {
-      ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, req->er_handle, &ev);
+      ret = epoll_ctl(gEpollFD, EPOLL_CTL_ADD, req->er_handle, &ev);
     } while (ret == -1 && Thread::GetErrno() == EINTR);
   } else {
     do {
-      ret = epoll_ctl(epoll_fd, EPOLL_CTL_MOD, req->er_handle, &ev);
+      ret = epoll_ctl(gEpollFD, EPOLL_CTL_MOD, req->er_handle, &ev);
     } while (ret == -1 && Thread::GetErrno() == EINTR);
   }
 
   if (ret == 0) {
-    epollFDMap[req->er_handle] = req->er_data;
+    gDataMap[req->er_handle] = req->er_data;
   }
 
   return ret;
@@ -110,9 +114,9 @@ int select_watchevent(struct eventreq *req, int which) {
 
 int select_removeevent(int which) {
   SpinLocker locker(&sMapLock);
-  int ret = epoll_ctl(epoll_fd, EPOLL_CTL_DEL, which, NULL); // remove all this fd events
+  int ret = epoll_ctl(gEpollFD, EPOLL_CTL_DEL, which, NULL); // remove all this fd events
   if (ret == 0) {
-    epollFDMap.erase(which);
+    gDataMap.erase(which);
   }
   return ret;
 }
@@ -120,19 +124,19 @@ int select_removeevent(int which) {
 int epoll_waitevent() {
   int curreadPos = -1;  // m_curEventReadPos;//start from 0
 
-  if (m_curTotalEvents <= 0) { // 当前一个epoll事件都没有的时候，执行epoll_wait
-    m_curTotalEvents = 0;
-    m_curEventReadPos = 0;
+  if (gCurTotalEvents <= 0) { // 当前一个epoll事件都没有的时候，执行epoll_wait
+    gCurTotalEvents = 0;
+    gCurEventReadPos = 0;
 
-    int nfds = epoll_wait(epoll_fd, _events, MAX_EPOLL_FD, 15000); // 15秒超时
-    if (nfds > 0) m_curTotalEvents = nfds;
+    int nfds = epoll_wait(gEpollFD, gEpollEvents, MAX_EPOLL_FD, 15000); // 15秒超时
+    if (nfds > 0) gCurTotalEvents = nfds;
   }
 
-  if (m_curTotalEvents > 0) { // 从事件数组中每次取一个，取的位置通过m_curEventReadPos设置
-    curreadPos = m_curEventReadPos++;
-    if (m_curEventReadPos >= m_curTotalEvents - 1) {
-      m_curEventReadPos = 0;
-      m_curTotalEvents = 0;
+  if (gCurTotalEvents > 0) { // 从事件数组中每次取一个，取的位置通过m_curEventReadPos设置
+    curreadPos = gCurEventReadPos++;
+    if (gCurEventReadPos >= gCurTotalEvents - 1) {
+      gCurEventReadPos = 0;
+      gCurTotalEvents = 0;
     }
   }
 
@@ -148,16 +152,16 @@ int select_waitevent(struct eventreq *req, void *onlyForMOSX) {
   SpinLocker locker(&sArrayLock);
   int eventPos = epoll_waitevent();
   if (eventPos >= 0) {
-    req->er_handle = _events[eventPos].data.fd;
-    if (_events[eventPos].events == EPOLLIN ||
-        _events[eventPos].events == EPOLLHUP ||
-        _events[eventPos].events == EPOLLERR) {
+    req->er_handle = gEpollEvents[eventPos].data.fd;
+    if (gEpollEvents[eventPos].events == EPOLLIN ||
+        gEpollEvents[eventPos].events == EPOLLHUP ||
+        gEpollEvents[eventPos].events == EPOLLERR) {
       req->er_eventbits = EV_RE;  // we only support read event
-    } else if (_events[eventPos].events == EPOLLOUT) {
+    } else if (gEpollEvents[eventPos].events == EPOLLOUT) {
       req->er_eventbits = EV_WR;
     }
     SpinLocker locker1(&sMapLock);
-    req->er_data = epollFDMap[req->er_handle];
+    req->er_data = gDataMap[req->er_handle];
     return 0;
   }
   return EINTR;

@@ -84,7 +84,7 @@ UInt8 StrPtrLen::sNonPrintChars[] =
 
 char *StrPtrLen::GetAsCString() const {
   // convert to a "new'd" zero terminated char array
-  // caler is reponsible for the newly allocated memory
+  // caller is responsible for the newly allocated memory
   char *theString = new char[Len + 1];
 
   if (Ptr && Len > 0)
@@ -133,24 +133,21 @@ bool StrPtrLen::EqualIgnoreCase(const char *compare, const UInt32 len) const {
   return false;
 }
 
-bool StrPtrLen::NumEqualIgnoreCase(const char *compare,
-                                   const UInt32 len) const {
+bool StrPtrLen::NumEqualIgnoreCase(const char *compare, const UInt32 len) const {
   // compare thru the first "len: bytes
   Assert(compare != nullptr);
 
   if (len <= Len) {
-    for (UInt32 x = 0; x < len; x++)
-      if (sCaseInsensitiveMask[(UInt8) Ptr[x]]
-          != sCaseInsensitiveMask[(UInt8) compare[x]])
+    for (UInt32 x = 0; x < len; x++) {
+      if (sCaseInsensitiveMask[(UInt8) Ptr[x]] != sCaseInsensitiveMask[(UInt8) compare[x]])
         return false;
+    }
     return true;
   }
   return false;
 }
 
-char *StrPtrLen::FindStringCase(char *queryCharStr,
-                                StrPtrLen *resultStr,
-                                bool caseSensitive) const {
+char *StrPtrLen::FindStringCase(char *queryCharStr, StrPtrLen *resultStr, bool caseSensitive) const {
   // Be careful about exiting this method from the middle. This routine deletes
   // allocated memory at the end.
   //
@@ -198,8 +195,7 @@ char *StrPtrLen::FindStringCase(char *queryCharStr,
     resultChar = ::strstr(sourceString, queryString);
   }
 
-  if (resultChar != nullptr) // get the start offset
-  {
+  if (resultChar != nullptr) { // get the start offset
     foundLen = resultChar - sourceString;
     resultChar = Ptr + foundLen;  // return a pointer in the source buffer
     if (resultChar > (Ptr + Len)) // make sure it is in the buffer

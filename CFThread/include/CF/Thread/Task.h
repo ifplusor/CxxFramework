@@ -236,21 +236,13 @@ class TaskThreadPool {
    * creates the threads: takes NumShortTaskThreads + NumBLockingThreads,
    * sets num short task threads.
    */
-  static bool AddThreads(UInt32 numToAdd);
+  static bool CreateThreads(UInt32 numShortTaskThreads, UInt32 numBlockingThreads);
 
   static void RemoveThreads();
 
   static TaskThread *GetThread(UInt32 index);
 
   static UInt32 GetNumThreads() { return sNumTaskThreads; }
-
-  static void SetNumShortTaskThreads(UInt32 numToAdd) {
-    sNumShortTaskThreads = numToAdd;
-  }
-
-  static void SetNumBlockingTaskThreads(UInt32 numToAdd) {
-    sNumBlockingTaskThreads = numToAdd;
-  }
 
  private:
   TaskThreadPool() = default;

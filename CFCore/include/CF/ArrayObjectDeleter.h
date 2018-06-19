@@ -51,6 +51,10 @@ class ArrayObjectDeleter {
     Assert(fT == NULL);
     fT = victim;
   }
+
+#ifdef GetObject
+#undef GetObject
+#endif
   T *GetObject() { return fT; }
 
   operator T *() { return fT; }

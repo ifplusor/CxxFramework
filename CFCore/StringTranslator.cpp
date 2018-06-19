@@ -38,14 +38,12 @@
 
 using namespace CF;
 
-SInt32 StringTranslator::DecodeURL(const char *inSrc,
-                                   SInt32 inSrcLen,
-                                   char *ioDest,
-                                   SInt32 inDestLen) {
-  // return the number of chars written to ioDest
-  // or OS_BadURLFormat in the case of any error.
+/**
+ * @return the number of chars written to ioDest or OS_BadURLFormat in the case of any error.
+ */
+SInt32 StringTranslator::DecodeURL(const char *inSrc, SInt32 inSrcLen, char *ioDest, SInt32 inDestLen) {
 
-  // inSrcLen must be > inSrcLen and the first character must be a '/'
+  // inSrcLen must be > 0 and the first character must be a '/'
   if (inSrcLen <= 0 || *inSrc != '/')
     return OS_BadURLFormat;
 
@@ -63,7 +61,7 @@ SInt32 StringTranslator::DecodeURL(const char *inSrc,
     if (*inSrc == '?')
       inQuery = true;
 
-    if (*inSrc == '%') {
+    if (*inSrc == '%') { // urlencode
       if (inSrcLen < 3)
         return OS_BadURLFormat;
 
@@ -82,16 +80,16 @@ SInt32 StringTranslator::DecodeURL(const char *inSrc,
       sscanf(tempbuff, "%x", &tempChar);
       Assert(tempChar < 256);
       inSrcLen -= 3;
-    } else if (*inSrc == '\0')
+    } else if (*inSrc == '\0') {
       return OS_BadURLFormat;
-    else {
+    } else {
       // Any normal character just gets copied into the destination buffer
       tempChar = *inSrc;
       inSrcLen--;
       inSrc++;
     }
 
-    if (!inQuery) { // don't do seperator parsing or .. parsing in query
+    if (!inQuery) { // don't do separator parsing or .. parsing in query
       //
       // If we are in a file system that uses a character besides '/' as a
       // path delimiter, we should not allow this character to appear in the URL.
@@ -121,12 +119,13 @@ SInt32 StringTranslator::DecodeURL(const char *inSrc,
           numDotChars++;
         else if ((numDotChars > 0) && (*(ioDest - 1) == '.'))
           numDotChars++;
-      }
+      } else {
         // If this isn't a dot char, we don't care at all, reset this value to 0.
-      else
         numDotChars = 0;
-    } else
+      }
+    } else {
       *ioDest = tempChar;
+    }
 
     theLengthWritten++;
     ioDest++;
@@ -136,13 +135,11 @@ SInt32 StringTranslator::DecodeURL(const char *inSrc,
   // accordingly
   if (numDotChars <= 2)
     theLengthWritten -= numDotChars;
+
   return theLengthWritten;
 }
 
-SInt32 StringTranslator::EncodeURL(const char *inSrc,
-                                   SInt32 inSrcLen,
-                                   char *ioDest,
-                                   SInt32 inDestLen) {
+SInt32 StringTranslator::EncodeURL(const char *inSrc, SInt32 inSrcLen, char *ioDest, SInt32 inDestLen) {
   // return the number of chars written to ioDest
 
   SInt32 theLengthWritten = 0;

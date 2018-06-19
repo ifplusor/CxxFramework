@@ -457,11 +457,15 @@ UInt32       TaskThreadPool::sNumTaskThreads = 0;
 UInt32       TaskThreadPool::sNumShortTaskThreads = 0;
 UInt32       TaskThreadPool::sNumBlockingTaskThreads = 0;
 
-bool TaskThreadPool::AddThreads(UInt32 numToAdd) {
-  /* 根据 numToAdd 参数创建 TaskThread 类对象,并调用该类的 Start 成员函数。
-   * 将该类对象指针保存到 sTaskThreadArray 数组。 */
+bool TaskThreadPool::CreateThreads(UInt32 numShortTaskThreads,
+                                   UInt32 numBlockingThreads) {
+  /*
+     根据 numToAdd 参数创建 TaskThread 类对象, 并调用该类的 Start 成员函数。
+     将该类对象指针保存到 sTaskThreadArray 数组。
+   */
 
   Assert(sTaskThreadArray == nullptr);
+  UInt32 numToAdd = numShortTaskThreads + numBlockingThreads;
   sTaskThreadArray = new TaskThread *[numToAdd];
 
   for (UInt32 x = 0; x < numToAdd; x++) {
@@ -472,6 +476,9 @@ bool TaskThreadPool::AddThreads(UInt32 numToAdd) {
                "sTaskThreadArray[%" _U32BITARG_ "]=%p\n",
                x, sTaskThreadArray[x]);
   }
+
+  sNumShortTaskThreads = numShortTaskThreads;
+  sNumBlockingTaskThreads = numBlockingThreads;
   sNumTaskThreads = numToAdd;
 
   if (0 == sNumShortTaskThreads)

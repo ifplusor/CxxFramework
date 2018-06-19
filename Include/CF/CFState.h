@@ -15,9 +15,9 @@ class CFState {
  public:
 
   enum {
-    kKillListener = 0x01 << 0x00, /* Kill TCPListenerSocket */
-    kDisableEvent = 0x01 << 0x01, /* Disable RequestEvent */
-    kCleanEvent = 0x01 << 0x02,   /* Cleanup all EventContext in select */
+    kKillListener = 0x01U << 0x00U, /* Kill TCPListenerSocket */
+    kDisableEvent = 0x01U << 0x01U, /* Disable RequestEvent */
+    kCleanEvent   = 0x01U << 0x02U, /* Cleanup all EventContext in select */
   };
   static std::atomic<UInt32> sState;
 

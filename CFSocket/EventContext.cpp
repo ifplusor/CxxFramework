@@ -56,7 +56,7 @@ std::atomic<unsigned int> EventContext::sUniqueID(WM_USER);
 std::atomic<unsigned int> EventContext::sUniqueID(1);
 #endif
 
-EventContext::EventContext(int inFileDesc, EventThread *inThread)
+EventContext::EventContext(SOCKET inFileDesc, EventThread *inThread)
     : fFileDesc(inFileDesc),
       fUseETMode(false),
       fUniqueID(0),
@@ -67,7 +67,7 @@ EventContext::EventContext(int inFileDesc, EventThread *inThread)
       fAutoCleanup(true),
       fTask(nullptr) {}
 
-void EventContext::InitNonBlocking(int inFileDesc) {
+void EventContext::InitNonBlocking(SOCKET inFileDesc) {
   fFileDesc = inFileDesc;
   fUseETMode = true;
 
@@ -201,7 +201,7 @@ void EventContext::RequestEvent(int theMask) {
             fUniqueID = (PointerSizedInt) WM_USER;
 
         //If the fUniqueID is used, find a new one until it's free
-        Ref * ref = fEventThread->fRefTable.Resolve(&fUniqueIDStr);
+        Ref *ref = fEventThread->fRefTable.Resolve(&fUniqueIDStr);
         if (ref != NULL) {
             fEventThread->fRefTable.Release(ref);
         } else {
