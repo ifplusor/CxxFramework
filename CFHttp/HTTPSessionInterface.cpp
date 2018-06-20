@@ -50,11 +50,11 @@ void HTTPSessionInterface::Initialize(HTTPMapping *mapping) {
 
 HTTPSessionInterface::HTTPSessionInterface()
     : Task(),
-      fTimeoutTask(NULL, 30 * 1000),
+      fTimeoutTask(nullptr, 30 * 1000),
       fInputStream(&fSocket),
       fOutputStream(&fSocket, &fTimeoutTask),
       fSessionMutex(),
-      fSocket(NULL, Socket::kNonBlockingSocketType),
+      fSocket(nullptr, Socket::kNonBlockingSocketType),
       fOutputSocketP(&fSocket),
       fInputSocketP(&fSocket),
       fLiveSession(true),
@@ -164,8 +164,7 @@ void HTTPSessionInterface::SnarfInputSocket(HTTPSessionInterface *fromRTSPSessio
   if (fInputSocketP == fOutputSocketP)
     fInputSocketP = new TCPSocket(this, Socket::kNonBlockingSocketType);
   else
-    fInputSocketP
-        ->Cleanup(); // if this is a Socket replacing an old Socket, we need
+    fInputSocketP->Cleanup(); // if this is a Socket replacing an old Socket, we need
   // to make sure the file descriptor gets closed
   fInputSocketP->SnarfSocket(fromRTSPSession->fSocket);
 

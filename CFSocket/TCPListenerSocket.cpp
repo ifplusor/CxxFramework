@@ -22,13 +22,11 @@
  * @APPLE_LICENSE_HEADER_END@
  *
  */
-/*
-    File:       TCPListenerSocket.cpp
-
-    Contains:   implements TCPListenerSocket class
-
-
-*/
+/**
+ * @file TCPListenerSocket.cpp
+ *
+ * implements TCPListenerSocket class
+ */
 
 #include <CF/Net/Socket/TCPListenerSocket.h>
 
@@ -65,7 +63,7 @@ OS_Error TCPListenerSocket::listen(UInt32 queueLength) {
 OS_Error TCPListenerSocket::Initialize(UInt32 addr, UInt16 port) {
 
   OS_Error err = this->TCPSocket::Open();
-  if (0 == err)
+  if (0 == err) {
     do {
       // set SO_REUSEADDR Socket option before calling bind.
 #if !__WinSock__
@@ -86,6 +84,7 @@ OS_Error TCPListenerSocket::Initialize(UInt32 addr, UInt16 port) {
       if (err != 0) break;
 
     } while (false);
+  }
 
   return err;
 }
@@ -128,7 +127,7 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
     if (acceptError == EAGAIN) {
       // If it's EAGAIN, there's nothing on the listen Queue right now,
       // so modwatch and return
-//      this->RequestEvent(EV_RE);
+      this->RequestEvent(EV_RE | EV_OS);
       return;
     }
 
@@ -193,7 +192,7 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
     theSocket->SetTask(theTask); // 实际上是调用 EventContext::SetTask
 
     // 监听可读事件，提供 TCP 服务
-    theSocket->RequestEvent(EV_RE);
+    theSocket->RequestEvent(EV_RE | EV_OS);
   }
 
   /* 如果 RTSPSession、HTTPSession 的连接数超过超过限制,则利用 IdleTaskThread 定时调用

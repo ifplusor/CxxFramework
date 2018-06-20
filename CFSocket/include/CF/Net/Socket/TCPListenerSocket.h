@@ -54,7 +54,7 @@ class TCPListenerSocket : public TCPSocket, public Thread::IdleTask {
         fSleepBetweenAccepts(false) {
     this->SetTaskName("TCPListenerSocket");
   }
-  virtual ~TCPListenerSocket() {}
+  ~TCPListenerSocket() override = default;
 
   //
   // Send a TCPListenerObject a Kill event to delete it.

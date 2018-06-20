@@ -56,7 +56,7 @@ Task::Task()
   fTimerHeapElem.SetEnclosingObject(this);
 }
 
-void Task::SetTaskName(char *name) {
+void Task::SetTaskName(char const *name) {
   if (name == nullptr) return;
 
   ::strncpy(fTaskName, sTaskStateStr, sizeof(fTaskName) - 1);
@@ -167,7 +167,10 @@ void Task::Signal(EventFlags events) {
                  TaskThreadPool::sTaskThreadArray[theThreadIndex]->fTaskQueue
                      .GetQueue()->GetLength(),
                  (void *) &fTaskQueueElem, (void *) this);
+
+      // 将任务压入 TaskThread 的就绪队列
       TaskThreadPool::sTaskThreadArray[theThreadIndex]->fTaskQueue.EnQueue(&fTaskQueueElem);
+
       if (DEBUG_TASK)
         s_printf( "Task::Signal EnQueue A TaskName=%s "
                   "theThreadIndex=%u Thread=%p "

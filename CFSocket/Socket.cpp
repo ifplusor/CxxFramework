@@ -88,8 +88,12 @@ OS_Error Socket::Open(int theType) {
 
   //
   // Setup this Socket's event context
+
   if (fState & kNonBlockingSocketType)
     this->InitNonBlocking(fFileDesc);
+
+  if (fState & kEdgeTriggeredSocketMode)
+    this->SetMode(true);
 
   return OS_NoErr;
 }
@@ -207,9 +211,10 @@ OS_Error Socket::Bind(UInt32 addr, UInt16 port, bool test) {
     fLocalAddr.sin_port = 0;
     fLocalAddr.sin_addr.s_addr = 0;
     return (OS_Error) Core::Thread::GetErrno();
-  } else
+  } else {
     // get the kernel to fill in unspecified values
     ::getsockname(fFileDesc, (sockaddr *) &fLocalAddr, &len);
+  }
   fState |= kBound;
   return OS_NoErr;
 }

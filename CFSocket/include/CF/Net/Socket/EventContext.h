@@ -69,6 +69,10 @@ class EventContext {
 
   virtual ~EventContext() { if (fAutoCleanup) this->Cleanup(); }
 
+  //
+  // Cleanup. Will be called by the destructor, but can be called earlier
+  void Cleanup();
+
   /**
    * @brief Sets inFileDesc to be non-blocking.
    *
@@ -80,20 +84,18 @@ class EventContext {
    */
   void InitNonBlocking(SOCKET inFileDesc);
 
-  //
-  // Cleanup. Will be called by the destructor, but can be called earlier
-  void Cleanup();
+  void SetMode(bool useET) { this->fUseETMode = useET; }
 
   //
   // Arms this EventContext. Pass in the events you would like to receive
-  virtual void RequestEvent(int theMask);
+  virtual void RequestEvent(UInt32 theMask);
 
   //
   // Provide the task you would like to be notified
   void SetTask(Thread::Task *inTask) {
     fTask = inTask;
     if (DEBUG_EVENT_CONTEXT) {
-      if (fTask == NULL)
+      if (fTask == nullptr)
         s_printf("EventContext::SetTask context=%p task= NULL\n",
                  (void *) this);
       else
@@ -128,7 +130,7 @@ class EventContext {
    */
   virtual void ProcessEvent(int /*eventBits*/) {
     if (DEBUG_EVENT_CONTEXT) {
-      if (fTask == NULL)
+      if (fTask == nullptr)
         s_printf("EventContext::ProcessEvent context=%p task=NULL\n",
                  (void *) this);
       else
@@ -136,7 +138,7 @@ class EventContext {
                  (void *) this, (void *) fTask, fTask->fTaskName);
     }
 
-    if (fTask != NULL)
+    if (fTask != nullptr)
       fTask->Signal(Thread::Task::kReadEvent);
   }
 

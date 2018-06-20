@@ -158,7 +158,8 @@ class Socket : public EventContext {
   enum {
     // Pass this in on Socket constructors to specify whether the
     // Socket should be non-blocking or blocking
-        kNonBlockingSocketType = 1
+    kNonBlockingSocketType = 0x0001U,
+    kEdgeTriggeredSocketMode = 0x0002U,
   };
 
  protected:

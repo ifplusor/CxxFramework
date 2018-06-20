@@ -69,7 +69,6 @@ EventContext::EventContext(SOCKET inFileDesc, EventThread *inThread)
 
 void EventContext::InitNonBlocking(SOCKET inFileDesc) {
   fFileDesc = inFileDesc;
-  fUseETMode = true;
 
 #if __WinSock__
   u_long one = 1;
@@ -149,7 +148,7 @@ void EventContext::SnarfEventContext(EventContext &fromContext) {
   fEventThread->fRefTable.UnRegister(&fromContext.fRef);
 }
 
-void EventContext::RequestEvent(int theMask) {
+void EventContext::RequestEvent(UInt32 theMask) {
 #if DEBUG_EVENT_CONTEXT
   fModwatched = true;
 #endif
@@ -268,14 +267,15 @@ void EventThread::Entry() {
       int theReturnValue = select_waitevent(&theCurrentEvent, nullptr);
 #endif
 
-      if (CFState::sState & (CFState::kKillListener | CFState::kCleanEvent)) {
+      static const UInt32 sStopState = CFState::kKillListener | CFState::kCleanEvent;
+      if (CFState::sState & sStopState) {
         // kill listener Socket
         if (CFState::sState & CFState::kKillListener) {
           while (true) {
             QueueElem *elem = CFState::sListenerSocket.DeQueue();
             if (elem == nullptr) break;
             auto *listener = (TCPListenerSocket *) elem->GetEnclosingObject();
-            listener->RequestEvent(EV_RM);
+            listener->RequestEvent(EV_RM); // 移除监听
             listener->Signal(CF::Thread::Task::kKillEvent);
             delete elem;
           }

@@ -42,14 +42,18 @@ enum EREQ_TYPE {
 };
 
 enum EREQ_EVENTS {
-  EV_RE = 0x01,
+  EV_RE = 0x0001U,
 #define EV_RE EV_RE
-  EV_WR = 0x02,
-#define EV_WR  0x2
-  EV_EX = 0x04,
-#define EV_ET  0x4  /* Edge Triggered */
-  EV_RM = 0x08,
-#define EV_RM  0x8  /* inner use */
+  EV_WR = 0x0002U,
+#define EV_WR  EV_WR
+  EV_EX = 0x0004U,
+#define EV_EX  EV_EX  /* no use */
+  EV_RM = 0x0008U,
+#define EV_RM  EV_RM  /* inner use */
+  EV_OS = 0x0010U,
+#define EV_OS  EV_OS  /* one shot */
+  EV_ET = 0x0020U,
+#define EV_ET  EV_ET  /* Edge Triggered */
 };
 
 struct eventreq {

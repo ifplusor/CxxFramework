@@ -58,7 +58,7 @@ class UDPSocket : public Socket {
   //Another Socket type flag (in addition to the ones defined in Socket.h).
   //The value of this can't conflict with those!
   enum {
-    kWantsDemuxer = 0x0100 //UInt32
+    kWantsDemuxer = 0x0100U //UInt32
   };
 
   UDPSocket(Thread::Task *inTask, UInt32 inSocketType);

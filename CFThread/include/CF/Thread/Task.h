@@ -114,7 +114,7 @@ class Task {
   bool Valid(); // for debugging
   char fTaskName[48];
 
-  void SetTaskName(char *name);
+  void SetTaskName(char const *name);
 
   void SetDefaultThread(TaskThread *defaultThread) {
     fDefaultThread = defaultThread;
@@ -247,7 +247,7 @@ class TaskThreadPool {
  private:
   TaskThreadPool() = default;
 
-  static TaskThread **sTaskThreadArray;
+  static TaskThread **sTaskThreadArray; // ShortTaskThreads + BlockingTaskThreads
   static UInt32 sNumTaskThreads;
   static UInt32 sNumShortTaskThreads;
   static UInt32 sNumBlockingTaskThreads;
