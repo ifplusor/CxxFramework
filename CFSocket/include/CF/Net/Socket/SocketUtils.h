@@ -22,12 +22,11 @@
  * @APPLE_LICENSE_HEADER_END@
  *
  */
-/*
-    File:       SocketUtils.h
-
-    Contains:   Some static routines for dealing with networking
-
-*/
+/**
+ * @file SocketUtils.h
+ *
+ * Some static routines for dealing with networking
+ */
 
 #ifndef __SOCKET_UTILS_H__
 #define __SOCKET_UTILS_H__
@@ -55,17 +54,24 @@ class SocketUtils {
  public:
 
   /**
-   * set global variables about local ip address.
+   * @brief set global variables about local ip address.
    *
-   * (pass true for lookupDNSName if you want the hostname
-   *  looked up via DNS during initialization -- %%sfu)
+   * @param lookupDNSName  pass true if you want the hostname looked up
+   *                       via DNS during initialization
    *
-   * <b>note:</b> Call initialize before using any socket functions.
+   * @note Call initialize before using any socket functions.
    */
   static void Initialize(bool lookupDNSName=true);
 
-  //设置NAT等公开IP
-  static void SetOpenIPAddrs(char **inAddress, UInt32 inAddressLen, bool lookupDNSName=true);
+  static void UnInitialize();
+
+  /**
+   * @brief 设置公开 IP
+   *
+   * 适用于 NAT 等 IP 映射场景
+   */
+  static void SetOpenIPAddrs(char **inAddress, UInt32 inAddressLen,
+                             bool lookupDNSName=true);
 
   //static utility routines
   static bool IsMulticastIPAddr(UInt32 inAddress);
@@ -77,7 +83,7 @@ class SocketUtils {
                                   StrPtrLen *outAddr);
 
   // This function converts a dotted-decimal string IP address to a UInt32
-  static UInt32 ConvertStringToAddr(const char *inAddr);
+  static UInt32 ConvertStringToAddr(char const *inAddr);
 
   //You can get at all the IP addrs and DNS names on this machine this way
   static UInt32 GetNumIPAddrs() { return sNumIPAddrs; }
@@ -91,6 +97,7 @@ class SocketUtils {
 #if !__WinSock__
   static bool IncrementIfReqIter(char **inIfReqIter, ifreq *ifr);
 #endif
+
   //For storing relevent information about each IP interface
   struct IPAddrInfo {
     UInt32 fIPAddr;

@@ -360,7 +360,7 @@ void HTTPPacket::setKeepAlive(StrPtrLen *keepAliveValue) {
   }
 }
 
-const char *HTTPPacket::GetQueryValues(char *inParam) {
+char const *HTTPPacket::GetQueryValues(char *inParam) {
   return fQueryValues->DoFindCGIValueForParam(inParam);
 }
 

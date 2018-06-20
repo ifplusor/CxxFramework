@@ -30,8 +30,8 @@
 
 #if TEST_CONF_PARSER
 
-static bool SampleConfigSetter(const char *paramName,
-                               const char *paramValue[],
+static bool SampleConfigSetter(char const *paramName,
+                               char const *paramValue[],
                                void * /*userData*/) {
   s_printf("param: %s", paramName);
 
@@ -56,10 +56,10 @@ void TestParseConfigFile() {
 
 #endif
 
-static void DisplayConfigErr(const char *fname,
+static void DisplayConfigErr(char const *fname,
                              int lineCount,
-                             const char *lineBuff,
-                             const char *errMessage) {
+                             char const *lineBuff,
+                             char const *errMessage) {
 
   s_printf("- Configuration file error:\n");
 
@@ -75,7 +75,7 @@ static void DisplayConfigErr(const char *fname,
     s_printf("  reason: %s\n", errMessage); // lineBuff already includes a \n
 }
 
-int ParseConfigFile(bool allowNullValues, const char *fname, CFConfigSetter setter, void *userData) {
+int ParseConfigFile(bool allowNullValues, char const *fname, CFConfigSetter setter, void *userData) {
   int error = -1;
 
   Assert(fname);
@@ -137,7 +137,7 @@ int ParseConfigFile(bool allowNullValues, const char *fname, CFConfigSetter sett
           Assert(param);
 
           if (param) {
-            const char *values[kConfParserMaxParamValues + 1];
+            char const *values[kConfParserMaxParamValues + 1];
             int maxValues = 0;
 
             ::strcpy(param, wordBuff);

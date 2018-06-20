@@ -200,7 +200,7 @@ class FileSource {
 
   }
 
-  FileSource(const char *inPath)
+  FileSource(char const *inPath)
       : fFile(-1),
         fLength(0),
         fPosition(0),
@@ -224,7 +224,7 @@ class FileSource {
   }
 
   //Sets this object to reference this file
-  void Set(const char *inPath);
+  void Set(char const *inPath);
 
   // Call this if you don't want Close or the destructor to close the fd
   void DontCloseFD() { fShouldClose = false; }
@@ -294,7 +294,7 @@ class FileSource {
   // So that close won't do anything
   void ResetFD() { fFile = -1; }
 
-  void SetLog(const char *inPath);
+  void SetLog(char const *inPath);
 
  private:
 

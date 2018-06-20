@@ -127,7 +127,7 @@ static bool CompareStrToName(::PLDoubleLinkedListNode<QueryParamListElement> *no
  * return the first value where the paramter name matches "name"
  * use case insenstitive comparison
  */
-const char *QueryParamList::DoFindCGIValueForParam(char *name) {
+char const *QueryParamList::DoFindCGIValueForParam(char *name) {
 
   ::PLDoubleLinkedListNode<QueryParamListElement> *node;
 

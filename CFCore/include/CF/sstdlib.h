@@ -43,7 +43,7 @@
 extern "C" {
 #endif
 
-extern int s_maxprintf(const char *fmt, ...);
+extern int s_maxprintf(char const *fmt, ...);
 extern void s_setmaxprintfcharsinK(UInt32 newMaxCharsInK);
 extern UInt32 s_getmaxprintfcharsinK();
 
@@ -54,16 +54,16 @@ extern UInt32 s_getmaxprintfcharsinK();
 #ifdef __USE_MAX_PRINTF__
 #define s_printf s_maxprintf
 #else
-extern int s_printf(const char *fmt, ...);
+extern int s_printf(char const *fmt, ...);
 
 #endif
 
-extern int s_sprintf(char *buffer, const char *fmt, ...);
-extern int s_fprintf(FILE *file, const char *fmt, ...);
-extern int s_snprintf(char *str, size_t size, const char *format, ...);
+extern int s_sprintf(char *buffer, char const *fmt, ...);
+extern int s_fprintf(FILE *file, char const *fmt, ...);
+extern int s_snprintf(char *str, size_t size, char const *format, ...);
 extern size_t s_strftime(char *buf,
                          size_t maxsize,
-                         const char *format,
+                         char const *format,
                          const struct tm *timeptr);
 
 // These calls return the pointer passed into the call as the result.

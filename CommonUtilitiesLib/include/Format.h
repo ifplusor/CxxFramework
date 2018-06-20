@@ -108,7 +108,7 @@ void Format(std::string& result, const std::string& fmt, const boost::any& value
 #endif
 
 void Format(std::string &result,
-            const char *fmt,
+            char const *fmt,
             const std::vector<boost::any> &values);
 /// Supports a variable number of arguments and is used by
 /// all other variants of format().

@@ -44,16 +44,15 @@ class StringFormatter {
  public:
 
   //pass in a buffer and length for writing
-  StringFormatter(char *buffer, UInt32 length) : fCurrentPut(buffer),
-                                                 fStartPut(buffer),
-                                                 fEndPut(buffer + length),
-                                                 fBytesWritten(0) {}
+  StringFormatter(char *buffer, UInt32 length)
+      : fCurrentPut(buffer), fStartPut(buffer), fEndPut(buffer + length),
+        fBytesWritten(0) {}
 
-  StringFormatter(StrPtrLen &buffer) : fCurrentPut(buffer.Ptr),
-                                       fStartPut(buffer.Ptr),
-                                       fEndPut(buffer.Ptr + buffer.Len),
-                                       fBytesWritten(0) {}
-  virtual ~StringFormatter() {}
+  explicit StringFormatter(StrPtrLen &buffer)
+      : fCurrentPut(buffer.Ptr), fStartPut(buffer.Ptr),
+        fEndPut(buffer.Ptr + buffer.Len), fBytesWritten(0) {}
+
+  virtual ~StringFormatter() = default;
 
   void Set(char *buffer, UInt32 length) {
     fCurrentPut = buffer;
@@ -69,9 +68,9 @@ class StringFormatter {
 
   //Object does no bounds checking on the buffer. That is your responsibility!
   //Put truncates to the buffer size
-  void Put(const SInt32 num);
-  void Put(char *buffer, UInt32 bufferSize);
-  void Put(char *str) { Put(str, strlen(str)); }
+  void Put(SInt32 num);
+  void Put(char const *buffer, UInt32 bufferSize);
+  void Put(char const *str) { Put(str, static_cast<UInt32>(strlen(str))); }
   void Put(const StrPtrLen &str) { Put(str.Ptr, str.Len); }
   void PutSpace() { PutChar(' '); }
   void PutEOL() { Put(sEOL, sEOLLen); }
@@ -79,7 +78,7 @@ class StringFormatter {
   void PutTerminator() { PutChar('\0'); }
 
   //Writes a printf style formatted string
-  bool PutFmtStr(const char *fmt, ...);
+  bool PutFmtStr(char const *fmt, ...);
 
   //the number of characters in the buffer
   inline UInt32 GetCurrentOffset();

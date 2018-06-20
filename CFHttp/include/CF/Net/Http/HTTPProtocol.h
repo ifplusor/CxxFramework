@@ -199,35 +199,35 @@ class HTTPProtocol {
  public:
   // Methods
   static HTTPMethod GetMethod(const StrPtrLen *inMethodStr);
-  static StrPtrLen &GetMethodString(HTTPMethod inMethod) { return sMethods[inMethod]; }
+  static const StrPtrLen &GetMethodString(HTTPMethod inMethod) { return sMethods[inMethod]; }
 
   // Headers
   static HTTPHeader GetHeader(const StrPtrLen *inHeaderStr);
-  static StrPtrLen &GetHeaderString(HTTPHeader inHeader) { return sHeaders[inHeader]; }
+  static const StrPtrLen &GetHeaderString(HTTPHeader inHeader) { return sHeaders[inHeader]; }
 
   // Status codes
-  static StrPtrLen &GetStatusCodeString(HTTPStatusCode inStat) { return sStatusCodeStrings[inStat]; }
+  static const StrPtrLen &GetStatusCodeString(HTTPStatusCode inStat) { return sStatusCodeStrings[inStat]; }
   static SInt32 GetStatusCode(HTTPStatusCode inStat) { return sStatusCodes[inStat]; }
-  static StrPtrLen &GetStatusCodeAsString(HTTPStatusCode inStat) { return sStatusCodeAsStrings[inStat]; }
+  static const StrPtrLen &GetStatusCodeAsString(HTTPStatusCode inStat) { return sStatusCodeAsStrings[inStat]; }
   static HTTPStatusCode GetStatusCodeEnum(SInt32 inCode);
 
   // Versions
   static HTTPVersion GetVersion(StrPtrLen *versionStr);
-  static StrPtrLen &GetVersionString(HTTPVersion version) { return sVersionStrings[version]; }
+  static const StrPtrLen &GetVersionString(HTTPVersion version) { return sVersionStrings[version]; }
 
   // StreamType
   static EasyStreamType GetStreamType(StrPtrLen *streamTypeStr);
-  static StrPtrLen &GetStreamTypeStream(EasyStreamType type) { return sStreamTypes[type]; }
+  static const StrPtrLen &GetStreamTypeStream(EasyStreamType type) { return sStreamTypes[type]; }
 
  private:
-  static StrPtrLen sMethods[];
-  static StrPtrLen sHeaders[];
-  static StrPtrLen sStatusCodeStrings[];
-  static StrPtrLen sStatusCodeAsStrings[];
-  static SInt32 sStatusCodes[];
-  static StrPtrLen sVersionStrings[];
+  static const StrPtrLen sMethods[];
+  static const StrPtrLen sHeaders[];
+  static const StrPtrLen sStatusCodeStrings[];
+  static const StrPtrLen sStatusCodeAsStrings[];
+  static const SInt32 sStatusCodes[];
+  static const StrPtrLen sVersionStrings[];
 
-  static StrPtrLen sStreamTypes[];
+  static const StrPtrLen sStreamTypes[];
 };
 
 } // namespace Net

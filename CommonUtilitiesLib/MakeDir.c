@@ -45,7 +45,7 @@
 #include <stdlib.h>
 #include "SafeStdLib.h"
 
-int MakeDir(const char *inPath, int mode) {
+int MakeDir(char const *inPath, int mode) {
   struct stat theStatBuffer;
   if (stat(inPath, &theStatBuffer) == -1) {
     //this directory doesn't exist, so let's try to create it
@@ -58,7 +58,7 @@ int MakeDir(const char *inPath, int mode) {
   return 0; //�- QTSS_NoErr;
 }
 
-int RecursiveMakeDir(const char *inPath, int mode) {
+int RecursiveMakeDir(char const *inPath, int mode) {
   //PL_ASSERT(inPath != NULL);
   char pathCopy[256];
   char *thePathTraverser = pathCopy;

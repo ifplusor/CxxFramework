@@ -46,8 +46,8 @@
 extern "C" {
 #endif
 
-int MakeDir(const char *path, int mode);
-int RecursiveMakeDir(const char *inPath, int mode);
+int MakeDir(char const *path, int mode);
+int RecursiveMakeDir(char const *inPath, int mode);
 
 #ifdef __cplusplus
 }

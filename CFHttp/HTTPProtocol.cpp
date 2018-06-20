@@ -28,24 +28,22 @@
 namespace CF {
 namespace Net {
 
-CF::StrPtrLen HTTPProtocol::sMethods[] =
-    {
-        StrPtrLen("GET"),
-        StrPtrLen("HEAD"),
-        StrPtrLen("POST"),
-        StrPtrLen("OPTIONS"),
-        StrPtrLen("PUT"),
-        StrPtrLen("DELETE"),
-        StrPtrLen("TRACE"),
-        StrPtrLen("CONNECT"),
-    };
+const StrPtrLen HTTPProtocol::sMethods[] = {
+    StrPtrLen("GET"),
+    StrPtrLen("HEAD"),
+    StrPtrLen("POST"),
+    StrPtrLen("OPTIONS"),
+    StrPtrLen("PUT"),
+    StrPtrLen("DELETE"),
+    StrPtrLen("TRACE"),
+    StrPtrLen("CONNECT"),
+};
 
-StrPtrLen HTTPProtocol::sStreamTypes[] =
-    {
-        StrPtrLen("RTSP"),
-        StrPtrLen("RTMP"),
-        StrPtrLen("HLS")
-    };
+const StrPtrLen HTTPProtocol::sStreamTypes[] = {
+    StrPtrLen("RTSP"),
+    StrPtrLen("RTMP"),
+    StrPtrLen("HLS")
+};
 
 HTTPMethod HTTPProtocol::GetMethod(const StrPtrLen *inMethodStr) {
   HTTPMethod theMethod = httpIllegalMethod;
@@ -84,69 +82,68 @@ HTTPMethod HTTPProtocol::GetMethod(const StrPtrLen *inMethodStr) {
   return httpIllegalMethod;
 }
 
-StrPtrLen HTTPProtocol::sHeaders[] =
-    {
-        StrPtrLen("Connection"),
-        StrPtrLen("Date"),
-        StrPtrLen("Authorization"),
-        StrPtrLen("If-Modified-Since"),
-        StrPtrLen("Server"),
-        StrPtrLen("WWW-Authenticate"),
-        StrPtrLen("Expires"),
-        StrPtrLen("Last-Modified"),
+const StrPtrLen HTTPProtocol::sHeaders[] = {
+    StrPtrLen("Connection"),
+    StrPtrLen("Date"),
+    StrPtrLen("Authorization"),
+    StrPtrLen("If-Modified-Since"),
+    StrPtrLen("Server"),
+    StrPtrLen("WWW-Authenticate"),
+    StrPtrLen("Expires"),
+    StrPtrLen("Last-Modified"),
 
-        StrPtrLen("Cache-Control"),
-        StrPtrLen("Pragma"),
-        StrPtrLen("Trailer"),
-        StrPtrLen("Transfer-Encoding"),
-        StrPtrLen("Upgrade"),
-        StrPtrLen("Via"),
-        StrPtrLen("Warning"),
+    StrPtrLen("Cache-Control"),
+    StrPtrLen("Pragma"),
+    StrPtrLen("Trailer"),
+    StrPtrLen("Transfer-Encoding"),
+    StrPtrLen("Upgrade"),
+    StrPtrLen("Via"),
+    StrPtrLen("Warning"),
 
-        StrPtrLen("Accept"),
-        StrPtrLen("Accept-Charset"),
-        StrPtrLen("Accept-Encoding"),
-        StrPtrLen("Accept-Language"),
-        StrPtrLen("Expect"),
-        StrPtrLen("From"),
-        StrPtrLen("Host"),
-        StrPtrLen("If-Match"),
-        StrPtrLen("If-None-Match"),
-        StrPtrLen("If-Range"),
-        StrPtrLen("If-Unmodified-Since"),
-        StrPtrLen("Max-Forwards"),
-        StrPtrLen("Proxy-Authorization"),
-        StrPtrLen("Range"),
-        StrPtrLen("Referer"),
-        StrPtrLen("TE"),
-        StrPtrLen("User-Agent"),
+    StrPtrLen("Accept"),
+    StrPtrLen("Accept-Charset"),
+    StrPtrLen("Accept-Encoding"),
+    StrPtrLen("Accept-Language"),
+    StrPtrLen("Expect"),
+    StrPtrLen("From"),
+    StrPtrLen("Host"),
+    StrPtrLen("If-Match"),
+    StrPtrLen("If-None-Match"),
+    StrPtrLen("If-Range"),
+    StrPtrLen("If-Unmodified-Since"),
+    StrPtrLen("Max-Forwards"),
+    StrPtrLen("Proxy-Authorization"),
+    StrPtrLen("Range"),
+    StrPtrLen("Referer"),
+    StrPtrLen("TE"),
+    StrPtrLen("User-Agent"),
 
-        StrPtrLen("Accept-Ranges"),
-        StrPtrLen("Age"),
-        StrPtrLen("ETag"),
-        StrPtrLen("Location"),
-        StrPtrLen("Proxy-Authenticate"),
-        StrPtrLen("Retry-After"),
-        StrPtrLen("Vary"),
+    StrPtrLen("Accept-Ranges"),
+    StrPtrLen("Age"),
+    StrPtrLen("ETag"),
+    StrPtrLen("Location"),
+    StrPtrLen("Proxy-Authenticate"),
+    StrPtrLen("Retry-After"),
+    StrPtrLen("Vary"),
 
-        StrPtrLen("Allow"),
-        StrPtrLen("Content-Encoding"),
-        StrPtrLen("Content-Language"),
-        StrPtrLen("Content-Length"),
-        StrPtrLen("Content-Location"),
-        StrPtrLen("Content-MD5"),
-        StrPtrLen("Content-Range"),
-        StrPtrLen("Content-Type"),
+    StrPtrLen("Allow"),
+    StrPtrLen("Content-Encoding"),
+    StrPtrLen("Content-Language"),
+    StrPtrLen("Content-Length"),
+    StrPtrLen("Content-Location"),
+    StrPtrLen("Content-MD5"),
+    StrPtrLen("Content-Range"),
+    StrPtrLen("Content-Type"),
 
-        StrPtrLen("X-SessionCookie"),
-        StrPtrLen("X-Server-IP-Address"),
+    StrPtrLen("X-SessionCookie"),
+    StrPtrLen("X-Server-IP-Address"),
 
-        StrPtrLen("Access-Control-Allow-Origin"),
+    StrPtrLen("Access-Control-Allow-Origin"),
 
-        StrPtrLen("Cookie"),
+    StrPtrLen("Cookie"),
 
-        StrPtrLen(" ,")
-    };
+    StrPtrLen(" ,")
+};
 
 HTTPHeader HTTPProtocol::GetHeader(const StrPtrLen *inHeaderStr) {
   if (inHeaderStr->Len == 0)
@@ -200,144 +197,140 @@ HTTPHeader HTTPProtocol::GetHeader(const StrPtrLen *inHeaderStr) {
   return httpIllegalHeader;
 }
 
-StrPtrLen HTTPProtocol::sStatusCodeStrings[] =
-    {
-        StrPtrLen("Continue"),                      //kContinue
-        StrPtrLen("Switching Protocols"),           //kSwitchingProtocols
-        StrPtrLen("OK"),                            //kOK
-        StrPtrLen("Created"),                       //kCreated
-        StrPtrLen("Accepted"),                      //kAccepted
-        StrPtrLen("Non Authoritative Information"), //kNonAuthoritativeInformation
-        StrPtrLen("No Content"),                    //kNoContent
-        StrPtrLen("Reset Content"),                 //kResetContent
-        StrPtrLen("Partial Content"),               //kPartialContent
-        StrPtrLen("Multiple Choices"),              //kMultipleChoices
-        StrPtrLen("Moved Permanently"),             //kMovedPermanently
-        StrPtrLen("Found"),                         //kFound
-        StrPtrLen("See Other"),                     //kSeeOther
-        StrPtrLen("Not Modified"),                  //kNotModified
-        StrPtrLen("Use Proxy"),                     //kUseProxy
-        StrPtrLen("Temporary Redirect"),            //kTemporaryRedirect
-        StrPtrLen("Bad Request"),                   //kBadRequest
-        StrPtrLen("Unauthorized"),                  //kUnAuthorized
-        StrPtrLen("Payment Required"),              //kPaymentRequired
-        StrPtrLen("Forbidden"),                     //kForbidden
-        StrPtrLen("Not Found"),                     //kNotFound
-        StrPtrLen("Method Not Allowed"),            //kMethodNotAllowed
-        StrPtrLen("Not Acceptable"),                //kNotAcceptable
-        StrPtrLen("Proxy Authentication Required"), //kProxyAuthenticationRequired
-        StrPtrLen("Request Time-out"),              //kRequestTimeout
-        StrPtrLen("Conflict"),                      //kConflict
-        StrPtrLen("Gone"),                          //kGone
-        StrPtrLen("Length Required"),               //kLengthRequired
-        StrPtrLen("Precondition Failed"),           //kPreconditionFailed
-        StrPtrLen("Request Entity Too Large"),      //kRequestEntityTooLarge
-        StrPtrLen("Request-URI Too Large"),         //kRequestURITooLarge
-        StrPtrLen("Unsupported Media Type"),        //kUnsupportedMediaType
-        StrPtrLen("Request Range Not Satisfiable"), //kRequestRangeNotSatisfiable
-        StrPtrLen("Expectation Failed"),            //kExpectationFailed
-        StrPtrLen("Internal Server Error"),         //kInternalServerError
-        StrPtrLen("Not Implemented"),               //kNotImplemented
-        StrPtrLen("Bad Gateway"),                   //kBadGateway
-        StrPtrLen("Service Unavailable"),           //kServiceUnavailable
-        StrPtrLen("Gateway Timeout"),               //kGatewayTimeout
-        StrPtrLen("HTTP Version not supported")     //kHTTPVersionNotSupported
-    };
+const StrPtrLen HTTPProtocol::sStatusCodeStrings[] = {
+    StrPtrLen("Continue"),                      //kContinue
+    StrPtrLen("Switching Protocols"),           //kSwitchingProtocols
+    StrPtrLen("OK"),                            //kOK
+    StrPtrLen("Created"),                       //kCreated
+    StrPtrLen("Accepted"),                      //kAccepted
+    StrPtrLen("Non Authoritative Information"), //kNonAuthoritativeInformation
+    StrPtrLen("No Content"),                    //kNoContent
+    StrPtrLen("Reset Content"),                 //kResetContent
+    StrPtrLen("Partial Content"),               //kPartialContent
+    StrPtrLen("Multiple Choices"),              //kMultipleChoices
+    StrPtrLen("Moved Permanently"),             //kMovedPermanently
+    StrPtrLen("Found"),                         //kFound
+    StrPtrLen("See Other"),                     //kSeeOther
+    StrPtrLen("Not Modified"),                  //kNotModified
+    StrPtrLen("Use Proxy"),                     //kUseProxy
+    StrPtrLen("Temporary Redirect"),            //kTemporaryRedirect
+    StrPtrLen("Bad Request"),                   //kBadRequest
+    StrPtrLen("Unauthorized"),                  //kUnAuthorized
+    StrPtrLen("Payment Required"),              //kPaymentRequired
+    StrPtrLen("Forbidden"),                     //kForbidden
+    StrPtrLen("Not Found"),                     //kNotFound
+    StrPtrLen("Method Not Allowed"),            //kMethodNotAllowed
+    StrPtrLen("Not Acceptable"),                //kNotAcceptable
+    StrPtrLen("Proxy Authentication Required"), //kProxyAuthenticationRequired
+    StrPtrLen("Request Time-out"),              //kRequestTimeout
+    StrPtrLen("Conflict"),                      //kConflict
+    StrPtrLen("Gone"),                          //kGone
+    StrPtrLen("Length Required"),               //kLengthRequired
+    StrPtrLen("Precondition Failed"),           //kPreconditionFailed
+    StrPtrLen("Request Entity Too Large"),      //kRequestEntityTooLarge
+    StrPtrLen("Request-URI Too Large"),         //kRequestURITooLarge
+    StrPtrLen("Unsupported Media Type"),        //kUnsupportedMediaType
+    StrPtrLen("Request Range Not Satisfiable"), //kRequestRangeNotSatisfiable
+    StrPtrLen("Expectation Failed"),            //kExpectationFailed
+    StrPtrLen("Internal Server Error"),         //kInternalServerError
+    StrPtrLen("Not Implemented"),               //kNotImplemented
+    StrPtrLen("Bad Gateway"),                   //kBadGateway
+    StrPtrLen("Service Unavailable"),           //kServiceUnavailable
+    StrPtrLen("Gateway Timeout"),               //kGatewayTimeout
+    StrPtrLen("HTTP Version not supported")     //kHTTPVersionNotSupported
+};
 
-SInt32 HTTPProtocol::sStatusCodes[] =
-    {
-        100,            //kContinue
-        101,            //kSwitchingProtocols
-        200,            //kOK
-        201,            //kCreated
-        202,            //kAccepted
-        203,            //kNonAuthoritativeInformation
-        204,            //kNoContent
-        205,            //kResetContent
-        206,            //kPartialContent
-        300,            //kMultipleChoices
-        301,            //kMovedPermanently
-        302,            //kFound
-        303,            //kSeeOther
-        304,            //kNotModified
-        305,            //kUseProxy
-        307,            //kTemporaryRedirect
-        400,            //kBadRequest
-        401,            //kUnAuthorized
-        402,            //kPaymentRequired
-        403,            //kForbidden
-        404,            //kNotFound
-        405,            //kMethodNotAllowed
-        406,            //kNotAcceptable
-        407,            //kProxyAuthenticationRequired
-        408,            //kRequestTimeout
-        409,            //kConflict
-        410,            //kGone
-        411,            //kLengthRequired
-        412,            //kPreconditionFailed
-        413,            //kRequestEntityTooLarge
-        414,            //kRequestURITooLarge
-        415,            //kUnsupportedMediaType
-        416,            //kRequestRangeNotSatisfiable
-        417,            //kExpectationFailed
-        500,            //kInternalServerError
-        501,            //kNotImplemented
-        502,            //kBadGateway
-        503,            //kServiceUnavailable
-        504,            //kGatewayTimeout
-        505             //kHTTPVersionNotSupported
-    };
+const SInt32 HTTPProtocol::sStatusCodes[] = {
+    100,            //kContinue
+    101,            //kSwitchingProtocols
+    200,            //kOK
+    201,            //kCreated
+    202,            //kAccepted
+    203,            //kNonAuthoritativeInformation
+    204,            //kNoContent
+    205,            //kResetContent
+    206,            //kPartialContent
+    300,            //kMultipleChoices
+    301,            //kMovedPermanently
+    302,            //kFound
+    303,            //kSeeOther
+    304,            //kNotModified
+    305,            //kUseProxy
+    307,            //kTemporaryRedirect
+    400,            //kBadRequest
+    401,            //kUnAuthorized
+    402,            //kPaymentRequired
+    403,            //kForbidden
+    404,            //kNotFound
+    405,            //kMethodNotAllowed
+    406,            //kNotAcceptable
+    407,            //kProxyAuthenticationRequired
+    408,            //kRequestTimeout
+    409,            //kConflict
+    410,            //kGone
+    411,            //kLengthRequired
+    412,            //kPreconditionFailed
+    413,            //kRequestEntityTooLarge
+    414,            //kRequestURITooLarge
+    415,            //kUnsupportedMediaType
+    416,            //kRequestRangeNotSatisfiable
+    417,            //kExpectationFailed
+    500,            //kInternalServerError
+    501,            //kNotImplemented
+    502,            //kBadGateway
+    503,            //kServiceUnavailable
+    504,            //kGatewayTimeout
+    505             //kHTTPVersionNotSupported
+};
 
-StrPtrLen HTTPProtocol::sStatusCodeAsStrings[] =
-    {
-        StrPtrLen("100"),               //kContinue
-        StrPtrLen("101"),               //kSwitchingProtocols
-        StrPtrLen("200"),               //kOK
-        StrPtrLen("201"),               //kCreated
-        StrPtrLen("202"),               //kAccepted
-        StrPtrLen("203"),               //kNonAuthoritativeInformation
-        StrPtrLen("204"),               //kNoContent
-        StrPtrLen("205"),               //kResetContent
-        StrPtrLen("206"),               //kPartialContent
-        StrPtrLen("300"),               //kMultipleChoices
-        StrPtrLen("301"),               //kMovedPermanently
-        StrPtrLen("302"),               //kFound
-        StrPtrLen("303"),               //kSeeOther
-        StrPtrLen("304"),               //kNotModified
-        StrPtrLen("305"),               //kUseProxy
-        StrPtrLen("307"),               //kTemporaryRedirect
-        StrPtrLen("400"),               //kBadRequest
-        StrPtrLen("401"),               //kUnAuthorized
-        StrPtrLen("402"),               //kPaymentRequired
-        StrPtrLen("403"),               //kForbidden
-        StrPtrLen("404"),               //kNotFound
-        StrPtrLen("405"),               //kMethodNotAllowed
-        StrPtrLen("406"),               //kNotAcceptable
-        StrPtrLen("407"),               //kProxyAuthenticationRequired
-        StrPtrLen("408"),               //kRequestTimeout
-        StrPtrLen("409"),               //kConflict
-        StrPtrLen("410"),               //kGone
-        StrPtrLen("411"),               //kLengthRequired
-        StrPtrLen("412"),               //kPreconditionFailed
-        StrPtrLen("413"),               //kRequestEntityTooLarge
-        StrPtrLen("414"),               //kRequestURITooLarge
-        StrPtrLen("415"),               //kUnsupportedMediaType
-        StrPtrLen("416"),               //kRequestRangeNotSatisfiable
-        StrPtrLen("417"),               //kExpectationFailed
-        StrPtrLen("500"),               //kInternalServerError
-        StrPtrLen("501"),               //kNotImplemented
-        StrPtrLen("502"),               //kBadGateway
-        StrPtrLen("503"),               //kServiceUnavailable
-        StrPtrLen("504"),               //kGatewayTimeout
-        StrPtrLen("505")                //kHTTPVersionNotSupported
-    };
+const StrPtrLen HTTPProtocol::sStatusCodeAsStrings[] = {
+    StrPtrLen("100"),               //kContinue
+    StrPtrLen("101"),               //kSwitchingProtocols
+    StrPtrLen("200"),               //kOK
+    StrPtrLen("201"),               //kCreated
+    StrPtrLen("202"),               //kAccepted
+    StrPtrLen("203"),               //kNonAuthoritativeInformation
+    StrPtrLen("204"),               //kNoContent
+    StrPtrLen("205"),               //kResetContent
+    StrPtrLen("206"),               //kPartialContent
+    StrPtrLen("300"),               //kMultipleChoices
+    StrPtrLen("301"),               //kMovedPermanently
+    StrPtrLen("302"),               //kFound
+    StrPtrLen("303"),               //kSeeOther
+    StrPtrLen("304"),               //kNotModified
+    StrPtrLen("305"),               //kUseProxy
+    StrPtrLen("307"),               //kTemporaryRedirect
+    StrPtrLen("400"),               //kBadRequest
+    StrPtrLen("401"),               //kUnAuthorized
+    StrPtrLen("402"),               //kPaymentRequired
+    StrPtrLen("403"),               //kForbidden
+    StrPtrLen("404"),               //kNotFound
+    StrPtrLen("405"),               //kMethodNotAllowed
+    StrPtrLen("406"),               //kNotAcceptable
+    StrPtrLen("407"),               //kProxyAuthenticationRequired
+    StrPtrLen("408"),               //kRequestTimeout
+    StrPtrLen("409"),               //kConflict
+    StrPtrLen("410"),               //kGone
+    StrPtrLen("411"),               //kLengthRequired
+    StrPtrLen("412"),               //kPreconditionFailed
+    StrPtrLen("413"),               //kRequestEntityTooLarge
+    StrPtrLen("414"),               //kRequestURITooLarge
+    StrPtrLen("415"),               //kUnsupportedMediaType
+    StrPtrLen("416"),               //kRequestRangeNotSatisfiable
+    StrPtrLen("417"),               //kExpectationFailed
+    StrPtrLen("500"),               //kInternalServerError
+    StrPtrLen("501"),               //kNotImplemented
+    StrPtrLen("502"),               //kBadGateway
+    StrPtrLen("503"),               //kServiceUnavailable
+    StrPtrLen("504"),               //kGatewayTimeout
+    StrPtrLen("505")                //kHTTPVersionNotSupported
+};
 
-StrPtrLen HTTPProtocol::sVersionStrings[] =
-    {
-        StrPtrLen("HTTP/0.9"),
-        StrPtrLen("HTTP/1.0"),
-        StrPtrLen("HTTP/1.1")
-    };
+const StrPtrLen HTTPProtocol::sVersionStrings[] = {
+    StrPtrLen("HTTP/0.9"),
+    StrPtrLen("HTTP/1.0"),
+    StrPtrLen("HTTP/1.1")
+};
 
 HTTPVersion HTTPProtocol::GetVersion(StrPtrLen *versionStr) {
   if (versionStr->Len != 8)

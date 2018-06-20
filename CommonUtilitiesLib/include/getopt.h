@@ -94,7 +94,7 @@ extern int optreset;
 extern int optind;
 extern int opterr;
 extern int optopt;
-int getopt(int argc, char *const *argv, const char *optstr);
+int getopt(int argc, char *const *argv, char const *optstr);
 
 //#endif /* WIN32 */
 

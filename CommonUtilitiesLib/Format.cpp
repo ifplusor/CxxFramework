@@ -413,7 +413,7 @@ void Format(std::string& result, const std::string& fmt, const boost::any& value
 #endif
 
 void Format(std::string &result,
-            const char *fmt,
+            char const *fmt,
             const std::vector<boost::any> &values) {
   Format(result, std::string(fmt), values);
 }

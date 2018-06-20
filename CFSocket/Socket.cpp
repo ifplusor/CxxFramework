@@ -285,7 +285,7 @@ CF::StrPtrLen *Socket::GetLocalPortStr() {
 }
 
 OS_Error Socket::
-Send(const char *inData, const UInt32 inLength, UInt32 *outLengthSent) {
+Send(char const *inData, const UInt32 inLength, UInt32 *outLengthSent) {
   Assert(inData != nullptr);
 
   if (!(fState & kConnected))

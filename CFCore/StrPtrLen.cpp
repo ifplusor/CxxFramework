@@ -34,58 +34,64 @@
 
 using namespace CF;
 
-UInt8 StrPtrLen::sCaseInsensitiveMask[] =
-    {
-        0, 1, 2, 3, 4, 5, 6, 7, 8, 9,                     //0-9
-        10, 11, 12, 13, 14, 15, 16, 17, 18, 19,           //10-19
-        20, 21, 22, 23, 24, 25, 26, 27, 28, 29,           //20-29
-        30, 31, 32, 33, 34, 35, 36, 37, 38, 39,           //30-39
-        40, 41, 42, 43, 44, 45, 46, 47, 48, 49,           //40-49
-        50, 51, 52, 53, 54, 55, 56, 57, 58, 59,           //50-59
-        60, 61, 62, 63, 64, 97, 98, 99, 100, 101,         //60-69   stop on every character except a letter
-        102, 103, 104, 105, 106, 107, 108, 109, 110, 111, //70-79
-        112, 113, 114, 115, 116, 117, 118, 119, 120, 121, //80-89
-        122, 91, 92, 93, 94, 95, 96, 97, 98, 99,          //90-99
-        100, 101, 102, 103, 104, 105, 106, 107, 108, 109, //100-109
-        110, 111, 112, 113, 114, 115, 116, 117, 118, 119, //110-119
-        120, 121, 122, 123, 124, 125, 126, 127, 128, 129  //120-129
-    };
+UInt8 StrPtrLen::sCaseInsensitiveMask[] = {
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9,                     //0-9
+    10, 11, 12, 13, 14, 15, 16, 17, 18, 19,           //10-19
+    20, 21, 22, 23, 24, 25, 26, 27, 28, 29,           //20-29
+    30, 31, 32, 33, 34, 35, 36, 37, 38, 39,           //30-39
+    40, 41, 42, 43, 44, 45, 46, 47, 48, 49,           //40-49
+    50, 51, 52, 53, 54, 55, 56, 57, 58, 59,           //50-59
+    60, 61, 62, 63, 64, 97, 98, 99, 100, 101,         //60-69   stop on every character except a letter
+    102, 103, 104, 105, 106, 107, 108, 109, 110, 111, //70-79
+    112, 113, 114, 115, 116, 117, 118, 119, 120, 121, //80-89
+    122, 91, 92, 93, 94, 95, 96, 97, 98, 99,          //90-99
+    100, 101, 102, 103, 104, 105, 106, 107, 108, 109, //100-109
+    110, 111, 112, 113, 114, 115, 116, 117, 118, 119, //110-119
+    120, 121, 122, 123, 124, 125, 126, 127, 128, 129  //120-129
+};
 
-UInt8 StrPtrLen::sNonPrintChars[] =
-    {
-        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, //0-9     stop
-        0, 1, 1, 0, 1, 1, 1, 1, 1,
-        1, //10-19   '\r' & '\n' are not stop conditions
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //20-29
-        1, 1, 0, 0, 0, 0, 0, 0, 0, 0, //30-39
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //40-49
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //50-59
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //60-69
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //70-79
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //80-89
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //90-99
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //100-109
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //110-119
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //120-129
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //130-139
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //140-149
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //150-159
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //160-169
-        0, 0, 0, 0, 0, 0, 0, 0, 1, 1, //170-179
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //180-189
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //190-199
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //200-209
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //210-219
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //220-229
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //230-239
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //240-249
-        1, 1, 1, 1, 1, 1              //250-255
-    };
+UInt8 StrPtrLen::sNonPrintChars[] = {
+    0, 1, 1, 1, 1, 1, 1, 1, 1, 1, //0-9     stop
+    0, 1, 1, 0, 1, 1, 1, 1, 1, 1, //10-19   '\r' & '\n' are not stop conditions
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //20-29
+    1, 1, 0, 0, 0, 0, 0, 0, 0, 0, //30-39
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //40-49
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //50-59
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //60-69
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //70-79
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //80-89
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //90-99
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //100-109
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //110-119
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //120-129
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //130-139
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //140-149
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //150-159
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //160-169
+    0, 0, 0, 0, 0, 0, 0, 0, 1, 1, //170-179
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //180-189
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //190-199
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //200-209
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //210-219
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //220-229
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //230-239
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //240-249
+    1, 1, 1, 1, 1, 1              //250-255
+};
+
+char *StrPtrLen::CopyAsCString(char const *sp) {
+  size_t len = sp != nullptr ? strlen(sp) : 0;
+  auto *theString = new char[len + 1];
+  if (len > 0)
+    ::memcpy(theString, sp, len);
+  theString[len] = 0;
+  return theString;
+}
 
 char *StrPtrLen::GetAsCString() const {
   // convert to a "new'd" zero terminated char array
   // caller is responsible for the newly allocated memory
-  char *theString = new char[Len + 1];
+  auto *theString = new char[Len + 1];
 
   if (Ptr && Len > 0)
     ::memcpy(theString, Ptr, Len);
@@ -102,38 +108,31 @@ bool StrPtrLen::Equal(const StrPtrLen &compare) const {
   if ((nullptr == compare.Ptr) || (nullptr == Ptr))
     return false;
 
-  if ((compare.Len == Len) && (::memcmp(compare.Ptr, Ptr, Len) == 0))
-    return true;
-  else
-    return false;
+  return (compare.Len == Len) && (::memcmp(compare.Ptr, Ptr, Len) == 0);
 }
 
-bool StrPtrLen::Equal(const char *compare) const {
+bool StrPtrLen::Equal(char const *compare) const {
   if (nullptr == compare && nullptr == Ptr)
     return true;
 
   if ((nullptr == compare) || (nullptr == Ptr))
     return false;
 
-  if ((::strlen(compare) == Len) && (::memcmp(compare, Ptr, Len) == 0))
-    return true;
-  else
-    return false;
+  return (::strlen(compare) == Len) && (::memcmp(compare, Ptr, Len) == 0);
 }
 
-bool StrPtrLen::EqualIgnoreCase(const char *compare, const UInt32 len) const {
+bool StrPtrLen::EqualIgnoreCase(char const *compare, const UInt32 len) const {
   Assert(compare != nullptr);
   if (len == Len) {
     for (UInt32 x = 0; x < len; x++)
-      if (sCaseInsensitiveMask[(UInt8) Ptr[x]]
-          != sCaseInsensitiveMask[(UInt8) compare[x]])
+      if (sCaseInsensitiveMask[(UInt8) Ptr[x]] != sCaseInsensitiveMask[(UInt8) compare[x]])
         return false;
     return true;
   }
   return false;
 }
 
-bool StrPtrLen::NumEqualIgnoreCase(const char *compare, const UInt32 len) const {
+bool StrPtrLen::NumEqualIgnoreCase(char const *compare, const UInt32 len) const {
   // compare thru the first "len: bytes
   Assert(compare != nullptr);
 
@@ -202,8 +201,7 @@ char *StrPtrLen::FindStringCase(char *queryCharStr, StrPtrLen *resultStr, bool c
       resultChar = nullptr;
   }
 
-  if (editSource != nullptr)
-    delete[] editSource;
+  delete[] editSource;
 
   if (resultStr != nullptr && resultChar != nullptr)
     resultStr->Set(resultChar, queryStr.Len);

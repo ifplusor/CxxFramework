@@ -120,7 +120,7 @@ class Socket : public EventContext {
    * Send
    * @return CF_FileNotOpen, CF_NoErr, or POSIX error code.
    */
-  OS_Error Send(const char *inData, UInt32 inLength, UInt32 *outLengthSent);
+  OS_Error Send(char const *inData, UInt32 inLength, UInt32 *outLengthSent);
 
   /**
    * Read - reads some data.

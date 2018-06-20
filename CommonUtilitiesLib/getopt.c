@@ -98,7 +98,7 @@ int opterr = 1;
 int optopt;
 
 static int
-optiserr(int argc, char* const *argv, int oint, const char* optstr,
+optiserr(int argc, char* const *argv, int oint, char const* optstr,
     int optchr, int err)
 {
     if (opterr)
@@ -127,7 +127,7 @@ optiserr(int argc, char* const *argv, int oint, const char* optstr,
 
 
 int
-getopt(int argc, char* const *argv, const char* optstr)
+getopt(int argc, char* const *argv, char const* optstr)
 {
     static int optchr = 0;
     static int dash = 0; /* have already seen the - */

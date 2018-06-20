@@ -43,7 +43,7 @@ void StringFormatter::Put(const SInt32 num) {
   Put(buff);
 }
 
-void StringFormatter::Put(char *buffer, UInt32 bufferSize) {
+void StringFormatter::Put(char const *buffer, UInt32 bufferSize) {
   // optimization for writing 1 character
   if ((bufferSize == 1) && (fCurrentPut != fEndPut)) {
     *(fCurrentPut++) = *buffer;
@@ -85,7 +85,7 @@ void StringFormatter::Put(char *buffer, UInt32 bufferSize) {
 
 //Puts a printf-style formatted string; except that the NUL terminator is not written.  If the buffer is too small, returns false and does not
 //Alter the buffer.  Will not count the '\0' terminator as among the bytes written
-bool StringFormatter::PutFmtStr(const char *fmt, ...) {
+bool StringFormatter::PutFmtStr(char const *fmt, ...) {
   Assert(fmt != nullptr);
 
   va_list args;

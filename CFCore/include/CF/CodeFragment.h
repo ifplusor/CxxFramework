@@ -49,11 +49,11 @@ class CodeFragment {
 
   static void Initialize();
 
-  CodeFragment(const char *inPath);
+  CodeFragment(char const *inPath);
   ~CodeFragment();
 
   bool IsValid() { return (fFragmentP != NULL); }
-  void *GetSymbol(const char *inSymbolName);
+  void *GetSymbol(char const *inSymbolName);
 
  private:
 

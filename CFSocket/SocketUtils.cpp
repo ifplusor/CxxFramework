@@ -637,7 +637,7 @@ void SocketUtils::ConvertAddrToString(const struct in_addr &theAddr, CF::StrPtrL
   sMutex.Unlock();
 }
 
-UInt32 SocketUtils::ConvertStringToAddr(const char *inAddrStr) {
+UInt32 SocketUtils::ConvertStringToAddr(char const *inAddrStr) {
   if (inAddrStr == nullptr)
     return 0;
 

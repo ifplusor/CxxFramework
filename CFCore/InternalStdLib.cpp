@@ -58,7 +58,7 @@ void s_setmaxprintfcharsinK(UInt32 newMaxCharsInK) {
   sMaxTotalCharsInK = newMaxCharsInK;
 }
 
-int s_maxprintf(const char *fmt, ...) {
+int s_maxprintf(char const *fmt, ...) {
   if (fmt == NULL)
     return -1;
 
@@ -96,7 +96,7 @@ int s_maxprintf(const char *fmt, ...) {
 
 #endif
 
-int s_printf(const char *fmt, ...) {
+int s_printf(char const *fmt, ...) {
   if (fmt == NULL)
     return -1;
 
@@ -109,7 +109,7 @@ int s_printf(const char *fmt, ...) {
   return result;
 }
 
-int s_sprintf(char *buffer, const char *fmt, ...) {
+int s_sprintf(char *buffer, char const *fmt, ...) {
   if (buffer == NULL)
     return -1;
 
@@ -122,7 +122,7 @@ int s_sprintf(char *buffer, const char *fmt, ...) {
   return result;
 }
 
-int s_fprintf(FILE *file, const char *fmt, ...) {
+int s_fprintf(FILE *file, char const *fmt, ...) {
   if (file == NULL)
     return -1;
 
@@ -135,7 +135,7 @@ int s_fprintf(FILE *file, const char *fmt, ...) {
   return result;
 }
 
-int s_snprintf(char *str, size_t size, const char *fmt, ...) {
+int s_snprintf(char *str, size_t size, char const *fmt, ...) {
   if (str == NULL)
     return -1;
 
@@ -150,7 +150,7 @@ int s_snprintf(char *str, size_t size, const char *fmt, ...) {
 
 size_t s_strftime(char *buf,
                   size_t maxsize,
-                  const char *format,
+                  char const *format,
                   const struct tm *timeptr) {
   if (buf == NULL)
     return 0;

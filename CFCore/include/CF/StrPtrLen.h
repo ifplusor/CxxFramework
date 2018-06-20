@@ -54,16 +54,19 @@ class StrPtrLen {
   StrPtrLen() : Ptr(nullptr), Len(0) {}
   StrPtrLen(char *sp) : Ptr(sp), Len(sp != nullptr ? strlen(sp) : 0) {}
   StrPtrLen(char *sp, UInt32 len) : Ptr(sp), Len(len) {}
-  virtual ~StrPtrLen() {}
+  virtual ~StrPtrLen() = default;
 
   //OPERATORS:
   bool Equal(const StrPtrLen &compare) const;
-  bool Equal(const char *compare) const;
-  bool EqualIgnoreCase(const char *compare, const UInt32 len) const;
+  bool Equal(char const *compare) const;
+  bool EqualIgnoreCase(char const *compare, UInt32 len) const;
+  bool EqualIgnoreCase(char const *compare) const {
+    return EqualIgnoreCase(compare, ::strlen(compare));
+  }
   bool EqualIgnoreCase(const StrPtrLen &compare) const {
     return EqualIgnoreCase(compare.Ptr, compare.Len);
   }
-  bool NumEqualIgnoreCase(const char *compare, const UInt32 len) const;
+  bool NumEqualIgnoreCase(char const *compare, UInt32 len) const;
 
   void Delete() {
     delete[] Ptr;
@@ -76,9 +79,7 @@ class StrPtrLen {
     return Ptr;
   }
 
-  char *FindStringCase(char *queryCharStr,
-                       StrPtrLen *resultStr,
-                       bool caseSensitive) const;
+  char *FindStringCase(char *queryCharStr, StrPtrLen *resultStr, bool caseSensitive) const;
 
   char *FindString(StrPtrLen *queryStr, StrPtrLen *outResultStr);
 
@@ -138,6 +139,7 @@ class StrPtrLen {
   UInt32 Len;
 
   // convert to a "NEW'd" zero terminated char array
+  static char *CopyAsCString(char const *sp);
   char *GetAsCString() const;
   void PrintStr();
   void PrintStr(char *appendStr);
@@ -169,7 +171,7 @@ class StrPtrLen {
 class StrPtrLenDel : public StrPtrLen {
  public:
   StrPtrLenDel() : StrPtrLen() {}
-  StrPtrLenDel(char *sp) : StrPtrLen(sp) {}
+  explicit StrPtrLenDel(char *sp) : StrPtrLen(sp) {}
   StrPtrLenDel(char *sp, UInt32 len) : StrPtrLen(sp, len) {}
   ~StrPtrLenDel() override { Delete(); }
 };

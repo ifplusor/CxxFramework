@@ -43,8 +43,8 @@ void Time::Initialize() {
   SInt64 the1900Sec = (SInt64) (24 * 60 * 60) * (SInt64) ((70 * 365) + 17);
   sMsecSince1900 = the1900Sec * 1000;
 
-  sWrapTime = (SInt64) 0x00000001 << 32;
-  sCompareWrap = (SInt64) 0xffffffff << 32;
+  sWrapTime = (SInt64) (0x00000001ULL << 32U);
+  sCompareWrap = (SInt64) (0xffffffffULL << 32U);
   sLastTimeMilli = 0;
 
   //Milliseconds uses sInitialMsec so this assignment is valid only once.

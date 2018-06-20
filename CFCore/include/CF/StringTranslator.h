@@ -50,7 +50,7 @@ class StringTranslator {
   //If successful, returns the length of the destination string.
   //If failure, returns an OS errorcode: OS_BadURLFormat, OS_NotEnoughSpace
 
-  static SInt32 DecodeURL(const char *inSrc,
+  static SInt32 DecodeURL(char const *inSrc,
                           SInt32 inSrcLen,
                           char *ioDest,
                           SInt32 inDestLen);
@@ -66,7 +66,7 @@ class StringTranslator {
   //
   // If function returns E2BIG, ioDest will be valid, but will contain
   // only the portion of the URL that fit.
-  static SInt32 EncodeURL(const char *inSrc,
+  static SInt32 EncodeURL(char const *inSrc,
                           SInt32 inSrcLen,
                           char *ioDest,
                           SInt32 inDestLen);

@@ -37,7 +37,7 @@ std::atomic_uint Task::sShortTaskThreadPicker(0);
 std::atomic_uint Task::sBlockingTaskThreadPicker(0);
 
 CF::Core::RWMutex TaskThreadPool::sRWMutex;
-static const char *sTaskStateStr = "live_"; // Alive
+static char const *sTaskStateStr = "live_"; // Alive
 
 Task::Task()
     : fEvents(0),

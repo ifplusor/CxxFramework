@@ -59,7 +59,7 @@ static bool sMovie = false;
 
 #if READ_LOG
 extern UInt32 xTrackID;
-void FileSource::SetLog(const char *inPath)
+void FileSource::SetLog(char const *inPath)
 {
     fFilePath[0] = 0;
     ::strcpy(fFilePath, inPath);
@@ -80,7 +80,7 @@ void FileSource::SetLog(const char *inPath)
     }
 }
 #else
-void FileSource::SetLog(const char *inPath) {
+void FileSource::SetLog(char const *inPath) {
 
 #if FILE_SOURCE_DEBUG
   s_printf("FileSource::SetLog=%s\n", inPath);
@@ -314,7 +314,7 @@ void FileMap::DeleteMap() {
 
 }
 
-void FileSource::Set(const char *inPath) {
+void FileSource::Set(char const *inPath) {
   Close();
 
 #if __Win32__

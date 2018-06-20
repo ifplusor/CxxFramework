@@ -27,7 +27,9 @@ class CFEnv {
   static void Initialize();
 
   /**
-   * configure 的内存将交由 CFEnv 管理
+   * @brief 注册服务配置类
+   *
+   * @note configure 的内存将交由 CFEnv 管理
    */
   static void Register(CFConfigure *configure) { sConfigure = configure; }
 

@@ -82,7 +82,7 @@ class HTTPPacket {
   char *GetRequestPath() { return fRequestPath; }
   char *GetQueryString() { return fQueryString; }
 
-  const char *GetQueryValues(char *inParam);
+  char const *GetQueryValues(char *inParam);
 
   // If header field exists in the request, it will be found in the dictionary
   // and the value returned. Otherwise, NULL is returned.

@@ -70,7 +70,7 @@ class QueryParamList {
   ~QueryParamList() { delete fNameValueQueryParamList; }
 
   void AddNameValuePairToList(char *name, char *value);
-  const char *DoFindCGIValueForParam(char *name);
+  char const *DoFindCGIValueForParam(char *name);
   void PrintAll(char *idString);
 
  protected:

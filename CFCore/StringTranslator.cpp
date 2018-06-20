@@ -41,7 +41,7 @@ using namespace CF;
 /**
  * @return the number of chars written to ioDest or OS_BadURLFormat in the case of any error.
  */
-SInt32 StringTranslator::DecodeURL(const char *inSrc, SInt32 inSrcLen, char *ioDest, SInt32 inDestLen) {
+SInt32 StringTranslator::DecodeURL(char const *inSrc, SInt32 inSrcLen, char *ioDest, SInt32 inDestLen) {
 
   // inSrcLen must be > 0 and the first character must be a '/'
   if (inSrcLen <= 0 || *inSrc != '/')
@@ -139,7 +139,7 @@ SInt32 StringTranslator::DecodeURL(const char *inSrc, SInt32 inSrcLen, char *ioD
   return theLengthWritten;
 }
 
-SInt32 StringTranslator::EncodeURL(const char *inSrc, SInt32 inSrcLen, char *ioDest, SInt32 inDestLen) {
+SInt32 StringTranslator::EncodeURL(char const *inSrc, SInt32 inSrcLen, char *ioDest, SInt32 inDestLen) {
   // return the number of chars written to ioDest
 
   SInt32 theLengthWritten = 0;

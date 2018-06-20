@@ -43,12 +43,12 @@
 void TestParseConfigFile();
 #endif
 
-typedef bool(*CFConfigSetter)(const char *paramName,
-                            const char *paramValue[],
+typedef bool(*CFConfigSetter)(char const *paramName,
+                            char const *paramValue[],
                             void *userData);
 
 int ParseConfigFile(bool allowNullValues,
-                    const char *fname,
+                    char const *fname,
                     CFConfigSetter setter,
                     void *userData);
 
