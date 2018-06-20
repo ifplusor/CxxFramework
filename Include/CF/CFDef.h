@@ -44,6 +44,12 @@ typedef enum {
 enum {
 #endif
   CF_NoErr = 0,
+
+  // server exit
+  CF_ShuttingDown = 1,
+  CF_Restart = 2,
+
+  // return code
   CF_RequestFailed = -1,
   CF_Unimplemented = -2,
   CF_RequestArrived = -3,
@@ -64,11 +70,11 @@ enum {
   CF_AttrDoesntExist = -18,
   CF_AttrNameExists = -19,
   CF_InstanceAttrsNotAllowed = -20,
-  CF_UnknowAudioCoder = -21,
+  CF_UnknownAudioCoder = -21,
 
   // server state error
-  CF_ShuttingDown = -22,
-  CF_FatalError = -23,
+  CF_UnknownError = -255,
+  CF_FatalError = -256,
 #if USE_ENUM
   } CF_Error;
 #else

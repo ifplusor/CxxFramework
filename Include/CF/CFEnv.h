@@ -35,7 +35,7 @@ class CFEnv {
 
   static CFConfigure *GetConfigure() { return sConfigure; }
 
-  static bool WillExit() { return sExitCode != CF_NoErr; };
+  static CF_Error WillExit() { return sExitCode; };
   static void Exit(UInt32 exitCode) { sExitCode = exitCode; }
 
   static bool AddListenerSocket(Net::TCPListenerSocket *socket);

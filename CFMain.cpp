@@ -128,7 +128,7 @@ CF_Error CFMain(CFConfigure *config) {
 #endif
 
     // do some statistics
-    theErr = config->DoIdle();
+    config->DoIdle();
   }
 
   /*
@@ -179,7 +179,7 @@ CF_Error CFMain(CFConfigure *config) {
 
   s_printf("all resources is released, the server will exit soon.\n");
 
-  return theErr;
+  return CFEnv::WillExit();
 }
 
 int main(int argc, char **argv) {
