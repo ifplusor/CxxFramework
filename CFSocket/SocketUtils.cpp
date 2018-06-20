@@ -35,8 +35,6 @@
 
 #if !__WinSock__
 
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/ioctl.h>
@@ -44,8 +42,6 @@
 #if __FreeBSD__
 #include <ifaddrs.h>
 #endif
-
-#include <unistd.h>
 
 #if __solaris__
 #include <sys/sockio.h>
@@ -79,6 +75,8 @@ using namespace CF::Net;
 
 UInt32 SocketUtils::sNumIPAddrs = 0;
 SocketUtils::IPAddrInfo *SocketUtils::sIPAddrInfoArray = nullptr;
+UInt32 SocketUtils::sNumOpenIPAddrs = 0;
+SocketUtils::IPAddrInfo *SocketUtils::sOpenIPAddrInfoArray = nullptr;
 CF::Core::Mutex SocketUtils::sMutex;
 
 #if __FreeBSD__
@@ -561,23 +559,73 @@ bool SocketUtils::IncrementIfReqIter(char **inIfReqIter, ifreq *ifr) {
 
 #endif
 
+void SocketUtils::SetOpenIPAddrs(char **inAddress, UInt32 inAddressLen, bool lookupDNSName) {
+  // allocate the IPAddrInfo array. Unfortunately we can't allocate this
+  // array the proper way due to a GCC bug
+  auto *addrInfoMem = new UInt8[sizeof(IPAddrInfo) * inAddressLen];
+  ::memset(addrInfoMem, 0, sizeof(IPAddrInfo) * inAddressLen);
+  auto *theIPAddrInfoArray = (IPAddrInfo *) addrInfoMem;
+
+  for (UInt32 i = 0; i < inAddressLen; i++) {
+
+    //store the IP addr
+    struct in_addr sin_addr;
+    ::inet_aton(inAddress[i], &sin_addr);
+    theIPAddrInfoArray[i].fIPAddr = ntohl(sin_addr.s_addr);
+
+    //store the IP addr as a string
+    theIPAddrInfoArray[i].fIPAddrStr.Len = static_cast<UInt32>(::strlen(inAddress[i]));
+    theIPAddrInfoArray[i].fIPAddrStr.Ptr = new char[theIPAddrInfoArray[i].fIPAddrStr.Len + 2];
+    ::strcpy(theIPAddrInfoArray[i].fIPAddrStr.Ptr, inAddress[i]);
+
+    struct hostent *theDNSName = nullptr;
+    if (lookupDNSName) { //convert this addr to a dns name, and store it
+      theDNSName = ::gethostbyaddr((char *) &sin_addr, sizeof(sin_addr), AF_INET);
+    }
+
+    if (theDNSName != nullptr) {
+      theIPAddrInfoArray[i].fDNSNameStr.Len = ::strlen(theDNSName->h_name);
+      theIPAddrInfoArray[i].fDNSNameStr.Ptr = new char[theIPAddrInfoArray[i].fDNSNameStr.Len + 2];
+      ::strcpy(theIPAddrInfoArray[i].fDNSNameStr.Ptr, theDNSName->h_name);
+    } else {
+      //if we failed to look up the DNS name, just store the IP addr as a string
+      theIPAddrInfoArray[i].fDNSNameStr.Len = theIPAddrInfoArray[i].fIPAddrStr.Len;
+      theIPAddrInfoArray[i].fDNSNameStr.Ptr = new char[theIPAddrInfoArray[i].fDNSNameStr.Len + 2];
+      ::strcpy(theIPAddrInfoArray[i].fDNSNameStr.Ptr, theIPAddrInfoArray[i].fIPAddrStr.Ptr);
+    }
+  }
+
+  auto *old = sOpenIPAddrInfoArray;
+  if (inAddressLen > sNumOpenIPAddrs) {
+    sOpenIPAddrInfoArray = theIPAddrInfoArray;
+    sNumOpenIPAddrs = inAddressLen;
+  } else {
+    sNumOpenIPAddrs = inAddressLen;
+    sOpenIPAddrInfoArray = theIPAddrInfoArray;
+  }
+  delete old;
+}
+
 bool SocketUtils::IsMulticastIPAddr(UInt32 inAddress) {
   // multicast addresses == "class D" == 0xExxxxxxx == 1,1,1,0,<28 bits>
   return ((inAddress >> 8U) & 0x00f00000U) == 0x00e00000U; // why right shift?
 }
 
 bool SocketUtils::IsLocalIPAddr(UInt32 inAddress) {
-  /*
-     NOTE: 本地 IP 是通过 SIOCGIFCONF 获取的网卡信息，如果服务隐藏在 NAT 后面，则不能支持
-   */
+  // 处理 NAT 情况
+  for (UInt32 y = 0; y < sNumOpenIPAddrs; y++)
+    if (sOpenIPAddrInfoArray[y].fIPAddr == inAddress)
+      return true;
+
+  /* NOTE: 本地 IP 是通过 SIOCGIFCONF 获取的网卡信息，如果服务隐藏在 NAT 后面，则不能支持 */
   for (UInt32 x = 0; x < sNumIPAddrs; x++)
     if (sIPAddrInfoArray[x].fIPAddr == inAddress)
       return true;
+
   return false;
 }
 
-void SocketUtils::ConvertAddrToString(const struct in_addr &theAddr,
-                                  CF::StrPtrLen *ioStr) {
+void SocketUtils::ConvertAddrToString(const struct in_addr &theAddr, CF::StrPtrLen *ioStr) {
   //re-entrant version of code below
   //inet_ntop(AF_INET, &theAddr, ioStr->Ptr, ioStr->Len);
   //ioStr->Len = ::strlen(ioStr->Ptr);

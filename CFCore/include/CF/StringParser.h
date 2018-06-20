@@ -43,13 +43,13 @@ namespace CF {
 class StringParser {
  public:
 
-  StringParser(StrPtrLen *inStream)
+  explicit StringParser(StrPtrLen *inStream)
       : fStartGet(inStream == nullptr ? nullptr : inStream->Ptr),
         fEndGet(inStream == nullptr ? nullptr : inStream->Ptr + inStream->Len),
         fCurLineNumber(1),
         fStream(inStream) {
   }
-  ~StringParser() {}
+  ~StringParser() = default;
 
   // Built-in masks for common stop conditions
   static UInt8 sDigitMask[];      // stop when you hit a digit

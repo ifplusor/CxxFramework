@@ -331,7 +331,7 @@ UInt32 StringParser::ConsumeInteger(StrPtrLen *outString) {
 
   if (outString != nullptr) {
     outString->Ptr = originalStartGet;
-    outString->Len = fStartGet - originalStartGet;
+    outString->Len = static_cast<UInt32>(fStartGet - originalStartGet);
   }
   return theValue;
 }

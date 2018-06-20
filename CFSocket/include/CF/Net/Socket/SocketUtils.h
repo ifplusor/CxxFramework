@@ -62,7 +62,10 @@ class SocketUtils {
    *
    * <b>note:</b> Call initialize before using any socket functions.
    */
-  static void Initialize(bool lookupDNSName = true);
+  static void Initialize(bool lookupDNSName=true);
+
+  //设置NAT等公开IP
+  static void SetOpenIPAddrs(char **inAddress, UInt32 inAddressLen, bool lookupDNSName=true);
 
   //static utility routines
   static bool IsMulticastIPAddr(UInt32 inAddress);
@@ -97,6 +100,10 @@ class SocketUtils {
 
   static IPAddrInfo *sIPAddrInfoArray;
   static UInt32 sNumIPAddrs;
+
+  static IPAddrInfo *sOpenIPAddrInfoArray;
+  static UInt32 sNumOpenIPAddrs;
+
   static Core::Mutex sMutex;
 };
 

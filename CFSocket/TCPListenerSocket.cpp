@@ -188,12 +188,12 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
     // setup the Socket. When there is data on the Socket,
     // theTask will get an kReadEvent event
     theSocket->Set(osSocket, &addr);
-    theSocket->InitNonBlocking(osSocket);
+    theSocket->InitNonBlocking(osSocket); // 因为 socket 是通过 Set 注入的，需要手动设置为 non-blocking
+    theTask->SetThreadPicker(Thread::Task::GetBlockingTaskThreadPicker()); // The Message Task processing threads
     theSocket->SetTask(theTask); // 实际上是调用 EventContext::SetTask
-    theSocket->RequestEvent(EV_RE);
 
-    // The Message Task processing threads
-    theTask->SetThreadPicker(Thread::Task::GetBlockingTaskThreadPicker());
+    // 监听可读事件，提供 TCP 服务
+    theSocket->RequestEvent(EV_RE);
   }
 
   /* 如果 RTSPSession、HTTPSession 的连接数超过超过限制,则利用 IdleTaskThread 定时调用

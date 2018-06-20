@@ -129,7 +129,7 @@ class StrPtrLen {
   }
   void Set(char *inPtr) {
     Ptr = inPtr;
-    Len = (inPtr) ? ::strlen(inPtr) : 0;
+    Len = static_cast<UInt32>((inPtr) ? ::strlen(inPtr) : 0);
   }
 
   // This is a non-encapsulating interface.
