@@ -55,6 +55,8 @@ enum EREQ_EVENTS {
   EV_ET = 0x0020U,
 #define EV_ET  EV_ET  /* Edge Triggered */
 };
+#define EV_REOS  (EV_RE | EV_OS)
+#define EV_WROS  (EV_WR | EV_OS)
 
 struct eventreq {
   int er_type;

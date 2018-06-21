@@ -80,6 +80,9 @@ int select_modwatch0(struct eventreq *req, int which, bool isAdd) {
   if (which & EV_ET)
     ev.events |= EPOLLET;  // Edge Triggered
 
+  if (which & EV_OS)
+    ev.events |= EPOLLONESHOT;  // one shot
+
   if (which & EV_RE)
     ev.events |= EPOLLIN | EPOLLHUP | EPOLLERR;
 

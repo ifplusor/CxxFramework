@@ -192,7 +192,7 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
     theSocket->SetTask(theTask); // 实际上是调用 EventContext::SetTask
 
     // 监听可读事件，提供 TCP 服务
-    theSocket->RequestEvent(EV_RE | EV_OS); // one shot
+    theSocket->RequestEvent(EV_REOS); // one shot
   }
 
   /* 如果 RTSPSession、HTTPSession 的连接数超过超过限制,则利用 IdleTaskThread 定时调用

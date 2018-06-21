@@ -64,7 +64,7 @@ class TCPSocket : public Socket {
       : Socket(notifytask, inSocketType),
         fRemoteStr(fRemoteBuffer, kIPAddrBufSize) {}
 
-  virtual ~TCPSocket() {}
+  ~TCPSocket() override = default;
 
   //Open
   OS_Error Open() { return Socket::Open(SOCK_STREAM); }

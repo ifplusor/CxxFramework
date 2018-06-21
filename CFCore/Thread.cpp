@@ -121,10 +121,8 @@ void Thread::Start() {
 #elif __PTHREADS__
   pthread_attr_t *theAttrP;
 #ifdef _POSIX_THREAD_PRIORITY_SCHEDULING
-  /*
-     注意:对于有_POSIX_THREAD_PRIORITY_SCHEDULING 宏定义的 pthread 库,创建线程
-     的时候,应该添加属性 PTHREAD_SCOPE_SYSTEM,但是这里被注释掉了!!!
-   */
+  /* 注意: 对于有 _POSIX_THREAD_PRIORITY_SCHEDULING 宏定义的 pthread 库,创建线程
+   * 的时候, 应该添加属性 PTHREAD_SCOPE_SYSTEM, 但是这里被注释掉了!!! */
   //theAttrP = &sThreadAttr;
   theAttrP = 0;
 #else
@@ -238,7 +236,7 @@ unsigned int WINAPI Thread::_Entry(LPVOID inThread) {
 void *Thread::_Entry(void *inThread) {
 #endif
 
-  Thread *theThread = (Thread *) inThread;
+  auto *theThread = (Thread *) inThread;
 #ifdef __Win32__
   BOOL theErr = ::TlsSetValue(sThreadStorageIndex, theThread);
   Assert(theErr == TRUE);

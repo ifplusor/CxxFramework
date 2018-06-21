@@ -131,12 +131,13 @@ class Thread {
 #endif
 
   /**
-   * @brief 返回持有当前线程的 OSThread 对象指针
+   * @brief 返回持有当前线程的 Thread 对象指针
    */
   static Thread *GetCurrent();
 
  private:
 
+  // TLS for Thread object pointer
 #ifdef __Win32__
   static DWORD sThreadStorageIndex;
 #elif __PTHREADS__
