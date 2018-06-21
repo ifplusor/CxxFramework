@@ -41,7 +41,7 @@ using namespace CF::Core;
 
 // Private globals
 #if __PTHREADS_MUTEXES__
-static pthread_mutexattr_t *sMutexAttr = NULL;
+static pthread_mutexattr_t *sMutexAttr = nullptr;
 static void MutexAttrInit();
 
 #if __solaris__

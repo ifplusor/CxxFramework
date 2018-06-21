@@ -30,7 +30,7 @@
 
 #define DEBUG_LOG(flag, ...) do { \
   if (flag) { \
-    s_printf(__VA_ARGS__); \
+    s_printf("DEBUG: " __VA_ARGS__); \
   } \
 } while(0)
 
