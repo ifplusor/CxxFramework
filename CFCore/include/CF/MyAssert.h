@@ -28,6 +28,12 @@
 
 #include "CF/Types.h"
 
+#define DEBUG_LOG(flag, ...) do { \
+  if (flag) { \
+    s_printf(__VA_ARGS__); \
+  } \
+} while(0)
+
 #ifdef __cplusplus
 
 namespace CF {

@@ -46,7 +46,7 @@ class TCPListenerSocket : public TCPSocket, public Thread::IdleTask {
  public:
 
   TCPListenerSocket()
-      : TCPSocket(nullptr, Socket::kNonBlockingSocketType),
+      : TCPSocket(nullptr, Socket::kNonBlockingSocketType), // 非阻塞，水平触发
         IdleTask(),
         fAddr(0),
         fPort(0),

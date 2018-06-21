@@ -127,7 +127,7 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
     if (acceptError == EAGAIN) {
       // If it's EAGAIN, there's nothing on the listen Queue right now,
       // so modwatch and return
-      this->RequestEvent(EV_RE | EV_OS);
+//      this->RequestEvent(EV_RE);
       return;
     }
 
@@ -139,7 +139,7 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
       // is going to be failing on sockets, logs, qtgroups and qtuser auth file
       // accesses and movie files. The server is not functional.
       s_printf("Out of File Descriptors. Set max connections lower and check"
-                   " for competing usage from other processes. Exiting.");
+               " for competing usage from other processes. Exiting.");
       exit(EXIT_FAILURE);
     } else {
       char errStr[256];
@@ -192,7 +192,7 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
     theSocket->SetTask(theTask); // 实际上是调用 EventContext::SetTask
 
     // 监听可读事件，提供 TCP 服务
-    theSocket->RequestEvent(EV_RE | EV_OS);
+    theSocket->RequestEvent(EV_RE | EV_OS); // one shot
   }
 
   /* 如果 RTSPSession、HTTPSession 的连接数超过超过限制,则利用 IdleTaskThread 定时调用
@@ -203,7 +203,7 @@ void TCPListenerSocket::ProcessEvent(int /*eventBits*/) {
     // slow down so we have Time to process the active ones (we will respond with errors or service).
     // wake up and execute again after sleeping. The timer must be reset each Time through
     //s_printf("TCPListenerSocket slowing down\n");
-    this->RequestEvent(EV_RM);
+    this->RequestEvent(EV_RM); // 屏蔽事件，暂停服务
     this->SetIdleTimer(kTimeBetweenAcceptsInMsec); //sleep 1 second
   } else {
     // sleep until there is a read event outstanding (another client wants to connect)
