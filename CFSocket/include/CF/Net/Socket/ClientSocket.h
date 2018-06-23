@@ -34,7 +34,12 @@
 #include <CF/Types.h>
 #include <CF/Net/Socket/TCPSocket.h>
 
+#ifndef DEBUG_CLIENT_SOCKET
+#define DEBUG_CLIENT_SOCKET 0
+#else
+#undef  DEBUG_CLIENT_SOCKET
 #define DEBUG_CLIENT_SOCKET 1
+#endif
 
 namespace CF {
 namespace Net {
@@ -43,7 +48,7 @@ class ClientSocket {
  public:
 
   ClientSocket();
-  virtual ~ClientSocket() {}
+  virtual ~ClientSocket() = default;
 
   void Set(UInt32 hostAddr, UInt16 hostPort) {
     fHostAddr = hostAddr;
@@ -57,7 +62,7 @@ class ClientSocket {
   //
   // When this call returns EAGAIN or EINPROGRESS, caller should use GetEventMask
   // and GetSocket to wait for a Socket event.
-  OS_Error Send(char *inData, const UInt32 inLength);
+  OS_Error Send(char *inData, UInt32 inLength);
 
   //
   // Sends an ioVec to the server. Same conditions apply as above function
@@ -70,9 +75,7 @@ class ClientSocket {
   //
   // When this call returns EAGAIN or EINPROGRESS, caller should use GetEventMask
   // and GetSocket to wait for a Socket event.
-  virtual OS_Error Read(void *inBuffer,
-                        const UInt32 inLength,
-                        UInt32 *outRcvLen) = 0;
+  virtual OS_Error Read(void *inBuffer, UInt32 inLength, UInt32 *outRcvLen) = 0;
 
   //
   // ACCESSORS
@@ -114,18 +117,16 @@ class ClientSocket {
 class TCPClientSocket : public ClientSocket {
  public:
 
-  TCPClientSocket(UInt32 inSocketType);
-  virtual ~TCPClientSocket() {}
+  explicit TCPClientSocket(UInt32 inSocketType);
+  ~TCPClientSocket() override = default;
 
   //
   // Implements the ClientSocket Send and Receive interface for a TCP connection
-  virtual OS_Error SendV(iovec *inVec, UInt32 inNumVecs);
-  virtual OS_Error Read(void *inBuffer,
-                        const UInt32 inLength,
-                        UInt32 *outRcvLen);
+  OS_Error SendV(iovec *inVec, UInt32 inNumVecs) override;
+  OS_Error Read(void *inBuffer, UInt32 inLength, UInt32 *outRcvLen) override;
 
-  virtual UInt32 GetLocalAddr() { return fSocket.GetLocalAddr(); }
-  virtual void SetRcvSockBufSize(UInt32 inSize) {
+  UInt32 GetLocalAddr() override { return fSocket.GetLocalAddr(); }
+  void SetRcvSockBufSize(UInt32 inSize) override {
     fSocket.SetSocketRcvBufSize(inSize);
   }
   virtual void SetOptions(int sndBufSize = 8192, int rcvBufSize = 1024);

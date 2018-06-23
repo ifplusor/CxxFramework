@@ -54,7 +54,12 @@
 
 #endif // !__Win32__
 
+#ifndef DEBUG_THREAD
+#define DEBUG_THREAD 0
+#else
+#undef  DEBUG_THREAD
 #define DEBUG_THREAD 1
+#endif
 
 namespace CF {
 namespace Core {

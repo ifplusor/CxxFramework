@@ -35,9 +35,9 @@ using namespace CF::Net;
 
 OS_Error UDPDemuxer::RegisterTask(UInt32 inRemoteAddr, UInt16 inRemotePort,
                                   UDPDemuxerTask *inTaskP) {
-  Assert(NULL != inTaskP);
+  Assert(nullptr != inTaskP);
   Core::MutexLocker locker(&fMutex);
-  if (this->GetTask(inRemoteAddr, inRemotePort) != NULL)
+  if (this->GetTask(inRemoteAddr, inRemotePort) != nullptr)
     return (OS_Error) EPERM;
   inTaskP->set(inRemoteAddr, inRemotePort);
   fHashTable.Add(inTaskP);
@@ -50,7 +50,7 @@ OS_Error UDPDemuxer::UnregisterTask(UInt32 inRemoteAddr, UInt16 inRemotePort,
   //remove by executing a lookup based on key information
   UDPDemuxerTask *theTask = this->GetTask(inRemoteAddr, inRemotePort);
 
-  if ((NULL != theTask) && (theTask == inTaskP)) {
+  if ((nullptr != theTask) && (theTask == inTaskP)) {
     fHashTable.Remove(theTask);
     return OS_NoErr;
   } else

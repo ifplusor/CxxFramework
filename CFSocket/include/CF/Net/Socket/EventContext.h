@@ -52,6 +52,9 @@
 //enable to trace event context execution and the task associated with the context
 #ifndef DEBUG_EVENT_CONTEXT
 #define DEBUG_EVENT_CONTEXT 0
+#else
+#undef  DEBUG_EVENT_CONTENT
+#define DEBUG_EVENT_CONTENT 1
 #endif
 
 namespace CF {

@@ -42,7 +42,12 @@
 
 #endif
 
+#ifndef DEBUG_SOCKET
 #define DEBUG_SOCKET 0
+#else
+#undef  DEBUG_SOCKET
+#define DEBUG_SOCKET 1
+#endif
 
 namespace CF {
 namespace Net {

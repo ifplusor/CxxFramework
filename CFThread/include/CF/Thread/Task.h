@@ -50,6 +50,9 @@
 
 #ifndef DEBUG_TASK
 #define DEBUG_TASK 0
+#else
+#undef  DEBUG_TASK
+#define DEBUG_TASK 1
 #endif
 
 namespace CF {

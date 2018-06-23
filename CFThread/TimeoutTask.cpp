@@ -22,12 +22,11 @@
  * @APPLE_LICENSE_HEADER_END@
  *
  */
-/*
-    File:       TimeoutTask.cpp
-
-    Contains:   Implementation of TimeoutTask
-
-*/
+/**
+ * @file TimeoutTask.cpp
+ *
+ * Implementation of TimeoutTask
+ */
 
 #include <CF/Thread/TimeoutTask.h>
 #include <CF/Core/Time.h>
@@ -90,14 +89,9 @@ SInt64 TimeoutTaskThread::Run() {
     // if it's Time to Time this task out, signal it
     if ((theTimeoutTask->fTimeoutAtThisTime > 0) &&
         (curTime >= theTimeoutTask->fTimeoutAtThisTime)) {
-#if DEBUG_TIMEOUT
-      s_printf("TimeoutTask@%" _UPOINTERSIZEARG_ " timed out. "
-                   "Curtime = %" _S64BITARG_ ", "
-                   "timeout Time = %" _S64BITARG_ "\n",
-               theTimeoutTask,
-               curTime,
-               theTimeoutTask->fTimeoutAtThisTime);
-#endif
+      DEBUG_LOG(DEBUG_TIMEOUT,
+                "TimeoutTask@%p timed out. Curtime = %" _S64BITARG_ ", timeout Time = %" _S64BITARG_ "\n",
+                theTimeoutTask, curTime, theTimeoutTask->fTimeoutAtThisTime);
       if (theTimeoutTask->fTask != nullptr)
         theTimeoutTask->fTask->Signal(Task::kTimeoutEvent);
     } else {
@@ -107,27 +101,21 @@ SInt64 TimeoutTaskThread::Run() {
           (intervalMilli > taskInterval))
         // set timeout to 1 second past this task's timeout
         intervalMilli = taskInterval + 1000;
-#if DEBUG_TIMEOUT
-      s_printf("TimeoutTask@%" _UPOINTERSIZEARG_ " not being timed out. "
-                   "Curtime = %" _S64BITARG_ ". "
-                   "timeout Time = %" _S64BITARG_ "\n",
-               theTimeoutTask,
-               curTime,
-               theTimeoutTask->fTimeoutAtThisTime);
-#endif
+      DEBUG_LOG(DEBUG_TIMEOUT,
+                "TimeoutTask@%p not being timed out. Curtime = %" _S64BITARG_ ". timeout Time = %" _S64BITARG_ "\n",
+                theTimeoutTask, curTime, theTimeoutTask->fTimeoutAtThisTime);
     }
   }
 
   Core::Thread::ThreadYield();
 
-#if DEBUG_TIMEOUT
-  s_printf("TimeoutTaskThread::Run interval seconds = %" _S32BITARG_ "\n",
-           (SInt32) intervalMilli / 1000);
-#endif
+  DEBUG_LOG(DEBUG_TIMEOUT,
+            "TimeoutTaskThread::Run interval seconds = %" _S32BITARG_ "\n",
+            (SInt32) intervalMilli / 1000);
 
-  /* NOTE：在 TaskThread::Entry 将 TimeoutTaskThread 项从线程的 fTaskQueue 里
-   * 取出处理后，根据 Run 返回值，决定是否插入线程的 fHeap，而不会再次插入到
-   * fTaskQueue 里。如果插入 fHeap，在 TaskThread::WaitForTask 里会被得到处理。
-   */
+  /* 在 TaskThread::Entry 将 TimeoutTaskThread
+   * 项从线程的 fTaskQueue 里取出处理后，
+   * 根据 Run 返回值，决定是否插入线程的 fHeap，而不会再次插入到 fTaskQueue 里。
+   * 如果插入 fHeap，在 TaskThread::WaitForTask 里会被得到处理。 */
   return intervalMilli; // don't delete me!
 }

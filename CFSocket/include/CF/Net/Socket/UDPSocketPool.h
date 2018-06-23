@@ -76,7 +76,7 @@ class UDPSocketPool {
   virtual UDPSocketPair *ConstructUDPSocketPair() = 0;
   virtual void DestructUDPSocketPair(UDPSocketPair *inPair) = 0;
 
-  virtual void SetUDPSocketOptions(UDPSocketPair * /*inPair*/) {}
+  virtual void SetUDPSocketOptions(UDPSocketPair *inPair) {}
 
  private:
 

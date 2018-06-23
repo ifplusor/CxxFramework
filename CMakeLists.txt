@@ -66,8 +66,8 @@ endif ()
 if (__PTHREADS__)
     add_definitions(-D_REENTRANT)
 endif ()
-set(DEBUG FALSE)
-set(ASSERT TRUE)
+OPTION(DEBUG "DEBUG macro" FALSE)
+OPTION(ASSERT "ASSERT flag" TRUE)
 
 # generate platform flag include file
 configure_file(

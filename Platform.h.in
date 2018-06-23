@@ -1,6 +1,7 @@
 /*
- * file:        Platform.h
- * description: compile flags.
+ * @file Platform.h
+ *
+ * compile flags.
  */
 
 #ifndef __CF_PLATFORM_FLAGS_H__

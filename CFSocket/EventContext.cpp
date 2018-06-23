@@ -156,10 +156,19 @@ void EventContext::RequestEvent(UInt32 theMask) {
   if (CFState::sState & CFState::kDisableEvent) return;
 
   if (theMask & EV_RM) { // 处理删除事件
+//    s_printf("EventContext@%p remove event.\n", this);
     if (fWatchEventCalled) {
       select_removeevent(fFileDesc);
     }
     return;
+  }
+
+//  if (theMask & EV_RE) {
+//    s_printf("EventContext@%p request read event.\n", this);
+//  }
+
+  if (theMask & EV_WR) {
+    s_printf("EventContext@%p request Write event.\n", this);
   }
 
   //

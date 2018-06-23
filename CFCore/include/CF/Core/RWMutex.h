@@ -35,7 +35,12 @@
 #include <CF/Types.h>
 #include <CF/Core/Cond.h>
 
+#ifndef DEBUG_MUTEXRW
 #define DEBUG_MUTEXRW 0
+#else
+#undef  DEBUG_MUTEXRW
+#define DEBUG_MUTEXRW 1
+#endif
 
 namespace CF {
 namespace Core {

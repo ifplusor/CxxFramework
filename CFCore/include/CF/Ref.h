@@ -44,7 +44,12 @@
 #include <CF/HashTable.h>
 #include <CF/Core/Cond.h>
 
+#ifndef DEBUG_REF
 #define DEBUG_REF 0
+#else
+#undef  DEBUG_REF
+#define DEBUG_REF 1
+#endif
 
 namespace CF {
 

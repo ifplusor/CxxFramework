@@ -136,8 +136,8 @@ TCPClientSocket::TCPClientSocket(UInt32 inSocketType)
   this->Open(&fSocket);
 }
 
-void TCPClientSocket::SetOptions(int sndBufSize,
-                                 int rcvBufSize) {   //set options on the Socket
+void TCPClientSocket::
+SetOptions(int sndBufSize, int rcvBufSize) {   //set options on the Socket
 
   //s_printf("TCPClientSocket::SetOptions sndBufSize=%d,rcvBuf=%d,keepAlive=%d,noDelay=%d\n",sndBufSize,rcvBufSize,(int)keepAlive,(int)noDelay);
   int err = ::setsockopt(fSocket.GetSocketFD(),

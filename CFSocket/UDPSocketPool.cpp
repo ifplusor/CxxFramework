@@ -33,15 +33,24 @@
 
 using namespace CF::Net;
 
+/**
+ * 获取 UDPSocket Pair
+ * @param inIPAddr  local ip
+ * @param inPort    local port
+ * @param inSrcIPAddr  remote ip
+ * @param inSrcPort    remote port
+ */
 UDPSocketPair *UDPSocketPool::GetUDPSocketPair(UInt32 inIPAddr, UInt16 inPort, UInt32 inSrcIPAddr, UInt16 inSrcPort) {
+  // TODO(james): convert NAT ip to local ip
+
   Core::MutexLocker locker(&fMutex);
   if ((inSrcIPAddr != 0) || (inSrcPort != 0)) {
+    /* If we find a pair that is:
+     *   a) on the right IP address,
+     *   b) doesn't have this source IP & port in the demuxer already,
+     * we can return this pair */
     for (QueueIter qIter(&fUDPQueue); !qIter.IsDone(); qIter.Next()) {
-      // If we find a pair that is
-      //   a) on the right IP address,
-      //   b) doesn't have this source IP & port in the demuxer already,
-      // we can return this pair
-      UDPSocketPair *theElem = (UDPSocketPair *) qIter.GetCurrent()->GetEnclosingObject();
+      auto theElem = (UDPSocketPair *) qIter.GetCurrent()->GetEnclosingObject();
       if ((theElem->fSocketA->GetLocalAddr() == inIPAddr) &&
           ((inPort == 0) || (theElem->fSocketA->GetLocalPort() == inPort))) {
         // check to make sure this source IP & port is not already in the demuxer.
@@ -78,7 +87,7 @@ void UDPSocketPool::ReleaseUDPSocketPair(UDPSocketPair *inPair) {
 UDPSocketPair *UDPSocketPool::CreateUDPSocketPair(UInt32 inAddr, UInt16 inPort) {
   // try to find an open pair of ports to bind these suckers tooo
   Core::MutexLocker locker(&fMutex);
-  UDPSocketPair *theElem = nullptr;
+  UDPSocketPair *thePair = nullptr;
   UInt16 socketAPort = kLowestUDPPort;
   UInt16 socketBPort;
 
@@ -89,25 +98,29 @@ UDPSocketPair *UDPSocketPool::CreateUDPSocketPair(UInt32 inAddr, UInt16 inPort) 
   while (socketAPort < kHighestUDPPort) {
     socketBPort = static_cast<UInt16>(socketAPort + 1);  // make Socket pairs adjacent to one another
 
-    theElem = ConstructUDPSocketPair();  // 创建一个 udp Socket pair
-    Assert(theElem != nullptr);
+    thePair = ConstructUDPSocketPair();  // 创建一个 udp Socket pair
+    Assert(thePair != nullptr);
+
+    // check construct udp socket pair fail
+    if (thePair == nullptr) return nullptr;
 
     // 创建数据报 Socket 端口
-    if (theElem->fSocketA->Open() != OS_NoErr || theElem->fSocketB->Open() != OS_NoErr) break;
+    if (thePair->fSocketA->Open() != OS_NoErr || thePair->fSocketB->Open() != OS_NoErr) break;
 
     // Set Socket options on these new sockets. 主要是设置 Socket buf size
-    this->SetUDPSocketOptions(theElem);
+    this->SetUDPSocketOptions(thePair);
 
     // 在两个 Socket 端口上执行 bind 操作,两个 port 相差 1.
-    OS_Error theErr = theElem->fSocketA->Bind(inAddr, socketAPort);
+    OS_Error theErr = thePair->fSocketA->Bind(inAddr, socketAPort);
     if (theErr == OS_NoErr) {
       //s_printf("fSocketA->Bind ok on port%u\n", socketAPort);
-      theErr = theElem->fSocketB->Bind(inAddr, socketBPort);
+      theErr = thePair->fSocketB->Bind(inAddr, socketBPort);
       if (theErr == OS_NoErr) {
         //s_printf("fSocketB->Bind ok on port%u\n", socketBPort);
-        fUDPQueue.EnQueue(&theElem->fElem);
-        theElem->fRefCount++;
-        return theElem;
+        fUDPQueue.EnQueue(&thePair->fElem);
+        thePair->fRefCount++;
+
+        return thePair;
       }
       //else s_printf("fSocketB->Bind failed on port%u\n", socketBPort);
     }
@@ -118,12 +131,12 @@ UDPSocketPair *UDPSocketPool::CreateUDPSocketPair(UInt32 inAddr, UInt16 inPort) 
 
     socketAPort += 2; //try a higher port pair
 
-    this->DestructUDPSocketPair(theElem); //a bind failure
-    theElem = nullptr;
+    this->DestructUDPSocketPair(thePair); //a bind failure
+    thePair = nullptr;
   }
 
   // if we couldn't find a pair of sockets, make sure to clean up our mess
-  if (theElem != nullptr) this->DestructUDPSocketPair(theElem);
+  if (thePair != nullptr) this->DestructUDPSocketPair(thePair);
 
   return nullptr;
 }

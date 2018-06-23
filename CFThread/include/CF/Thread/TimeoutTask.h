@@ -41,6 +41,9 @@
 //messages to help debugging timeouts
 #ifndef DEBUG_TIMEOUT
 #define DEBUG_TIMEOUT 0
+#else
+#undef  DEBUG_TIMEOUT
+#define DEBUG_TIMEOUT 1
 #endif
 
 namespace CF {

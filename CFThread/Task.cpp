@@ -100,8 +100,7 @@ void Task::Signal(EventFlags events) {
       if (DEBUG_TASK) {
         if (fTaskName[0] == 0) ::strcpy(fTaskName, " _Corrupt_Task");
 
-        s_printf("Task::Signal EnQueue TaskName=%s fUseThisThread=%p "
-                 "q_elem=%p enclosing=%p\n",
+        s_printf("Task::Signal EnQueue TaskName=%s fUseThisThread=%p q_elem=%p enclosing=%p\n",
                  fTaskName, (void *) fUseThisThread,
                  (void *) &fTaskQueueElem, (void *) this);
 
@@ -220,8 +219,7 @@ void Task::ForceSameThread() {
   Assert(fUseThisThread != nullptr);
   if (DEBUG_TASK) if (fTaskName[0] == 0) ::strcpy(fTaskName, " corrupt task");
   if (DEBUG_TASK)
-    s_printf("Task::ForceSameThread fUseThisThread %p "
-             "task %s enqueue elem=%p enclosing %p\n",
+    s_printf("Task::ForceSameThread fUseThisThread %p task %s enqueue elem=%p enclosing %p\n",
              (void *) fUseThisThread, fTaskName,
              (void *) &fTaskQueueElem, (void *) this);
 }
@@ -273,8 +271,7 @@ void TaskThread::Entry() {
       if (theTask->fWriteLock) {
         Core::MutexWriteLocker mutexLocker(&TaskThreadPool::sRWMutex);
         if (DEBUG_TASK)
-          s_printf("TaskThread::Entry run global locked TaskName=%s "
-                   "CurMSec=%.3f Thread=%p task=%p\n",
+          s_printf("TaskThread::Entry run global locked TaskName=%s CurMSec=%.3f Thread=%p task=%p\n",
                    theTask->fTaskName, Core::Time::StartTimeMilli_Float(),
                    (void *) this, (void *) theTask);
 
@@ -283,8 +280,7 @@ void TaskThread::Entry() {
       } else {
         Core::MutexReadLocker mutexLocker(&TaskThreadPool::sRWMutex);
         if (DEBUG_TASK)
-          s_printf("TaskThread::Entry run TaskName=%s CurMSec=%.3f "
-                   "Thread=%p task=%p\n",
+          s_printf("TaskThread::Entry run TaskName=%s CurMSec=%.3f Thread=%p task=%p\n",
                    theTask->fTaskName, Core::Time::StartTimeMilli_Float(),
                    (void *) this, (void *) theTask);
 
@@ -302,8 +298,7 @@ void TaskThread::Entry() {
          *  等待下个处理。 */
 
         if (DEBUG_TASK) {
-          s_printf("TaskThread::Entry delete TaskName=%s CurMSec=%.3f "
-                   "Thread=%p task=%p\n",
+          s_printf("TaskThread::Entry delete TaskName=%s CurMSec=%.3f Thread=%p task=%p\n",
                    theTask->fTaskName, Core::Time::StartTimeMilli_Float(),
                    (void *) this, (void *) theTask);
 
