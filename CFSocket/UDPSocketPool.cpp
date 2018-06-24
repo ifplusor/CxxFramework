@@ -42,9 +42,6 @@ using namespace CF::Net;
  * @param inSrcPort    remote port
  */
 UDPSocketPair *UDPSocketPool::GetUDPSocketPair(UInt32 inIPAddr, UInt16 inPort, UInt32 inSrcIPAddr, UInt16 inSrcPort) {
-  // convert NAT ip to local ip
-  inIPAddr = SocketUtils::ConvertToLocalAddr(inIPAddr);
-
   Core::MutexLocker locker(&fMutex);
   if ((inSrcIPAddr != 0) || (inSrcPort != 0)) {
     /* If we find a pair that is:

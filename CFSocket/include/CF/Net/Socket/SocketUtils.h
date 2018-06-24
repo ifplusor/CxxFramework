@@ -73,7 +73,7 @@ class SocketUtils {
   static void SetOpenIPAddrs(char **inAddress, UInt32 inAddressLen,
                              bool lookupDNSName=true);
 
-  static UInt32 ConvertToLocalAddr(UInt32 inAddress);
+  static bool ConvertToLocalAddr(UInt32 *ioAddress);
 
   //static utility routines
   static bool IsMulticastIPAddr(UInt32 inAddress);

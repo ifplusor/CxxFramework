@@ -624,13 +624,15 @@ void SocketUtils::SetOpenIPAddrs(char **inAddress, UInt32 inAddressLen, bool loo
   delete old;
 }
 
-UInt32 SocketUtils::ConvertToLocalAddr(UInt32 inAddress) {
+bool SocketUtils::ConvertToLocalAddr(UInt32 *ioAddress) {
   // 处理 NAT 情况
   for (UInt32 y = 0; y < sNumOpenIPAddrs; y++)
-    if (sOpenIPAddrInfoArray[y].fIPAddr == inAddress)
-      return sOpenIPAddrInfoArray[y].fLocalIPAddr;
+    if (sOpenIPAddrInfoArray[y].fIPAddr == *ioAddress) {
+      *ioAddress = sOpenIPAddrInfoArray[y].fLocalIPAddr;
+      return true;
+    }
 
-  return inAddress;
+  return false;
 }
 
 bool SocketUtils::IsMulticastIPAddr(UInt32 inAddress) {
