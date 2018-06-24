@@ -73,6 +73,8 @@ class SocketUtils {
   static void SetOpenIPAddrs(char **inAddress, UInt32 inAddressLen,
                              bool lookupDNSName=true);
 
+  static UInt32 ConvertToLocalAddr(UInt32 inAddress);
+
   //static utility routines
   static bool IsMulticastIPAddr(UInt32 inAddress);
   static bool IsLocalIPAddr(UInt32 inAddress);
@@ -108,7 +110,14 @@ class SocketUtils {
   static IPAddrInfo *sIPAddrInfoArray;
   static UInt32 sNumIPAddrs;
 
-  static IPAddrInfo *sOpenIPAddrInfoArray;
+  struct OpenIPAddrInfo {
+    UInt32 fIPAddr;
+    UInt32 fLocalIPAddr;
+    StrPtrLen fIPAddrStr;
+    StrPtrLen fDNSNameStr;
+  };
+
+  static OpenIPAddrInfo *sOpenIPAddrInfoArray;
   static UInt32 sNumOpenIPAddrs;
 
   static Core::Mutex sMutex;

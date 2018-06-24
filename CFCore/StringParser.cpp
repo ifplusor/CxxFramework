@@ -436,8 +436,8 @@ void StringParser::ConsumeEOL(StrPtrLen *outString) {
   if ((fStartGet < fEndGet) && ((*fStartGet == '\r') || (*fStartGet == '\n'))) {
     advanceMark();
     //check for a \r\n, which is the most common EOL sequence.
-    if ((fStartGet < fEndGet)
-        && ((*(fStartGet - 1) == '\r') && (*fStartGet == '\n')))
+    if ((fStartGet < fEndGet) &&
+        ((*(fStartGet - 1) == '\r') && (*fStartGet == '\n')))
       advanceMark();
   }
 

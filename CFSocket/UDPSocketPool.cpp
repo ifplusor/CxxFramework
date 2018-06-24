@@ -30,6 +30,7 @@
 */
 
 #include <CF/Net/Socket/UDPSocketPool.h>
+#include <CF/Net/Socket/SocketUtils.h>
 
 using namespace CF::Net;
 
@@ -41,7 +42,8 @@ using namespace CF::Net;
  * @param inSrcPort    remote port
  */
 UDPSocketPair *UDPSocketPool::GetUDPSocketPair(UInt32 inIPAddr, UInt16 inPort, UInt32 inSrcIPAddr, UInt16 inSrcPort) {
-  // TODO(james): convert NAT ip to local ip
+  // convert NAT ip to local ip
+  inIPAddr = SocketUtils::ConvertToLocalAddr(inIPAddr);
 
   Core::MutexLocker locker(&fMutex);
   if ((inSrcIPAddr != 0) || (inSrcPort != 0)) {

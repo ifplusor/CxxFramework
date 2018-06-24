@@ -104,7 +104,7 @@ class StringParser {
   void ConsumeUntil(StrPtrLen *spl, UInt8 *stop);
 
   //+ rt 8.19.99
-  //returns whatever is avaliable until non-whitespace
+  //returns whatever is available until non-whitespace
   void ConsumeUntilWhitespace(StrPtrLen *spl = nullptr) {
     ConsumeUntil(spl, sEOLWhitespaceMask);
   }
