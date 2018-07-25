@@ -132,13 +132,12 @@ class EventContext {
    * Currently, we always generate a Task::kReadEvent
    */
   virtual void ProcessEvent(int /*eventBits*/) {
-    if (DEBUG_EVENT_CONTEXT) {
-      if (fTask == nullptr)
-        s_printf("EventContext::ProcessEvent context=%p task=NULL\n",
-                 (void *) this);
-      else
-        s_printf("EventContext::ProcessEvent context=%p task=%p TaskName=%s\n",
-                 (void *) this, (void *) fTask, fTask->fTaskName);
+
+    if (fTask == nullptr) {
+      DEBUG_LOG(DEBUG_EVENT_CONTEXT, "EventContext@%p::ProcessEvent task=NULL\n", this);
+    } else {
+      DEBUG_LOG(DEBUG_EVENT_CONTEXT, "EventContext@%p::ProcessEvent task=%p TaskName=%s\n",
+                this, fTask, fTask->fTaskName);
     }
 
     if (fTask != nullptr)

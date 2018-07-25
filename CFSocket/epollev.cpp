@@ -125,25 +125,21 @@ int select_removeevent(int which) {
 }
 
 int epoll_waitevent() {
-  int curreadPos = -1;  // m_curEventReadPos;//start from 0
+  int curReadPos = -1;
 
-  if (gCurTotalEvents <= 0) { // 当前一个epoll事件都没有的时候，执行epoll_wait
-    gCurTotalEvents = 0;
+  if (gCurTotalEvents <= 0) { // 当前一个epoll事件都没有的时候，执行 epoll_wait
+    gCurTotalEvents = epoll_wait(gEpollFD, gEpollEvents, MAX_EPOLL_FD, 15000); // 15秒超时
     gCurEventReadPos = 0;
-
-    int nfds = epoll_wait(gEpollFD, gEpollEvents, MAX_EPOLL_FD, 15000); // 15秒超时
-    if (nfds > 0) gCurTotalEvents = nfds;
   }
 
-  if (gCurTotalEvents > 0) { // 从事件数组中每次取一个，取的位置通过m_curEventReadPos设置
-    curreadPos = gCurEventReadPos++;
-    if (gCurEventReadPos >= gCurTotalEvents - 1) {
-      gCurEventReadPos = 0;
+  if (gCurTotalEvents > 0) { // 从事件数组中每次取一个，取的位置通过 gCurEventReadPos 设置
+    curReadPos = gCurEventReadPos++;
+    if (gCurEventReadPos >= gCurTotalEvents) {
       gCurTotalEvents = 0;
     }
   }
 
-  return curreadPos;
+  return curReadPos;
 }
 
 /**
@@ -159,6 +155,9 @@ int select_waitevent(struct eventreq *req, void *onlyForMOSX) {
     if (gEpollEvents[eventPos].events == EPOLLIN ||
         gEpollEvents[eventPos].events == EPOLLHUP ||
         gEpollEvents[eventPos].events == EPOLLERR) {
+      if (gEpollEvents[eventPos].events != EPOLLIN) {
+        DEBUG_LOG(0, "active non-in event=%u\n", gEpollEvents[eventPos].events);
+      }
       req->er_eventbits = EV_RE;  // we only support read event
     } else if (gEpollEvents[eventPos].events == EPOLLOUT) {
       req->er_eventbits = EV_WR;

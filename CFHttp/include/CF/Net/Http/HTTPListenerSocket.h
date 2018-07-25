@@ -15,10 +15,10 @@ class HTTPListenerSocket : public TCPListenerSocket {
 
   HTTPListenerSocket() : TCPListenerSocket() {}
 
-  virtual ~HTTPListenerSocket() {}
+  ~HTTPListenerSocket() override = default;
 
   //sole job of this object is to implement this function
-  virtual Thread::Task *GetSessionTask(TCPSocket **outSocket) override;
+  Thread::Task *GetSessionTask(TCPSocket **outSocket) override;
 
   //check whether the Listener should be idling
   bool OverMaxConnections(UInt32 buffer);

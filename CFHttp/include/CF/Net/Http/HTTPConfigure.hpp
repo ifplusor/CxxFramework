@@ -29,8 +29,7 @@ class HTTPConfigure {
       HTTPSessionInterface::Initialize(config->GetHttpMapping());
       for (UInt32 i = 0; i < numHttpListens; i++) {
         auto *httpSocket = new HTTPListenerSocket();
-        theErr = httpSocket->Initialize(SocketUtils::ConvertStringToAddr(
-            httpListenAddrs[i].ip), httpListenAddrs[i].port);
+        theErr = httpSocket->Initialize(SocketUtils::ConvertStringToAddr(httpListenAddrs[i].ip), httpListenAddrs[i].port);
         if (theErr == CF_NoErr) {
           CFEnv::AddListenerSocket(httpSocket);
           httpSocket->RequestEvent(EV_RE);

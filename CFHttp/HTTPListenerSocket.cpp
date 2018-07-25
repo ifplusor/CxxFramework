@@ -11,9 +11,8 @@ namespace Net {
 Thread::Task *HTTPListenerSocket::GetSessionTask(TCPSocket **outSocket) {
   Assert(outSocket != nullptr);
 
-  HTTPSession *theTask = new HTTPSession();
-  *outSocket =
-      theTask->GetSocket(); // out Socket is not attached to a unix Socket yet.
+  auto *theTask = new HTTPSession();
+  *outSocket = theTask->GetSocket(); // out Socket is not attached to a unix Socket yet.
 
   if (this->OverMaxConnections(0))
     this->SlowDown();

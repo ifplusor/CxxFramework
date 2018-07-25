@@ -107,9 +107,8 @@ UDPSocket::RecvFrom(UInt32 *outRemoteAddr, UInt16 *outRemotePort,
   SInt32 theRecvLen = ::recvfrom(fFileDesc, ioBuffer, inBufLen, 0, (sockaddr*)&fMsgAddr, &addrLen);
 #else
   // Win32 says that ioBuffer is a char*
-  auto theRecvLen = static_cast<SInt32>(
-      ::recvfrom(fFileDesc, (char *) ioBuffer, inBufLen, 0,
-                 (sockaddr *) &fMsgAddr, &addrLen));
+  ssize_t theRecvLen = ::recvfrom(fFileDesc, (char *) ioBuffer, inBufLen, 0,
+                                  (sockaddr *) &fMsgAddr, &addrLen);
 #endif
 
   if (theRecvLen == -1)

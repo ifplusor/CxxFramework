@@ -22,11 +22,11 @@
  * @APPLE_LICENSE_HEADER_END@
  *
  */
-/*
-    File:       EventContext.cpp
-
-    Contains:   Impelments object in .h file
-*/
+/**
+ * @file EventContext.cpp
+ *
+ * Implements object in .h file
+ */
 
 #include <CF/Net/Socket/EventContext.h>
 #include <CF/Net/Socket/TCPListenerSocket.h>
@@ -156,20 +156,15 @@ void EventContext::RequestEvent(UInt32 theMask) {
   if (CFState::sState & CFState::kDisableEvent) return;
 
   if (theMask & EV_RM) { // 处理删除事件
-//    s_printf("EventContext@%p remove event.\n", this);
+    DEBUG_LOG(0, "EventContext@%p remove event.\n", this);
     if (fWatchEventCalled) {
       select_removeevent(fFileDesc);
     }
     return;
   }
 
-//  if (theMask & EV_RE) {
-//    s_printf("EventContext@%p request read event.\n", this);
-//  }
-
-  if (theMask & EV_WR) {
-    s_printf("EventContext@%p request Write event.\n", this);
-  }
+  DEBUG_LOG(0 && (theMask & EV_RE), "EventContext@%p request read event.\n", this);
+  DEBUG_LOG(0 && (theMask & EV_WR), "EventContext@%p request Write event.\n", this);
 
   //
   // The first Time this function gets called, we're supposed to
