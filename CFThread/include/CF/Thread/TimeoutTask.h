@@ -50,7 +50,7 @@ namespace CF {
 namespace Thread {
 
 /**
- * @brief TimeoutTask 守护线程
+ * @brief TimeoutTask 调度线程
  *
  * TimeoutTaskThread 是 IdleTask 的派生类, IdleTask 是 Task 的派生类。
  * 本质上，TimeoutTaskThread 并不是一个线程类，而是一个基于 Task 类的

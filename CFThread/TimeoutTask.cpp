@@ -86,9 +86,10 @@ SInt64 TimeoutTaskThread::Run() {
   for (QueueIter iter(&fQueue); !iter.IsDone(); iter.Next()) {
     auto *theTimeoutTask = (TimeoutTask *) iter.GetCurrent()->GetEnclosingObject();
 
+    if (theTimeoutTask->fTimeoutAtThisTime <= 0) continue;
+
     // if it's Time to Time this task out, signal it
-    if ((theTimeoutTask->fTimeoutAtThisTime > 0) &&
-        (curTime >= theTimeoutTask->fTimeoutAtThisTime)) {
+    if (curTime >= theTimeoutTask->fTimeoutAtThisTime) {
       DEBUG_LOG(DEBUG_TIMEOUT,
                 "TimeoutTask@%p timed out. Curtime = %" _S64BITARG_ ", timeout Time = %" _S64BITARG_ "\n",
                 theTimeoutTask, curTime, theTimeoutTask->fTimeoutAtThisTime);
@@ -97,8 +98,7 @@ SInt64 TimeoutTaskThread::Run() {
     } else {
       taskInterval = theTimeoutTask->fTimeoutAtThisTime - curTime;
       /* 更新 TimeoutTaskThread 的唤醒时间 */
-      if ((taskInterval > 0) && (theTimeoutTask->fTimeoutInMilSecs > 0) &&
-          (intervalMilli > taskInterval))
+      if ((taskInterval > 0) && (intervalMilli > taskInterval))
         // set timeout to 1 second past this task's timeout
         intervalMilli = taskInterval + 1000;
       DEBUG_LOG(DEBUG_TIMEOUT,

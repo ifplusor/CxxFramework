@@ -35,11 +35,13 @@
 #include <atomic>
 
 #if MACOSXEVENTQUEUE
+
 #ifdef AVAILABLE_MAC_OS_X_VERSION_10_5_AND_LATER
 #include <sys/ev.h>
 #else
-#include "ev.h"
+#include "CF/Net/ev.h"
 #endif
+
 #else
 
 #include "CF/Net/ev.h"
@@ -159,6 +161,7 @@ class EventContext {
   bool fAutoCleanup;
 
   Thread::Task *fTask;
+
 #if DEBUG_EVENT_CONTEXT
   bool fModwatched;
 #endif

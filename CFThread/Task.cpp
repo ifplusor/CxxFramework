@@ -340,7 +340,9 @@ void TaskThread::Entry() {
         /* 虽然该任务目前没有事件处理，但是并不表示要销毁，所以没有 delete。 */
       } else {
         /* 如果 theTimeout > 0,
-         *  则说明任务希望等待 theTimeout 时间后得到处理。*/
+         *  则说明任务希望等待 theTimeout 时间后得到处理。
+         *
+         * heap 中的 task，因为仍处于 alive 状态，不会被 signal 重复唤醒 */
 
         if (theTimeout < kMinWaitTimeInMilSecs)
           theTimeout = kMinWaitTimeInMilSecs;

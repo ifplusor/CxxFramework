@@ -22,12 +22,11 @@
  * @APPLE_LICENSE_HEADER_END@
  *
  */
-/*
-    File:       SocketUtils.cpp
-
-    Contains:   Implements utility functions defined in SocketUtils.h
-
-*/
+/**
+ * @file SocketUtils.cpp
+ *
+ * Implements utility functions defined in SocketUtils.h
+ */
 
 #include <string.h>
 

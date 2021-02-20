@@ -94,8 +94,8 @@ typedef int SOCKET;
 #define QT_TIME_TO_LOCAL_TIME   (-2082844800)
 #define QT_PATH_SEPARATOR       '/'
 
-
-#include "/System/Library/Frameworks/CoreServices.framework/Headers/../Frameworks/CarbonCore.framework/Headers/MacTypes.h"
+#include <MacTypes.h>
+//#include "/System/Library/Frameworks/CoreServices.framework/Headers/../Frameworks/CarbonCore.framework/Headers/MacTypes.h"
 
 #define kSInt16_Max (SInt16) SHRT_MAX
 #define kUInt16_Max (UInt16) USHRT_MAX
@@ -192,21 +192,21 @@ typedef unsigned long long  PointerSizedUInt;
 typedef signed long         PointerSizedInt;
 typedef unsigned long       PointerSizedUInt;
 #endif
-typedef uint8_t UInt8;
-typedef int8_t SInt8;
-typedef uint16_t UInt16;
-typedef int16_t SInt16;
-typedef uint32_t UInt32;
-typedef int32_t SInt32;
-typedef int64_t SInt64;
-typedef uint64_t UInt64;
-typedef float Float32;
-typedef double Float64;
-typedef UInt16 Bool16;
-typedef UInt8 Bool8;
+typedef uint8_t             UInt8;
+typedef int8_t              SInt8;
+typedef uint16_t            UInt16;
+typedef int16_t             SInt16;
+typedef uint32_t            UInt32;
+typedef int32_t             SInt32;
+typedef int64_t             SInt64;
+typedef uint64_t            UInt64;
+typedef float               Float32;
+typedef double              Float64;
+typedef UInt16              Bool16;
+typedef UInt8               Bool8;
 
-typedef unsigned int FourCharCode;
-typedef FourCharCode OSType;
+typedef unsigned int        FourCharCode;
+typedef FourCharCode        OSType;
 
 #ifdef  FOUR_CHARS_TO_INT
 #error Conflicting Macro "FOUR_CHARS_TO_INT"

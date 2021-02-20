@@ -44,7 +44,7 @@ namespace Thread {
 class IdleTask;
 
 /**
- * @brief IdleTask 守护线程
+ * @brief IdleTask 调度线程
  *
  * 这套机制实际上是利用一个线程专门来处理一个定时事件，平时睡眠，一旦发现有
  * 任务到期，就会通过 signal 通知另外的线程处理这个事件。

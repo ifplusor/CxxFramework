@@ -38,7 +38,7 @@
 
 enum EREQ_TYPE {
   EV_FD = 1,
-#define EV_FD 1   /* file descriptor */
+#define EV_FD EV_FD   /* file descriptor */
 };
 
 enum EREQ_EVENTS {
