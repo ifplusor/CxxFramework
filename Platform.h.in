@@ -28,9 +28,11 @@
 #cmakedefine01 USE_THR_YIELD
 #cmakedefine01 MACOSX_PUBLICBETA
 #cmakedefine01 __WinSock__
+#cmakedefine01 EVENT_EDGE_TRIGGERED_SUPPORTED
 
 #cmakedefine USE_DEFAULT_STD_LIB
-#if defined(USE_DEFAULT_STD_LIB) && !USE_DEFAULT_STD_LIB
+#ifdef USE_DEFAULT_STD_LIB
+#undef USE_DEFAULT_STD_LIB
 #define USE_DEFAULT_STD_LIB 1
 #endif
 

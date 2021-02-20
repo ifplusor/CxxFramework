@@ -39,7 +39,7 @@
 #endif
 
 #if MACOSXEVENTQUEUE
-#include "tempcalls.h" //includes MacOS X prototypes of event Queue functions
+#include "CF/Net/tempcalls.h" //includes MacOS X prototypes of event Queue functions
 #endif
 
 #if DEBUG_EVENT_CONTEXT
@@ -171,7 +171,9 @@ void EventContext::RequestEvent(UInt32 theMask) {
   // call watchevent. Each subsequent Time, call modwatch. That's
   // the way the MacOS X event Queue works.
 
+#if EVENT_EDGE_TRIGGERED_SUPPORTED
   if (fUseETMode) theMask |= EV_ET; // ET Mode
+#endif
 
   if (fWatchEventCalled) {
     fEventReq.er_eventbits = theMask;
@@ -293,6 +295,9 @@ void EventThread::Entry() {
             Ref *ref = iter.GetCurrent();
             auto *theContext = (EventContext *) ref->GetObject();
             iter.Next();
+
+            // 显式清理 EventContext
+            theContext->DontAutoCleanup();
             theContext->Cleanup();
           }
           CFState::sState ^= CFState::kCleanEvent;
