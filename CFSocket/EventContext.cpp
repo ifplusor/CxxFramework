@@ -335,7 +335,7 @@ void EventThread::Entry() {
     SInt64  yieldStart = Core::Time::Milliseconds();
 #endif
 
-#if 0//defined(__linux__) && !defined(EASY_DEVICE)
+#if 0//defined(__Linux__) && !defined(EASY_DEVICE)
 
 #else
     Thread::ThreadYield();

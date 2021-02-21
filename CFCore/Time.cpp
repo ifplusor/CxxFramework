@@ -6,7 +6,7 @@
 #include <string.h>
 #include <CF/Core/Time.h>
 
-#if __MacOSX__
+#if __macOS__
 
 #ifndef __COREFOUNDATION__
 #include <CoreFoundation/CoreFoundation.h>
@@ -61,7 +61,7 @@ void Time::Initialize() {
 
 SInt64 Time::Milliseconds() {
   /*
-  #if __MacOSX__
+  #if __macOS__
 
   #if DEBUG
       OSMutexLocker locker(sLastMillisMutex);
@@ -122,7 +122,7 @@ SInt64 Time::Milliseconds() {
 
 SInt64 Time::Microseconds() {
   /*
-  #if __MacOSX__
+  #if __macOS__
       UnsignedWide theMicros;
       ::Microseconds(&theMicros);
       SInt64 theMillis = theMicros.hi;

@@ -31,7 +31,7 @@
 
 #include <CF/Core/Thread.h>
 
-#ifdef __MacOSX__
+#ifdef __macOS__
 #include <mach/mach_types.h>
 #include <mach/mach_time.h>
 #endif
@@ -70,7 +70,7 @@ pthread_key_t Thread::gMainKey = 0;
 #endif
 #endif
 
-#if __linux__ || __MacOSX__
+#if __Linux__ || __macOS__
 bool Thread::sWrapSleep = true;
 #endif
 
@@ -175,7 +175,7 @@ void Thread::Sleep(UInt32 inMsec) {
 
 #if __Win32__ || __MinGW__
   ::Sleep(inMsec);
-#elif __linux__ || __MacOSX__
+#elif __Linux__ || __macOS__
 
   if (inMsec == 0)
     return;

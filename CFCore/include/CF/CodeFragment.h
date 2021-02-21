@@ -38,7 +38,7 @@
 
 #include <CF/Types.h>
 
-#ifdef __OSX__
+#ifdef __macOS__
 #include <CoreFoundation/CFBundle.h>
 #endif
 
@@ -59,7 +59,7 @@ class CodeFragment {
 
 #if defined(__Win32__) || defined(__MinGW__)
   HMODULE fFragmentP;
-#elif __OSX__
+#elif __macOS__
   CFBundleRef fFragmentP;
 #else
   void *fFragmentP;

@@ -15,10 +15,7 @@ if ((NOT (DEFINED DetectTarget)) OR DetectTarget)
     set(DetectTarget FALSE)
 endif ()
 
-# configure options
-# - follow options must be configure:
-#    set(PLATFORM_DEFINE __linux__)
-# - follow options can be configure:
+# configure options:
 #    set(DEBUG FALSE)
 #    set(ASSERT FALSE)
 #    set(USE_ENUM FALSE)
@@ -35,7 +32,7 @@ endif ()
 #    set(__WinSock__ FALSE)
 #    set(USE_DEFAULT_STD_LIB FALSE)
 message(STATUS "Build for ${CONF_PLATFORM}-${CONF_ARCH}")
-if (${CONF_PLATFORM} STREQUAL "OSX")
+if (${CONF_PLATFORM} STREQUAL "macOS")
     set(CONF_DLIB_EXT so)
     set(MACOSXEVENTQUEUE TRUE)
     set(__PTHREADS__ TRUE)

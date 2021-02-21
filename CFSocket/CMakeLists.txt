@@ -27,7 +27,7 @@ elseif (${CONF_PLATFORM} STREQUAL "Win32")
     set(SOURCE_FILES ${SOURCE_FILES} win32ev.cpp)
 elseif (${CONF_PLATFORM} STREQUAL "MinGW")
     set(SOURCE_FILES ${SOURCE_FILES} win32ev.cpp)
-else (${CONF_PLATFORM} STREQUAL "OSX")
+else (${CONF_PLATFORM} STREQUAL "macOS")
     set(HEADER_FILES ${HEADER_FILES} include/CF/Net/tempcalls.h)
 endif ()
 

@@ -10,7 +10,7 @@
 #include <unistd.h>
 #endif
 
-#if __solaris__ || __linux__ || __sgi__ || __hpux__
+#if __solaris__ || __Linux__ || __sgi__ || __hpux__
 #endif
 
 using namespace CF::Net;

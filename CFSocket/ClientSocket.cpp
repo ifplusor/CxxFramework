@@ -61,7 +61,7 @@ OS_Error ClientSocket::Open(TCPSocket *inSocket) {
       return theErr;
 
     inSocket->NoDelay();
-#if __FreeBSD__ || __MacOSX__
+#if __FreeBSD__ || __macOS__
     // no KeepAlive -- probably should be off for all platforms.
 #else
     inSocket->KeepAlive();
@@ -154,7 +154,7 @@ SetOptions(int sndBufSize, int rcvBufSize) {   //set options on the Socket
                      sizeof(int));
   AssertV(err == 0, Core::Thread::GetErrno());
 
-#if __FreeBSD__ || __MacOSX__
+#if __FreeBSD__ || __macOS__
   struct timeval Time;
   //int len = sizeof(Time);
   Time.tv_sec = 0;

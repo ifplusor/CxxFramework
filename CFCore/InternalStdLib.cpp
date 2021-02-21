@@ -171,7 +171,7 @@ char *s_strerror(int errnum, char *buffer, int buffLen) {
 }
 
 char *s_ctime(const time_t *timep, char *buffer, int buffLen) {
-#if __MacOSX__
+#if __macOS__
   Assert(buffLen >= 26);
   return ::ctime_r(timep, buffer);
 #else
@@ -184,7 +184,7 @@ char *s_ctime(const time_t *timep, char *buffer, int buffLen) {
 }
 
 char *s_asctime(const struct tm *timeptr, char *buffer, int buffLen) {
-#if __MacOSX__
+#if __macOS__
   Assert(buffLen >= 26);
   return ::asctime_r(timeptr, buffer);
 #else
@@ -197,7 +197,7 @@ char *s_asctime(const struct tm *timeptr, char *buffer, int buffLen) {
 }
 
 struct tm *s_gmtime(const time_t *timep, struct tm *result) {
-#if __MacOSX__
+#if __macOS__
   return ::gmtime_r(timep, result);
 #else
   MutexLocker locker(&sStdLibOSMutex);
@@ -209,7 +209,7 @@ struct tm *s_gmtime(const time_t *timep, struct tm *result) {
 }
 
 struct tm *s_localtime(const time_t *timep, struct tm *result) {
-#if __MacOSX__
+#if __macOS__
   return ::localtime_r(timep, result);
 #else
   MutexLocker locker(&sStdLibOSMutex);

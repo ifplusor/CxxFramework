@@ -317,7 +317,7 @@ void SocketUtils::Initialize(bool lookupDNSName) {
   ifc.ifc_len = kMaxAddrBufferSize;
   ifc.ifc_buf = buffer;
 
-#if __linux__ || __linuxppc__ || __solaris__ || __MacOSX__ || __sgi__ || __osf__
+#if __Linux__ || __linuxppc__ || __solaris__ || __macOS__ || __sgi__ || __osf__
   int err = ::ioctl(tempSocket, SIOCGIFCONF, (char *) &ifc);
 #elif __FreeBSD__
   int err = ::ioctl(tempSocket, OSIOCGIFCONF, (char*)&ifc);
@@ -452,7 +452,7 @@ void SocketUtils::Initialize(bool lookupDNSName) {
           currentIndex++;
       }
   }
-#endif // TRUCLUSTER	
+#endif // TRUCLUSTER
 
   for (ifReqIter = buffer; ifReqIter < (buffer + ifc.ifc_len);) {
     ifr = (struct ifreq *) ifReqIter;
@@ -532,7 +532,7 @@ void SocketUtils::Initialize(bool lookupDNSName) {
 bool SocketUtils::IncrementIfReqIter(char **inIfReqIter, ifreq *ifr) {
   //returns true if successful, false otherwise
 
-#if __MacOSX__
+#if __macOS__
   *inIfReqIter += sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len;
 
   //if the length of the addr is 0, use the family to determine

@@ -174,7 +174,7 @@ class EventContext {
 /**
  * @brief 基于“IO多路复用”的网络事件守护线程
  *
- * Linux 下为 epoll，Windows 下为 WSAAsyncSelect，OSX 下为 event queue
+ * Linux 下为 epoll，Windows 下为 WSAAsyncSelect，macOS 下为 event queue
  */
 class EventThread : public Core::Thread {
  public:

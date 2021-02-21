@@ -34,7 +34,7 @@
 
 #if __Win32__ || __MinGW__
 // Win32 includes here
-#elif __MacOSX__
+#elif __macOS__
 #include <CoreFoundation/CFString.h>
 #include <CoreFoundation/CFBundle.h>
 #else
@@ -60,11 +60,11 @@ CodeFragment::CodeFragment(char const *inPath) : fFragmentP(NULL) {
   fFragmentP = dlopen(inPath, RTLD_NOW); // not sure this should be either RTLD_NOW or RTLD_LAZY
 #elif defined(__Win32__) || defined(__MinGW__)
   fFragmentP = ::LoadLibrary(inPath);
-#elif defined(__MacOSX__)
+#elif defined(__macOS__)
   CFStringRef theString = CFStringCreateWithCString(kCFAllocatorDefault, inPath, kCFStringEncodingASCII);
 
   //
-  // In MacOSX, our "fragments" are CF bundles, which are really
+  // In macOS, our "fragments" are CF bundles, which are really
   // directories, so our paths are paths to a directory
   CFURLRef    bundleURL = CFURLCreateWithFileSystemPath(kCFAllocatorDefault,
       theString,
@@ -104,7 +104,7 @@ CodeFragment::~CodeFragment() {
 #elif defined(__Win32__) || defined(__MinGW__)
   BOOL theErr = ::FreeLibrary(fFragmentP);
   Assert(theErr);
-#elif defined(__MacOSX__)
+#elif defined(__macOS__)
   CFBundleUnloadExecutable(fFragmentP);
   CFRelease(fFragmentP);
 #else
@@ -134,7 +134,7 @@ void *CodeFragment::GetSymbol(char const *inSymbolName) {
   return retval;
 #elif defined(__Win32__) || defined(__MinGW__)
   return (void*) ::GetProcAddress(fFragmentP, inSymbolName);
-#elif defined(__MacOSX__)
+#elif defined(__macOS__)
   CFStringRef theString = CFStringCreateWithCString(kCFAllocatorDefault, inSymbolName, kCFStringEncodingASCII);
   void* theSymbol = (void*)CFBundleGetFunctionPointerForName(fFragmentP, theString);
   CFRelease(theString);

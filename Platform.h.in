@@ -37,8 +37,8 @@
 #endif
 
 // Platform-specific switches
-#if __MacOSX__
-#define kPlatformNameString     "MacOSX"
+#if __macOS__
+#define kPlatformNameString     "macOS"
 #define EXPORT
 
 #include <machine/endian.h>
@@ -69,7 +69,7 @@
 #define kPlatformNameString     "MinGW"
 #define EXPORT
 
-#elif __linux__
+#elif __Linux__
 #define kPlatformNameString     "Linux"
 #define EXPORT
 

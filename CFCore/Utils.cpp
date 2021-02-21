@@ -33,7 +33,7 @@
 
 #include <CF/Utils.h>
 
-#if (__solaris__ || __linux__ || __linuxppc__)
+#if (__solaris__ || __Linux__ || __linuxppc__)
 #include <CF/StringParser.h>
 #endif
 
@@ -41,7 +41,7 @@
 #include <unistd.h>
 #endif
 
-#if __linux__
+#if __Linux__
 
 #include <unistd.h>
 #include <grp.h>
@@ -49,7 +49,7 @@
 
 #endif
 
-#if (__FreeBSD__ || __MacOSX__)
+#if (__FreeBSD__ || __macOS__)
 #include <sys/sysctl.h>
 #endif
 
@@ -162,7 +162,7 @@ UInt32 Utils::GetNumProcessors() {
   return (UInt32)theSystemInfo.dwNumberOfProcessors;
 #endif
 
-#if (__MacOSX__ || __FreeBSD__)
+#if (__macOS__ || __FreeBSD__)
   int numCPUs = 1;
   size_t len = sizeof(numCPUs);
   int mib[2];
@@ -174,7 +174,7 @@ UInt32 Utils::GetNumProcessors() {
   return (UInt32)numCPUs;
 #endif
 
-#if(__linux__ || __linuxppc__)
+#if(__Linux__ || __linuxppc__)
 
   char cpuBuffer[8192] = "";
   StrPtrLen cpuInfoBuf(cpuBuffer, sizeof(cpuBuffer));
@@ -263,7 +263,7 @@ UInt32 Utils::GetNumProcessors() {
 
 bool Utils::ThreadSafe() {
 
-#if (__MacOSX__) // check for version 7 or greater for Thread safe stdlib
+#if (__macOS__) // check for version 7 or greater for Thread safe stdlib
   char releaseStr[32] = "";
   size_t strLen = sizeof(releaseStr);
   int mib[2];
@@ -291,7 +291,7 @@ bool Utils::ThreadSafe() {
 }
 
 bool Utils::SwitchPersonality() {
-#if __linux__
+#if __Linux__
   if (::strlen(sGroup) > 0) {
     struct group *gr = ::getgrnam(sGroup);
     if (gr == nullptr || ::setgid(gr->gr_gid) == -1) {

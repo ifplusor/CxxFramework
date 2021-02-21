@@ -42,7 +42,7 @@ Cond::Cond() {
   fCondition = ::CreateEvent(NULL, FALSE, FALSE, NULL);
   Assert(fCondition != NULL);
 #elif __PTHREADS_MUTEXES__
-#if __MacOSX__
+#if __macOS__
   int ret = pthread_cond_init(&fCondition, NULL);
   Assert(ret == 0);
 #else
